@@ -1,10 +1,11 @@
-import { Expense, Budget } from './types';
+import { Expense, Budget, RecurringTransaction } from './types';
 
 const API_BASE = '/api';
 
 export interface CloudData {
   transactions: Expense[];
   budgets: Budget[];
+  recurring: RecurringTransaction[];
 }
 
 /**
@@ -76,7 +77,40 @@ export async function loadBudgetFromCloud(
 }
 
 /**
- * Sync all data (transactions + budgets) to the cloud in one request.
+ * Sync recurring transactions to the cloud.
+ */
+export async function syncRecurringToCloud(
+  email: string,
+  recurring: RecurringTransaction[]
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/recurring?email=${encodeURIComponent(email)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, recurring }),
+  });
+  if (!res.ok) {
+    throw new Error(`Sync recurring failed: ${res.status} ${res.statusText}`);
+  }
+}
+
+/**
+ * Load recurring transactions for a given email from the cloud.
+ */
+export async function loadRecurringFromCloud(
+  email: string
+): Promise<RecurringTransaction[]> {
+  const res = await fetch(
+    `${API_BASE}/recurring?email=${encodeURIComponent(email)}`
+  );
+  if (!res.ok) {
+    throw new Error(`Load recurring failed: ${res.status} ${res.statusText}`);
+  }
+  const data = await res.json();
+  return data.recurring ?? [];
+}
+
+/**
+ * Sync all data (transactions + budgets + recurring) to the cloud in one request.
  */
 export async function syncAllToCloud(
   email: string,
@@ -93,7 +127,7 @@ export async function syncAllToCloud(
 }
 
 /**
- * Load all data (transactions + budgets) from the cloud in one request.
+ * Load all data (transactions + budgets + recurring) from the cloud in one request.
  */
 export async function loadAllFromCloud(email: string): Promise<CloudData> {
   const res = await fetch(
@@ -106,6 +140,7 @@ export async function loadAllFromCloud(email: string): Promise<CloudData> {
   return {
     transactions: data.transactions ?? [],
     budgets: data.budgets ?? [],
+    recurring: data.recurring ?? [],
   };
 }
 

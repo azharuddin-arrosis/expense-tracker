@@ -1,7 +1,18 @@
-import { Expense, Budget } from './types';
+import { Expense, Budget, RecurringTransaction } from './types';
+import { getStoredEmail } from './cloud';
 
-const EXPENSES_KEY = 'expense-tracker-expenses-v2';
-const BUDGET_KEY = 'expense-tracker-budgets-v2';
+const EXPENSES_PREFIX = 'expense-tracker-expenses-v2:';
+const BUDGET_PREFIX = 'expense-tracker-budgets-v2:';
+const RECURRING_PREFIX = 'expense-tracker-recurring-v2:';
+
+function getEmailKey(prefix: string): string {
+  const email = getStoredEmail();
+  return prefix + (email || 'guest');
+}
+
+function getRecurringKey(email: string): string {
+  return RECURRING_PREFIX + email;
+}
 
 function isBrowser(): boolean {
   return typeof window !== 'undefined';
@@ -12,7 +23,8 @@ function isBrowser(): boolean {
 export function getExpenses(): Expense[] {
   if (!isBrowser()) return [];
   try {
-    const data = localStorage.getItem(EXPENSES_KEY);
+    const key = getEmailKey(EXPENSES_PREFIX);
+    const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : [];
   } catch {
     return [];
@@ -21,7 +33,8 @@ export function getExpenses(): Expense[] {
 
 function saveExpenses(expenses: Expense[]): void {
   if (!isBrowser()) return;
-  localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
+  const key = getEmailKey(EXPENSES_PREFIX);
+  localStorage.setItem(key, JSON.stringify(expenses));
 }
 
 export function addExpense(
@@ -119,6 +132,150 @@ export function getAllMonths(): string[] {
     months.add(exp.date.slice(0, 7));
   }
   return Array.from(months).sort();
+}
+
+// ═══════════════════════════════════════════════════
+// Recurring Transactions
+// ═══════════════════════════════════════════════════
+
+export function getRecurringTransactions(email: string): RecurringTransaction[] {
+  if (!isBrowser()) return [];
+  try {
+    const key = getRecurringKey(email);
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecurringTransactions(email: string, transactions: RecurringTransaction[]): void {
+  if (!isBrowser()) return;
+  const key = getRecurringKey(email);
+  localStorage.setItem(key, JSON.stringify(transactions));
+}
+
+function generateNextDueDate(rt: RecurringTransaction, fromDate: string): string {
+  const date = new Date(fromDate + 'T00:00:00');
+  
+  switch (rt.frequency) {
+    case 'daily':
+      date.setDate(date.getDate() + 1);
+      break;
+    case 'weekly':
+      if (rt.dayOfWeek !== undefined) {
+        const currentDay = date.getDay();
+        let daysToAdd = rt.dayOfWeek - currentDay;
+        if (daysToAdd <= 0) daysToAdd += 7;
+        date.setDate(date.getDate() + daysToAdd);
+      } else {
+        date.setDate(date.getDate() + 7);
+      }
+      break;
+    case 'monthly':
+      const dayOfMonth = rt.dayOfMonth || date.getDate();
+      date.setMonth(date.getMonth() + 1);
+      const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      date.setDate(Math.min(dayOfMonth, daysInMonth));
+      break;
+    case 'yearly':
+      date.setFullYear(date.getFullYear() + 1);
+      break;
+  }
+  
+  return date.toISOString().slice(0, 10);
+}
+
+export function addRecurringTransaction(
+  rt: Omit<RecurringTransaction, 'id' | 'createdAt' | 'updatedAt'>,
+  email: string
+): RecurringTransaction {
+  const now = new Date().toISOString();
+  const newRt: RecurringTransaction = {
+    ...rt,
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 9),
+    createdAt: now,
+    updatedAt: now,
+  };
+  
+  const transactions = getRecurringTransactions(email);
+  transactions.push(newRt);
+  saveRecurringTransactions(email, transactions);
+  
+  return newRt;
+}
+
+export function updateRecurringTransaction(
+  id: string,
+  updates: Partial<Omit<RecurringTransaction, 'id' | 'createdAt'>>,
+  email: string
+): void {
+  const transactions = getRecurringTransactions(email);
+  const idx = transactions.findIndex((e) => e.id === id);
+  if (idx === -1) return;
+  
+  transactions[idx] = {
+    ...transactions[idx],
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+  saveRecurringTransactions(email, transactions);
+}
+
+export function deleteRecurringTransaction(id: string, email: string): void {
+  const transactions = getRecurringTransactions(email);
+  saveRecurringTransactions(email, transactions.filter((e) => e.id !== id));
+}
+
+export function getDueRecurringTransactions(
+  email: string,
+  date: string
+): RecurringTransaction[] {
+  const transactions = getRecurringTransactions(email);
+  return transactions.filter(
+    (rt) => rt.isActive && rt.nextDueDate <= date
+  );
+}
+
+export function markRecurringGenerated(
+  id: string,
+  generatedDate: string,
+  email: string
+): void {
+  const transactions = getRecurringTransactions(email);
+  const idx = transactions.findIndex((e) => e.id === id);
+  if (idx === -1) return;
+  
+  const rt = transactions[idx];
+  const nextDue = generateNextDueDate(rt, generatedDate);
+  
+  // Check if we should deactivate (past endDate)
+  let isActive = rt.isActive;
+  if (rt.endDate && nextDue > rt.endDate) {
+    isActive = false;
+  }
+  
+  transactions[idx] = {
+    ...rt,
+    lastGenerated: generatedDate,
+    nextDueDate: nextDue,
+    isActive,
+    updatedAt: new Date().toISOString(),
+  };
+  saveRecurringTransactions(email, transactions);
+}
+
+export function getRecurringWithSync(
+  email: string | null
+): Promise<RecurringTransaction[]> {
+  if (!email) return Promise.resolve(getRecurringTransactions('guest'));
+  
+  try {
+    const { loadRecurringFromCloud } = require('./cloud');
+    return loadRecurringFromCloud(email);
+  } catch {
+    return Promise.resolve(getRecurringTransactions(email));
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -280,4 +437,211 @@ export function saveBudgetAndSync(
   if (email) {
     syncBudgetToCloud(email, budget.month).catch(() => {});
   }
+}
+
+/**
+ * Sync recurring transactions to cloud.
+ */
+export async function syncRecurringToCloud(email: string): Promise<void> {
+  const { syncRecurringToCloud: syncRecurring } = await import('./cloud');
+  const transactions = getRecurringTransactions(email);
+  try {
+    await syncRecurring(email, transactions);
+  } catch (err) {
+    console.warn('Recurring sync to cloud failed (offline?):', err);
+  }
+}
+
+/**
+ * Add recurring transaction locally AND sync to cloud in background.
+ */
+export function addRecurringTransactionAndSync(
+  rt: Omit<RecurringTransaction, 'id' | 'createdAt' | 'updatedAt'>,
+  email: string | null
+): RecurringTransaction {
+  const result = addRecurringTransaction(rt, email || 'guest');
+
+  if (email) {
+    syncRecurringToCloud(email).catch(() => {});
+  }
+
+  return result;
+}
+
+/**
+ * Update recurring transaction locally AND sync to cloud in background.
+ */
+export function updateRecurringTransactionAndSync(
+  id: string,
+  updates: Partial<Omit<RecurringTransaction, 'id' | 'createdAt'>>,
+  email: string | null
+): void {
+  updateRecurringTransaction(id, updates, email || 'guest');
+
+  if (email) {
+    syncRecurringToCloud(email).catch(() => {});
+  }
+}
+
+/**
+ * Delete recurring transaction locally AND sync to cloud in background.
+ */
+export function deleteRecurringTransactionAndSync(
+  id: string,
+  email: string | null
+): void {
+  deleteRecurringTransaction(id, email || 'guest');
+
+  if (email) {
+    syncRecurringToCloud(email).catch(() => {});
+  }
+}
+
+// ===== Monthly Summary & Saving Targets =====
+
+const SAVING_TARGETS_PREFIX = 'expense-tracker-targets-v1:';
+
+function getSavingTargetsKey(email: string): string {
+  return SAVING_TARGETS_PREFIX + email;
+}
+
+export function getSavingTargets(email: string): SavingTarget[] {
+  if (!isBrowser()) return DEFAULT_SAVING_TARGETS;
+  try {
+    const key = getSavingTargetsKey(email);
+    const data = localStorage.getItem(key);
+    if (data) {
+      const parsed = JSON.parse(data);
+      return parsed.length > 0 ? parsed : DEFAULT_SAVING_TARGETS;
+    }
+  } catch {}
+  return DEFAULT_SAVING_TARGETS;
+}
+
+export function saveSavingTargets(email: string, targets: SavingTarget[]): void {
+  if (!isBrowser()) return;
+  const key = getSavingTargetsKey(email);
+  localStorage.setItem(key, JSON.stringify(targets));
+}
+
+export function updateSavingTargetAndSync(
+  email: string,
+  targetId: string,
+  updates: Partial<SavingTarget>
+): void {
+  const targets = getSavingTargets(email);
+  const idx = targets.findIndex((t) => t.id === targetId);
+  if (idx >= 0) {
+    targets[idx] = { ...targets[idx], ...updates };
+    saveSavingTargets(email, targets);
+  }
+}
+
+/**
+ * Compute monthly summary for a given month and email.
+ * Runs entirely on client using localStorage (offline-first).
+ */
+export function computeMonthlySummary(
+  month: string,
+  email: string
+): MonthlySummary {
+  const transactions = getExpenses().filter((e) => e.date.startsWith(month));
+  
+  const income = transactions.filter((e) => e.flow === 'in');
+  const expense = transactions.filter((e) => e.flow === 'out');
+  
+  const totalIncome = income.reduce((s, e) => s + e.amount, 0);
+  const totalExpense = expense.reduce((s, e) => s + e.amount, 0);
+  const balance = totalIncome - totalExpense;
+
+  // By category
+  const incomeByCategory: Record<string, number> = {};
+  const expenseByCategory: Record<string, number> = {};
+  
+  for (const t of income) {
+    incomeByCategory[t.category] = (incomeByCategory[t.category] || 0) + t.amount;
+  }
+  for (const t of expense) {
+    expenseByCategory[t.category] = (expenseByCategory[t.category] || 0) + t.amount;
+  }
+
+  // Daily balance
+  const dailyBalance: Record<string, { income: number; expense: number; balance: number }> = {};
+  for (const t of transactions) {
+    if (!dailyBalance[t.date]) {
+      dailyBalance[t.date] = { income: 0, expense: 0, balance: 0 };
+    }
+    if (t.flow === 'in') {
+      dailyBalance[t.date].income += t.amount;
+    } else {
+      dailyBalance[t.date].expense += t.amount;
+    }
+    dailyBalance[t.date].balance = dailyBalance[t.date].income - dailyBalance[t.date].expense;
+  }
+
+  // By account
+  const byAccount = {
+    suami: { income: 0, expense: 0, balance: 0 },
+    istri: { income: 0, expense: 0, balance: 0 },
+    bersama: { income: 0, expense: 0, balance: 0 },
+  };
+  
+  for (const t of transactions) {
+    const acc = t.account || 'bersama';
+    if (t.flow === 'in') {
+      byAccount[acc].income += t.amount;
+    } else {
+      byAccount[acc].expense += t.amount;
+    }
+    byAccount[acc].balance = byAccount[acc].income - byAccount[acc].expense;
+  }
+
+  // Targets
+  const targets = getSavingTargets('guest'); // or email-specific
+  const savingTarget = targets.find((t) => t.id === 'saving');
+  const liburanTarget = targets.find((t) => t.id === 'liburan');
+  const customTargets = targets.filter((t) => !['saving', 'liburan'].includes(t.id));
+
+  // Calculate achieved: sum of income categorized as saving/liburan
+  // For simplicity, we'll track via a separate category or tag
+  // Here we'll use income with category matching target category
+  let savingAchieved = 0;
+  let liburanAchieved = 0;
+  const customAchieved: Record<string, number> = {};
+  
+  for (const t of income) {
+    if (savingTarget && t.category === savingTarget.category) {
+      savingAchieved += t.amount;
+    }
+    if (liburanTarget && t.category === liburanTarget.category) {
+      liburanAchieved += t.amount;
+    }
+    for (const ct of customTargets) {
+      if (t.category === ct.category) {
+        customAchieved[ct.id] = (customAchieved[ct.id] || 0) + t.amount;
+      }
+    }
+  }
+
+  return {
+    month,
+    income: totalIncome,
+    expense: totalExpense,
+    balance,
+    incomeByCategory,
+    expenseByCategory,
+    dailyBalance,
+    byAccount,
+    targets: {
+      saving: { target: savingTarget?.target || 0, achieved: savingAchieved },
+      liburan: { target: liburanTarget?.target || 0, achieved: liburanAchieved },
+      custom: customTargets.map((ct) => ({
+        name: ct.name,
+        target: ct.target,
+        achieved: customAchieved[ct.id] || 0,
+      })),
+    },
+  };
+}
+
 }
