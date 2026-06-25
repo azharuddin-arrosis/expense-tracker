@@ -5,13 +5,13 @@ import { AuthGuard } from '@/components/AuthGuard';
 import { PwaRegister } from '@/components/PwaRegister';
 
 export const metadata: Metadata = {
-  title: 'Finance Keluarga',
-  description: 'Aplikasi pencatatan pemasukan dan pengeluaran bulanan keluarga',
+  title: 'Duit',
+  description: 'Aplikasi pencatatan pemasukan dan pengeluaran bulanan',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Finance Keluarga',
+    title: 'Duit',
   },
   icons: {
     apple: '/apple-touch-icon.png',

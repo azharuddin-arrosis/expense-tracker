@@ -152,7 +152,7 @@ export default function DashboardPage() {
     <div className="px-4 pt-4 pb-6 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Finance Keluarga</h1>
+        <h1 className="text-xl font-bold text-gray-900">Duit</h1>
         <div className="flex items-center gap-2">
           {/* Cloud Status Indicator */}
           {cloudStatus === 'checking' ? (

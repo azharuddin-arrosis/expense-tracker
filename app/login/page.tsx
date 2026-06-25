@@ -48,10 +48,10 @@ export default function LoginPage() {
             <Wallet className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            Finance Keluarga
+            Duit
           </h1>
           <p className="text-sm text-gray-500">
-            Catat pengeluaran &amp; atur budget keluarga
+            Catat pemasukan &amp; pengeluaran bulanan
           </p>
         </div>
 
