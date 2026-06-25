@@ -1,28 +1,34 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search, Trash2, Pencil, ChevronLeft, ChevronRight, TrendingDown, TrendingUp } from 'lucide-react';
+import { Search, Trash2, Pencil, TrendingDown, TrendingUp } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
-import { getTransactionsByMonth, deleteExpenseAndSync } from '@/lib/storage';
-import { formatRupiah, formatDate, getMonthName, prevMonth, nextMonth, getCurrentMonthString } from '@/lib/format';
-import { CATEGORIES, getCategoryColor, getCategoryName, INCOME_CATEGORIES } from '@/lib/types';
+import { getTransactionsByMonth, getTransactionsByDateRange, deleteExpenseAndSync } from '@/lib/storage';
+import { formatRupiah, formatDate, formatDateFull, getMonthName, getCurrentMonthString } from '@/lib/format';
+import { CATEGORIES, getCategoryColor, getCategoryName, INCOME_CATEGORIES, Expense } from '@/lib/types';
 import { getStoredEmail } from '@/lib/cloud';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { DateFilter } from '@/components/DateFilter';
+import { DetailPopup } from '@/components/DetailPopup';
 import { EmptyState } from '@/components/EmptyState';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function RiwayatPage() {
   const { refreshKey, refreshData, setShowAddExpense, setEditTarget } = useAppContext();
   const [month, setMonth] = useState(getCurrentMonthString);
+  const [filterMode, setFilterMode] = useState<'month' | 'week' | 'range'>('month');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [detailTarget, setDetailTarget] = useState<Expense | null>(null);
 
-  const allExpenses = useMemo(
-    () => getTransactionsByMonth(month),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [month, refreshKey]
-  );
+  const allExpenses = useMemo(() => {
+    if (filterMode === 'month' || !dateRange) {
+      return getTransactionsByMonth(month);
+    }
+    return getTransactionsByDateRange(dateRange.start, dateRange.end);
+  }, [month, filterMode, dateRange, refreshKey]);
 
   const filtered = useMemo(() => {
     let result = allExpenses;
@@ -69,26 +75,15 @@ export default function RiwayatPage() {
       {/* Header */}
       <h1 className="text-xl font-bold text-gray-900">Riwayat</h1>
 
-      {/* Month Navigator */}
-      <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-        <button
-          onClick={() => setMonth(prevMonth(month))}
-          className="w-9 h-9 rounded-full flex items-center justify-center active:bg-gray-200 transition-colors"
-          aria-label="Bulan sebelumnya"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <h2 className="text-base font-semibold text-gray-800">
-          {getMonthName(month)}
-        </h2>
-        <button
-          onClick={() => setMonth(nextMonth(month))}
-          className="w-9 h-9 rounded-full flex items-center justify-center active:bg-gray-200 transition-colors"
-          aria-label="Bulan berikutnya"
-        >
-          <ChevronRight className="w-5 h-5 text-gray-600" />
-        </button>
-      </div>
+      {/* Date Filter */}
+      <DateFilter
+        month={month}
+        onMonthChange={setMonth}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        filterMode={filterMode}
+        onFilterModeChange={setFilterMode}
+      />
 
       {/* Search & Filter */}
       <div className="space-y-2">
@@ -160,7 +155,8 @@ export default function RiwayatPage() {
                 {items.map((exp) => (
                   <div
                     key={exp.id}
-                    className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-100 active:bg-gray-50 transition-colors"
+                    onClick={() => setDetailTarget(exp)}
+                    className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-100 active:bg-gray-50 transition-colors cursor-pointer"
                   >
                     <div className="relative flex-shrink-0">
                       <div
@@ -203,7 +199,8 @@ export default function RiwayatPage() {
                         {exp.flow === 'in' ? '+' : '-'}{formatRupiah(exp.amount)}
                       </span>
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setEditTarget(exp);
                           setShowAddExpense(true);
                         }}
@@ -213,7 +210,10 @@ export default function RiwayatPage() {
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteTarget(exp.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTarget(exp.id);
+                        }}
                         className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 active:bg-red-50 active:text-red-500 transition-colors"
                         aria-label="Hapus"
                       >
@@ -247,6 +247,12 @@ export default function RiwayatPage() {
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      {/* Detail Popup */}
+      <DetailPopup
+        transaction={detailTarget}
+        onClose={() => setDetailTarget(null)}
       />
     </div>
   );

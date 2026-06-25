@@ -70,6 +70,10 @@ export function getExpensesByDate(date: string): Expense[] {
   return getExpenses().filter((e) => e.date === date);
 }
 
+export function getTransactionsByDateRange(start: string, end: string): Expense[] {
+  return getExpenses().filter((e) => e.date >= start && e.date <= end);
+}
+
 export function getExpensesByCategory(
   month: string
 ): Record<string, number> {

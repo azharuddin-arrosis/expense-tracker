@@ -1,32 +1,35 @@
 'use client';
 
-import { useMemo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useAppContext } from '@/lib/context';
-import { getExpensesByMonth, getExpensesByCategory } from '@/lib/storage';
-import { formatRupiah, getMonthName, prevMonth, nextMonth } from '@/lib/format';
+import { getExpensesByMonth, getExpensesByCategory, getTransactionsByDateRange } from '@/lib/storage';
+import { formatRupiah, getMonthName, getCurrentMonthString } from '@/lib/format';
 import { CATEGORIES, getCategoryColor, getCategoryName } from '@/lib/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryBar } from '@/components/CategoryBar';
+import { DateFilter } from '@/components/DateFilter';
 import { EmptyState } from '@/components/EmptyState';
 
 export default function StatistikPage() {
-  const { refreshKey, currentMonth, setCurrentMonth } = useAppContext();
+  const { refreshKey } = useAppContext();
+  const [month, setMonth] = useState(getCurrentMonthString);
+  const [filterMode, setFilterMode] = useState<'month' | 'week' | 'range'>('month');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
 
-  const expenses = useMemo(
-    () => getExpensesByMonth(currentMonth),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentMonth, refreshKey]
-  );
+  const expenses = useMemo(() => {
+    if (filterMode === 'month' || !dateRange) {
+      return getExpensesByMonth(month);
+    }
+    return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'out');
+  }, [month, filterMode, dateRange, refreshKey]);
 
   const categoryData = useMemo(
-    () => getExpensesByCategory(currentMonth),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentMonth, refreshKey]
+    () => getExpensesByCategory(month),
+    [month, refreshKey]
   );
 
   const totalMonth = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const avgPerDay = totalMonth > 0 ? totalMonth / new Date(parseInt(currentMonth.split('-')[0]), parseInt(currentMonth.split('-')[1]), 0).getDate() : 0;
+  const avgPerDay = totalMonth > 0 ? totalMonth / new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate() : 0;
   const transactionCount = expenses.length;
 
   // Build conic-gradient for pie chart
@@ -55,26 +58,15 @@ export default function StatistikPage() {
       {/* Header */}
       <h1 className="text-xl font-bold text-gray-900">Statistik</h1>
 
-      {/* Month Navigator */}
-      <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-        <button
-          onClick={() => setCurrentMonth(prevMonth(currentMonth))}
-          className="w-9 h-9 rounded-full flex items-center justify-center active:bg-gray-200 transition-colors"
-          aria-label="Bulan sebelumnya"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <h2 className="text-base font-semibold text-gray-800">
-          {getMonthName(currentMonth)}
-        </h2>
-        <button
-          onClick={() => setCurrentMonth(nextMonth(currentMonth))}
-          className="w-9 h-9 rounded-full flex items-center justify-center active:bg-gray-200 transition-colors"
-          aria-label="Bulan berikutnya"
-        >
-          <ChevronRight className="w-5 h-5 text-gray-600" />
-        </button>
-      </div>
+      {/* Date Filter */}
+      <DateFilter
+        month={month}
+        onMonthChange={setMonth}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        filterMode={filterMode}
+        onFilterModeChange={setFilterMode}
+      />
 
       {hasData ? (
         <>
@@ -158,9 +150,7 @@ export default function StatistikPage() {
       ) : (
         <EmptyState
           title="Belum ada data"
-          description={`Belum ada pengeluaran untuk ${getMonthName(
-            currentMonth
-          )}. Data statistik akan muncul setelah kamu mencatat pengeluaran.`}
+          description={`Belum ada pengeluaran untuk ${getMonthName(month)}. Data statistik akan muncul setelah kamu mencatat pengeluaran.`}
         />
       )}
     </div>

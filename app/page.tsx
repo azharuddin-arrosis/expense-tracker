@@ -2,8 +2,6 @@
 
 import { useMemo, useEffect, useState } from 'react';
 import {
-  ChevronLeft,
-  ChevronRight,
   TrendingUp,
   TrendingDown,
   Wallet,
@@ -15,6 +13,7 @@ import { useAppContext } from '@/lib/context';
 import {
   getExpensesByMonth,
   getIncomesByMonth,
+  getTransactionsByDateRange,
   getExpensesByCategory,
   getBudget,
   getExpensesWithSync,
@@ -23,19 +22,21 @@ import {
   formatRupiah,
   formatDate,
   getMonthName,
-  prevMonth,
-  nextMonth,
   getTodayString,
 } from '@/lib/format';
 import { CategoryBar } from '@/components/CategoryBar';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { DateFilter } from '@/components/DateFilter';
 import { EXPENSE_CATEGORIES, getCategoryColor, getCategoryName } from '@/lib/types';
 import { EmptyState } from '@/components/EmptyState';
 import { getStoredEmail } from '@/lib/cloud';
 
 export default function DashboardPage() {
-  const { refreshKey, currentMonth, setCurrentMonth } = useAppContext();
+  const { refreshKey } = useAppContext();
   const [cloudStatus, setCloudStatus] = useState<'checking' | 'connected' | 'local'>('checking');
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [filterMode, setFilterMode] = useState<'month' | 'week' | 'range'>('month');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
 
   const email = getStoredEmail();
 
@@ -64,28 +65,30 @@ export default function DashboardPage() {
     };
   }, [email, refreshKey]);
 
-  const expenses = useMemo(
-    () => getExpensesByMonth(currentMonth),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentMonth, refreshKey]
-  );
+  const expenses = useMemo(() => {
+    if (filterMode === 'month' || !dateRange) {
+      return getExpensesByMonth(month);
+    }
+    return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'out');
+  }, [month, filterMode, dateRange, refreshKey]);
 
-  const incomes = useMemo(
-    () => getIncomesByMonth(currentMonth),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentMonth, refreshKey]
-  );
+  const incomes = useMemo(() => {
+    if (filterMode === 'month' || !dateRange) {
+      return getIncomesByMonth(month);
+    }
+    return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'in');
+  }, [month, filterMode, dateRange, refreshKey]);
 
   const categoryData = useMemo(
-    () => getExpensesByCategory(currentMonth),
+    () => getExpensesByCategory(month),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentMonth, refreshKey]
+    [month, refreshKey]
   );
 
   const budget = useMemo(
-    () => getBudget(currentMonth),
+    () => getBudget(month),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentMonth, refreshKey]
+    [month, refreshKey]
   );
 
   const todayStr = getTodayString();
@@ -174,26 +177,15 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Month Navigator */}
-      <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-        <button
-          onClick={() => setCurrentMonth(prevMonth(currentMonth))}
-          className="w-9 h-9 rounded-full flex items-center justify-center active:bg-gray-200 transition-colors"
-          aria-label="Bulan sebelumnya"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <h2 className="text-base font-semibold text-gray-800">
-          {getMonthName(currentMonth)}
-        </h2>
-        <button
-          onClick={() => setCurrentMonth(nextMonth(currentMonth))}
-          className="w-9 h-9 rounded-full flex items-center justify-center active:bg-gray-200 transition-colors"
-          aria-label="Bulan berikutnya"
-        >
-          <ChevronRight className="w-5 h-5 text-gray-600" />
-        </button>
-      </div>
+      {/* Date Filter */}
+      <DateFilter
+        month={month}
+        onMonthChange={setMonth}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        filterMode={filterMode}
+        onFilterModeChange={setFilterMode}
+      />
 
       {/* Summary Cards: Income | Expense | Balance */}
       <div className="grid grid-cols-3 gap-2">
@@ -483,9 +475,7 @@ export default function DashboardPage() {
       {expenses.length === 0 && incomes.length === 0 && (
         <EmptyState
           title="Belum ada transaksi"
-          description={`Belum ada catatan untuk ${getMonthName(
-            currentMonth
-          )}. Tambahkan transaksi pertama kamu!`}
+          description={`Belum ada catatan untuk ${getMonthName(month)}. Tambahkan transaksi pertama kamu!`}
         />
       )}
     </div>
