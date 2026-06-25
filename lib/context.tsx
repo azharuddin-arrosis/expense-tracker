@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { getCurrentMonthString } from './format';
+import { Expense } from './types';
 
 interface AppContextType {
   refreshKey: number;
@@ -14,6 +15,8 @@ interface AppContextType {
   setShowFlowSelector: (show: boolean) => void;
   currentMonth: string;
   setCurrentMonth: (month: string) => void;
+  editTarget: Expense | null;
+  setEditTarget: (target: Expense | null) => void;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -27,6 +30,8 @@ const AppContext = createContext<AppContextType>({
   setShowFlowSelector: () => {},
   currentMonth: '',
   setCurrentMonth: () => {},
+  editTarget: null,
+  setEditTarget: () => {},
 });
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -35,6 +40,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [addFlow, setAddFlow] = useState<'in' | 'out'>('out');
   const [showFlowSelector, setShowFlowSelector] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(getCurrentMonthString);
+  const [editTarget, setEditTarget] = useState<Expense | null>(null);
 
   const refreshData = useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -53,6 +59,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setShowFlowSelector,
         currentMonth,
         setCurrentMonth,
+        editTarget,
+        setEditTarget,
       }}
     >
       {children}

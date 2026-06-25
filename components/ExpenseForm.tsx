@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
   getCategoryColor,
 } from '@/lib/types';
-import { addExpenseAndSync } from '@/lib/storage';
+import { addExpenseAndSync, updateExpenseAndSync } from '@/lib/storage';
 import { useAppContext } from '@/lib/context';
 import { getTodayString } from '@/lib/format';
 import { getStoredEmail } from '@/lib/cloud';
@@ -19,8 +19,9 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
-  const { showAddExpense, setShowAddExpense, addFlow, refreshData } = useAppContext();
-  const [flow, setFlow] = useState<'in' | 'out'>(addFlow);
+  const { showAddExpense, setShowAddExpense, editTarget, setEditTarget, refreshData } = useAppContext();
+  const isEditing = editTarget !== null;
+  const [flow, setFlow] = useState<'in' | 'out'>(editTarget?.flow || 'out');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
   const [date, setDate] = useState(getTodayString());
@@ -29,6 +30,16 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = flow === 'in' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+
+  useEffect(() => {
+    if (editTarget) {
+      setFlow(editTarget.flow);
+      setAmount(formatRupiahInput(editTarget.amount));
+      setCategory(editTarget.category);
+      setDate(editTarget.date);
+      setDescription(editTarget.description);
+    }
+  }, [editTarget]);
 
   const resetForm = (newFlow?: 'in' | 'out') => {
     setAmount('');
@@ -41,11 +52,17 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
 
   const handleClose = () => {
     setShowAddExpense(false);
+    setEditTarget(null);
     resetForm();
   };
 
   const handleTabChange = (newFlow: 'in' | 'out') => {
+    if (isEditing) return;
     resetForm(newFlow);
+  };
+
+  const formatRupiahInput = (num: number): string => {
+    return new Intl.NumberFormat('id-ID').format(num);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,16 +88,20 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
 
     try {
       const email = getStoredEmail();
-      addExpenseAndSync(
-        {
-          amount: amountNum,
-          category,
-          description: description.trim(),
-          date,
-          flow,
-        },
-        email
-      );
+
+      if (isEditing && editTarget) {
+        updateExpenseAndSync(
+          editTarget.id,
+          { amount: amountNum, category, description: description.trim(), date, flow },
+          email
+        );
+      } else {
+        addExpenseAndSync(
+          { amount: amountNum, category, description: description.trim(), date, flow },
+          email
+        );
+      }
+
       refreshData();
       handleClose();
       onSuccess();
@@ -101,19 +122,15 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
     setAmount(formatRupiahInput(num));
   };
 
-  const formatRupiahInput = (num: number): string => {
-    return new Intl.NumberFormat('id-ID').format(num);
-  };
-
   return (
     <BottomSheet
       open={showAddExpense}
       onClose={handleClose}
-      title={flow === 'in' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran'}
+      title={isEditing ? 'Edit Transaksi' : flow === 'in' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran'}
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Flow Toggle */}
-        <div className="flex bg-gray-100 rounded-xl p-1">
+        <div className={`flex bg-gray-100 rounded-xl p-1 ${isEditing ? 'opacity-60 pointer-events-none' : ''}`}>
           <button
             type="button"
             onClick={() => handleTabChange('out')}
@@ -258,7 +275,7 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
           ) : (
             <>
               <Check className="w-5 h-5" />
-              {flow === 'in' ? 'Simpan Pemasukan' : 'Simpan'}
+              {isEditing ? 'Simpan Perubahan' : flow === 'in' ? 'Simpan Pemasukan' : 'Simpan'}
             </>
           )}
         </button>

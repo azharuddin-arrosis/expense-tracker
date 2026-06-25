@@ -43,6 +43,17 @@ export function deleteExpense(id: string): void {
   saveExpenses(expenses.filter((e) => e.id !== id));
 }
 
+export function updateExpense(
+  id: string,
+  updates: Partial<Omit<Expense, 'id' | 'createdAt'>>
+): void {
+  const expenses = getExpenses();
+  const idx = expenses.findIndex((e) => e.id === id);
+  if (idx === -1) return;
+  expenses[idx] = { ...expenses[idx], ...updates };
+  saveExpenses(expenses);
+}
+
 export function getTransactionsByMonth(month: string): Expense[] {
   return getExpenses().filter((e) => e.date.startsWith(month));
 }
@@ -232,6 +243,21 @@ export function deleteExpenseAndSync(
   email: string | null
 ): void {
   deleteExpense(id);
+
+  if (email) {
+    syncExpensesToCloud(email).catch(() => {});
+  }
+}
+
+/**
+ * Update expense locally AND sync to cloud in background.
+ */
+export function updateExpenseAndSync(
+  id: string,
+  updates: Partial<Omit<Expense, 'id' | 'createdAt'>>,
+  email: string | null
+): void {
+  updateExpense(id, updates);
 
   if (email) {
     syncExpensesToCloud(email).catch(() => {});

@@ -2,15 +2,19 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AppProvider } from '@/lib/context';
 import { AuthGuard } from '@/components/AuthGuard';
+import { PwaRegister } from '@/components/PwaRegister';
 
 export const metadata: Metadata = {
   title: 'Finance Keluarga',
-  description: 'Aplikasi pencatatan pengeluaran bulanan keluarga',
-  // manifest: '/manifest.json', // add manifest.json with icons for PWA support
+  description: 'Aplikasi pencatatan pemasukan dan pengeluaran bulanan keluarga',
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Finance Keluarga',
+  },
+  icons: {
+    apple: '/apple-touch-icon.png',
   },
 };
 
@@ -33,6 +37,7 @@ export default function RootLayout({
       <body className="h-full bg-gray-50">
         <AppProvider>
           <AuthGuard>{children}</AuthGuard>
+          <PwaRegister />
         </AppProvider>
       </body>
     </html>

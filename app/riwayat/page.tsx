@@ -1,25 +1,25 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Trash2, Pencil, ChevronLeft, ChevronRight, TrendingDown, TrendingUp } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
-import { getExpensesByMonth, deleteExpenseAndSync } from '@/lib/storage';
+import { getTransactionsByMonth, deleteExpenseAndSync } from '@/lib/storage';
 import { formatRupiah, formatDate, getMonthName, prevMonth, nextMonth, getCurrentMonthString } from '@/lib/format';
-import { CATEGORIES, getCategoryColor, getCategoryName } from '@/lib/types';
+import { CATEGORIES, getCategoryColor, getCategoryName, INCOME_CATEGORIES } from '@/lib/types';
 import { getStoredEmail } from '@/lib/cloud';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { EmptyState } from '@/components/EmptyState';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function RiwayatPage() {
-  const { refreshKey, refreshData } = useAppContext();
+  const { refreshKey, refreshData, setShowAddExpense, setEditTarget } = useAppContext();
   const [month, setMonth] = useState(getCurrentMonthString);
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const allExpenses = useMemo(
-    () => getExpensesByMonth(month),
+    () => getTransactionsByMonth(month),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [month, refreshKey]
   );
@@ -162,17 +162,31 @@ export default function RiwayatPage() {
                     key={exp.id}
                     className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-100 active:bg-gray-50 transition-colors"
                   >
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{
-                        backgroundColor: getCategoryColor(exp.category) + '20',
-                      }}
-                    >
-                      <CategoryIcon
-                        categoryId={exp.category}
-                        className="w-4 h-4"
-                        style={{ color: getCategoryColor(exp.category) }}
-                      />
+                    <div className="relative flex-shrink-0">
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center"
+                        style={{
+                          backgroundColor: exp.flow === 'in'
+                            ? '#F59E0B20'
+                            : getCategoryColor(exp.category) + '20',
+                        }}
+                      >
+                        <CategoryIcon
+                          categoryId={exp.category}
+                          className="w-4 h-4"
+                          style={{
+                            color: exp.flow === 'in' ? '#F59E0B' : getCategoryColor(exp.category),
+                          }}
+                        />
+                      </div>
+                      <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${
+                        exp.flow === 'in' ? 'bg-amber-500' : 'bg-red-400'
+                      }`}>
+                        {exp.flow === 'in'
+                          ? <TrendingUp className="w-2.5 h-2.5 text-white" />
+                          : <TrendingDown className="w-2.5 h-2.5 text-white" />
+                        }
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
@@ -182,10 +196,22 @@ export default function RiwayatPage() {
                         {getCategoryName(exp.category)}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-sm font-semibold text-gray-900 tabular-nums">
-                        {formatRupiah(exp.amount)}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <span className={`text-sm font-semibold tabular-nums ${
+                        exp.flow === 'in' ? 'text-amber-600' : 'text-gray-900'
+                      }`}>
+                        {exp.flow === 'in' ? '+' : '-'}{formatRupiah(exp.amount)}
                       </span>
+                      <button
+                        onClick={() => {
+                          setEditTarget(exp);
+                          setShowAddExpense(true);
+                        }}
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 active:bg-blue-50 active:text-blue-500 transition-colors"
+                        aria-label="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => setDeleteTarget(exp.id)}
                         className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 active:bg-red-50 active:text-red-500 transition-colors"
@@ -202,11 +228,11 @@ export default function RiwayatPage() {
         </div>
       ) : (
         <EmptyState
-          title={allExpenses.length === 0 ? 'Belum ada pengeluaran' : 'Tidak ditemukan'}
+          title={allExpenses.length === 0 ? 'Belum ada transaksi' : 'Tidak ditemukan'}
           description={
             allExpenses.length === 0
-              ? `Belum ada catatan pengeluaran untuk ${getMonthName(month)}.`
-              : 'Tidak ada pengeluaran yang cocok dengan pencarian atau filter.'
+              ? `Belum ada catatan untuk ${getMonthName(month)}.`
+              : 'Tidak ada transaksi yang cocok dengan pencarian atau filter.'
           }
         />
       )}
@@ -214,7 +240,7 @@ export default function RiwayatPage() {
       {/* Delete Confirmation */}
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Hapus Pengeluaran?"
+        title="Hapus Transaksi?"
         message="Data yang sudah dihapus tidak dapat dikembalikan."
         confirmLabel="Ya, Hapus"
         cancelLabel="Batal"
