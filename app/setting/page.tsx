@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Target,
   Download,
@@ -8,13 +8,26 @@ import {
   Check,
   FileDown,
   AlertTriangle,
+  Mail,
+  LogOut,
+  Cloud,
+  CloudOff,
+  RefreshCw,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/lib/context';
-import { getBudget, saveBudget, getExpenses } from '@/lib/storage';
+import {
+  getBudget,
+  saveBudgetAndSync,
+  getExpenses,
+  syncAllToCloud,
+} from '@/lib/storage';
 import { formatRupiah, getMonthName } from '@/lib/format';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { getStoredEmail, clearStoredEmail } from '@/lib/cloud';
 
 export default function SettingPage() {
+  const router = useRouter();
   const { refreshKey, currentMonth, refreshData } = useAppContext();
   const budget = useMemo(
     () => getBudget(currentMonth),
@@ -28,6 +41,19 @@ export default function SettingPage() {
   const [saved, setSaved] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [exportText, setExportText] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const email = getStoredEmail();
+
+  // Reset sync status after success/error
+  useEffect(() => {
+    if (syncStatus === 'success' || syncStatus === 'error') {
+      const timer = setTimeout(() => setSyncStatus('idle'), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [syncStatus]);
 
   function formatTargetInput(num: number): string {
     return new Intl.NumberFormat('id-ID').format(num);
@@ -38,7 +64,7 @@ export default function SettingPage() {
     const num = parseInt(raw);
     if (!num || num <= 0) return;
 
-    saveBudget({ month: currentMonth, target: num });
+    saveBudgetAndSync({ month: currentMonth, target: num }, email);
     refreshData();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -98,12 +124,32 @@ export default function SettingPage() {
     setExportText(text);
     setShowExport(true);
 
-    // Copy to clipboard
     try {
       await navigator.clipboard.writeText(text);
     } catch {
       // Fallback: user can manually copy
     }
+  };
+
+  // ── Sync ──
+  const handleSync = async () => {
+    if (!email) return;
+    setSyncing(true);
+    setSyncStatus('syncing');
+    try {
+      await syncAllToCloud(email);
+      setSyncStatus('success');
+    } catch {
+      setSyncStatus('error');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // ── Logout ──
+  const handleLogout = () => {
+    clearStoredEmail();
+    router.replace('/login');
   };
 
   const handleClearAll = () => {
@@ -118,6 +164,95 @@ export default function SettingPage() {
     <div className="px-4 pt-4 pb-6 space-y-4">
       {/* Header */}
       <h1 className="text-xl font-bold text-gray-900">Pengaturan</h1>
+
+      {/* ── Akun & Cloud ── */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Mail className="w-5 h-5 text-emerald-600" />
+          <h2 className="text-base font-semibold text-gray-800">
+            Akun & Cloud
+          </h2>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+          {/* Email */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-600">Email</span>
+            </div>
+            <span className="text-sm font-medium text-gray-900">
+              {email ?? '-'}
+            </span>
+          </div>
+
+          <div className="border-t border-gray-200/60" />
+
+          {/* Cloud Status */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {email ? (
+                <Cloud className="w-4 h-4 text-emerald-500" />
+              ) : (
+                <CloudOff className="w-4 h-4 text-gray-400" />
+              )}
+              <span className="text-sm text-gray-600">Status</span>
+            </div>
+            <span
+              className={`text-sm font-medium flex items-center gap-1 ${
+                email ? 'text-emerald-600' : 'text-gray-500'
+              }`}
+            >
+              {email ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Tersimpan di Cloud
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-gray-400" />
+                  Hanya Lokal
+                </>
+              )}
+            </span>
+          </div>
+
+          <div className="border-t border-gray-200/60" />
+
+          {/* Sync Button */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSync}
+              disabled={syncing || !email}
+              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`}
+              />
+              {syncing
+                ? 'Menyinkronkan...'
+                : syncStatus === 'success'
+                  ? 'Tersinkronkan!'
+                  : 'Sync Sekarang'}
+            </button>
+
+            <button
+              onClick={() => setShowLogoutConfirm(true)}
+              disabled={!email}
+              className="flex items-center justify-center gap-2 h-11 px-4 rounded-xl border-2 border-red-200 text-red-600 font-semibold text-sm active:bg-red-100 disabled:opacity-50 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Ganti Email
+            </button>
+          </div>
+
+          {syncStatus === 'error' && (
+            <p className="text-xs text-red-500">
+              Gagal sinkronisasi. Periksa koneksi internet.
+            </p>
+          )}
+        </div>
+      </section>
 
       {/* Budget Target */}
       <section className="space-y-3">
@@ -182,7 +317,7 @@ export default function SettingPage() {
         {/* Info Card */}
         <div className="bg-emerald-50 rounded-xl px-4 py-3">
           <p className="text-xs text-emerald-800 leading-relaxed">
-            💡 Target budget membantumu mengontrol pengeluaran bulanan. Dashboard
+            Target budget membantumu mengontrol pengeluaran bulanan. Dashboard
             akan menampilkan sisa budget dan peringatan jika pengeluaran mendekati
             atau melebihi target.
           </p>
@@ -277,6 +412,18 @@ export default function SettingPage() {
           </button>
         </div>
       </section>
+
+      {/* Logout Confirmation */}
+      <ConfirmDialog
+        open={showLogoutConfirm}
+        title="Ganti Email?"
+        message="Kamu akan logout dari akun saat ini. Data lokal tidak akan dihapus."
+        confirmLabel="Ya, Ganti Email"
+        cancelLabel="Batal"
+        variant="danger"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </div>
   );
 }

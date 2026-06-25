@@ -3,9 +3,10 @@
 import { useMemo, useState } from 'react';
 import { Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
-import { getExpensesByMonth, deleteExpense } from '@/lib/storage';
+import { getExpensesByMonth, deleteExpenseAndSync } from '@/lib/storage';
 import { formatRupiah, formatDate, getMonthName, prevMonth, nextMonth, getCurrentMonthString } from '@/lib/format';
 import { CATEGORIES, getCategoryColor, getCategoryName } from '@/lib/types';
+import { getStoredEmail } from '@/lib/cloud';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { EmptyState } from '@/components/EmptyState';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -43,7 +44,8 @@ export default function RiwayatPage() {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    deleteExpense(deleteTarget);
+    const email = getStoredEmail();
+    deleteExpenseAndSync(deleteTarget, email);
     refreshData();
     setDeleteTarget(null);
   };

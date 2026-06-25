@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AppProvider } from '@/lib/context';
-import { BottomNav } from '@/components/BottomNav';
-import { ExpenseFormGlobal } from '@/components/ExpenseFormGlobal';
+import { AuthGuard } from '@/components/AuthGuard';
 
 export const metadata: Metadata = {
   title: 'Finance Keluarga',
@@ -33,11 +32,7 @@ export default function RootLayout({
     <html lang="id" className="h-full">
       <body className="h-full bg-gray-50">
         <AppProvider>
-          <div className="min-h-screen max-w-[480px] mx-auto bg-white shadow-sm relative">
-            <main className="pb-20 min-h-screen">{children}</main>
-            <BottomNav />
-            <ExpenseFormGlobal />
-          </div>
+          <AuthGuard>{children}</AuthGuard>
         </AppProvider>
       </body>
     </html>

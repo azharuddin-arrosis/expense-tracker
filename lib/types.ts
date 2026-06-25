@@ -5,6 +5,7 @@ export interface Expense {
   description: string;
   date: string; // YYYY-MM-DD
   createdAt: string;
+  flow: 'in' | 'out';
 }
 
 export interface Budget {
@@ -18,7 +19,7 @@ export interface Category {
   color: string;
 }
 
-export const CATEGORIES: Category[] = [
+export const EXPENSE_CATEGORIES: Category[] = [
   { id: 'makanan', name: 'Makanan', color: '#10B981' },
   { id: 'transport', name: 'Transport', color: '#3B82F6' },
   { id: 'belanja', name: 'Belanja', color: '#F59E0B' },
@@ -28,10 +29,24 @@ export const CATEGORIES: Category[] = [
   { id: 'lainnya', name: 'Lainnya', color: '#6B7280' },
 ];
 
+export const INCOME_CATEGORIES: Category[] = [
+  { id: 'gaji', name: 'Gaji', color: '#10B981' },
+  { id: 'freelance', name: 'Freelance', color: '#F59E0B' },
+  { id: 'bisnis', name: 'Bisnis', color: '#8B5CF6' },
+  { id: 'investasi', name: 'Investasi', color: '#3B82F6' },
+  { id: 'hadiah', name: 'Hadiah', color: '#EC4899' },
+  { id: 'lainnya_in', name: 'Lainnya', color: '#6B7280' },
+];
+
+// Backward-compat alias
+export const CATEGORIES = EXPENSE_CATEGORIES;
+
+const ALL_CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
+
 export function getCategoryColor(id: string): string {
-  return CATEGORIES.find((c) => c.id === id)?.color ?? '#6B7280';
+  return ALL_CATEGORIES.find((c) => c.id === id)?.color ?? '#6B7280';
 }
 
 export function getCategoryName(id: string): string {
-  return CATEGORIES.find((c) => c.id === id)?.name ?? id;
+  return ALL_CATEGORIES.find((c) => c.id === id)?.name ?? id;
 }
