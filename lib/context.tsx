@@ -9,6 +9,8 @@ interface AppContextType {
   refreshData: () => void;
   showAddExpense: boolean;
   setShowAddExpense: (show: boolean) => void;
+  showAddTarget: boolean;
+  setShowAddTarget: (show: boolean) => void;
   addFlow: 'in' | 'out';
   setAddFlow: (flow: 'in' | 'out') => void;
   showFlowSelector: boolean;
@@ -24,6 +26,8 @@ const AppContext = createContext<AppContextType>({
   refreshData: () => {},
   showAddExpense: false,
   setShowAddExpense: () => {},
+  showAddTarget: false,
+  setShowAddTarget: () => {},
   addFlow: 'out',
   setAddFlow: () => {},
   showFlowSelector: false,
@@ -37,6 +41,7 @@ const AppContext = createContext<AppContextType>({
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAddExpense, setShowAddExpense] = useState(false);
+  const [showAddTarget, setShowAddTarget] = useState(false);
   const [addFlow, setAddFlow] = useState<'in' | 'out'>('out');
   const [showFlowSelector, setShowFlowSelector] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(getCurrentMonthString);
@@ -53,6 +58,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         refreshData,
         showAddExpense,
         setShowAddExpense,
+        showAddTarget,
+        setShowAddTarget,
         addFlow,
         setAddFlow,
         showFlowSelector,

@@ -90,3 +90,28 @@ export const DEFAULT_SAVING_TARGETS: SavingTarget[] = [
   { id: 'saving', name: 'Tabungan', target: 0, category: 'tabungan', month: 'all', color: '#10B981', icon: 'PiggyBank' },
   { id: 'liburan', name: 'Liburan', target: 0, category: 'liburan', month: 'all', color: '#06B6D4', icon: 'Plane' },
 ];
+
+export interface RecurringTransaction {
+  id: string;
+  userEmail: string;
+  name: string;           // "Gaji Bulanan", "Sewa Kost", "Netflix"
+  amount: number;
+  category: string;       // pakai kategori existing
+  flow: 'in' | 'out';     // pemasukan/pengeluaran
+  description?: string;
+  
+  // Schedule
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  dayOfMonth?: number;    // untuk monthly: 1-28 (28 = akhir bulan)
+  dayOfWeek?: number;     // untuk weekly: 0-6 (0=Minggu)
+  startDate: string;      // YYYY-MM-DD
+  endDate?: string;       // optional, null = selamanya
+  
+  // Status
+  isActive: boolean;
+  lastGenerated?: string; // YYYY-MM-DD, kapan terakhir generate
+  nextDueDate: string;    // YYYY-MM-DD, kapan berikutnya
+  
+  createdAt: string;
+  updatedAt: string;
+}

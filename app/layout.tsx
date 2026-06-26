@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AppProvider } from '@/lib/context';
 import { AuthGuard } from '@/components/AuthGuard';
+import { TargetForm } from '@/components/TargetForm';
 import { PwaRegister } from '@/components/PwaRegister';
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className="h-full bg-gray-50">
         <AppProvider>
           <AuthGuard>{children}</AuthGuard>
+          <TargetForm />
           <PwaRegister />
         </AppProvider>
       </body>

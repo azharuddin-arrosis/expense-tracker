@@ -5,7 +5,7 @@ const API_BASE = '/api';
 export interface CloudData {
   transactions: Expense[];
   budgets: Budget[];
-  recurring: RecurringTransaction[];
+  recurring?: RecurringTransaction[];
 }
 
 /**

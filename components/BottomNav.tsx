@@ -9,6 +9,7 @@ import {
   Settings,
   TrendingDown,
   TrendingUp,
+  Crosshair,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { BottomSheet } from './BottomSheet';
@@ -24,12 +25,17 @@ const navItems = [
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { setShowAddExpense, setAddFlow, showFlowSelector, setShowFlowSelector } = useAppContext();
+  const { setShowAddExpense, setAddFlow, showFlowSelector, setShowFlowSelector, setShowAddTarget } = useAppContext();
 
   const openForm = (flow: 'in' | 'out') => {
     setAddFlow(flow);
     setShowFlowSelector(false);
     setShowAddExpense(true);
+  };
+
+  const openTargetForm = () => {
+    setShowFlowSelector(false);
+    setShowAddTarget(true);
   };
 
   return (
@@ -110,6 +116,23 @@ export function BottomNav() {
               </p>
               <p className="text-sm text-amber-600">
                 Gaji, freelance, bisnis, dll
+              </p>
+            </div>
+          </button>
+
+          <button
+            onClick={openTargetForm}
+            className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-violet-100 bg-violet-50 active:bg-violet-100 transition-colors"
+          >
+            <div className="w-14 h-14 rounded-full bg-violet-500 flex items-center justify-center flex-shrink-0">
+              <Crosshair className="w-7 h-7 text-white" />
+            </div>
+            <div className="text-left flex-1">
+              <p className="text-base font-semibold text-violet-900">
+                Atur Target
+              </p>
+              <p className="text-sm text-violet-600">
+                Budget, tabungan, liburan
               </p>
             </div>
           </button>

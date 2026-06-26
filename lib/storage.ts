@@ -1,4 +1,4 @@
-import { Expense, Budget, RecurringTransaction } from './types';
+import { Expense, Budget, RecurringTransaction, SavingTarget, DEFAULT_SAVING_TARGETS, MonthlySummary } from './types';
 import { getStoredEmail } from './cloud';
 
 const EXPENSES_PREFIX = 'expense-tracker-expenses-v2:';
@@ -103,7 +103,8 @@ export function getExpensesByCategory(
 export function getBudget(month: string): Budget | null {
   if (!isBrowser()) return null;
   try {
-    const data = localStorage.getItem(BUDGET_KEY);
+    const key = getEmailKey(BUDGET_PREFIX);
+    const data = localStorage.getItem(key);
     if (!data) return null;
     const all: Budget[] = JSON.parse(data);
     return all.find((b) => b.month === month) ?? null;
@@ -114,7 +115,8 @@ export function getBudget(month: string): Budget | null {
 
 export function saveBudget(budget: Budget): void {
   if (!isBrowser()) return;
-  const data = localStorage.getItem(BUDGET_KEY);
+  const key = getEmailKey(BUDGET_PREFIX);
+  const data = localStorage.getItem(key);
   const all: Budget[] = data ? JSON.parse(data) : [];
   const idx = all.findIndex((b) => b.month === budget.month);
   if (idx >= 0) {
@@ -122,7 +124,7 @@ export function saveBudget(budget: Budget): void {
   } else {
     all.push(budget);
   }
-  localStorage.setItem(BUDGET_KEY, JSON.stringify(all));
+  localStorage.setItem(key, JSON.stringify(all));
 }
 
 export function getAllMonths(): string[] {
@@ -314,7 +316,8 @@ export async function syncBudgetToCloud(email: string, month: string): Promise<v
 export async function syncAllToCloud(email: string): Promise<void> {
   const { syncAllToCloud: syncAll } = await import('./cloud');
   const transactions = getExpenses();
-  const data = localStorage.getItem(BUDGET_KEY);
+  const key = getEmailKey(BUDGET_PREFIX);
+  const data = localStorage.getItem(key);
   const budgets: Budget[] = data ? JSON.parse(data) : [];
   try {
     await syncAll(email, { transactions, budgets });
@@ -642,6 +645,4 @@ export function computeMonthlySummary(
       })),
     },
   };
-}
-
 }
