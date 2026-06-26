@@ -25,6 +25,7 @@ import {
   Building2,
   TrendingUp,
   Gift,
+  HandCoins,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
@@ -44,6 +45,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string; style?: 
   perawatan: Sparkles,
   sosial: HeartHandshake,
   hewan: PawPrint,
+  tarik_tunai: HandCoins,
   dapur: CookingPot,
   olahraga: Dumbbell,
   hiburan: Gamepad2,

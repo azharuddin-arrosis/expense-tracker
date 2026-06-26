@@ -37,6 +37,7 @@ export const EXPENSE_CATEGORIES: Category[] = [
   { id: 'perawatan', name: 'Perawatan', color: '#C084FC' },
   { id: 'sosial', name: 'Sosial', color: '#F472B6' },
   { id: 'hewan', name: 'Hewan', color: '#FB923C' },
+  { id: 'tarik_tunai', name: 'Tarik Tunai', color: '#78716C' },
   { id: 'dapur', name: 'Dapur', color: '#A3E635' },
   { id: 'olahraga', name: 'Olahraga', color: '#22D3EE' },
   { id: 'hiburan', name: 'Hiburan', color: '#8B5CF6' },
