@@ -13,11 +13,15 @@ import {
   User,
   Users,
   Heart,
+  List,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
-import { computeMonthlySummary, getBudget } from '@/lib/storage';
+import { computeMonthlySummary, getBudget, getExpensesByDate } from '@/lib/storage';
 import { formatRupiah, getMonthName } from '@/lib/format';
 import { getStoredEmail } from '@/lib/cloud';
+import { Expense, getCategoryName, getCategoryColor } from '@/lib/types';
+import { CategoryIcon } from '@/components/CategoryIcon';
+import { DetailPopup } from '@/components/DetailPopup';
 
 export default function RingkasanPage() {
   const { refreshKey } = useAppContext();
@@ -27,11 +31,17 @@ export default function RingkasanPage() {
   const [month, setMonth] = useState(
     today.toISOString().slice(0, 7)
   );
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedTx, setSelectedTx] = useState<Expense | null>(null);
 
   const summary = useMemo(
     () => computeMonthlySummary(month, email),
     [month, email, refreshKey]
   );
+
+  const dayTransactions = selectedDay
+    ? getExpensesByDate(selectedDay)
+    : [];
 
   const prevMonth = () => {
     const [y, m] = month.split('-').map(Number);
@@ -153,15 +163,15 @@ export default function RingkasanPage() {
             const data = summary.byAccount[key];
             return (
               <div key={key} className="flex items-center gap-3 bg-white rounded-lg px-3 py-2.5">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: color + '20' }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color + '20' }}>
                   <Icon className="w-4 h-4" style={{ color }} />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-gray-700">{label}</p>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-[10px] text-amber-600">+{formatRupiah(data.income)}</span>
-                    <span className="text-[10px] text-red-500">-{formatRupiah(data.expense)}</span>
-                    <span className={`text-[10px] font-medium ${data.balance >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                  <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                    <span className="text-[10px] text-amber-600 whitespace-nowrap tabular-nums">+{formatRupiah(data.income)}</span>
+                    <span className="text-[10px] text-red-500 whitespace-nowrap tabular-nums">-{formatRupiah(data.expense)}</span>
+                    <span className={`text-[10px] font-medium whitespace-nowrap tabular-nums ${data.balance >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                       ={formatRupiah(data.balance)}
                     </span>
                   </div>
@@ -231,30 +241,78 @@ export default function RingkasanPage() {
                 const dayName = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'][day.getDay()];
                 const dateStr = `${day.getDate()}/${day.getMonth() + 1}`;
                 const maxInOut = Math.max(data.income, data.expense, 1);
+                const isSelected = selectedDay === date;
+                const hasTransactions = dayTransactions.length > 0 && selectedDay === date;
                 return (
-                  <div key={date} className="flex items-center gap-2 text-xs">
-                    <span className="w-12 text-gray-500 flex-shrink-0">{dayName} {dateStr}</span>
-                    <div className="flex-1 flex items-center gap-0.5 h-6">
-                      {data.income > 0 && (
-                        <div
-                          className="h-full rounded-sm bg-amber-400"
-                          style={{ width: `${(data.income / maxInOut) * 40}%` }}
-                          title={`Pemasukan: ${formatRupiah(data.income)}`}
-                        />
-                      )}
-                      {data.expense > 0 && (
-                        <div
-                          className="h-full rounded-sm bg-red-400"
-                          style={{ width: `${(data.expense / maxInOut) * 40}%` }}
-                          title={`Pengeluaran: ${formatRupiah(data.expense)}`}
-                        />
-                      )}
-                    </div>
-                    <span className={`w-16 text-right tabular-nums font-medium ${
-                      data.balance >= 0 ? 'text-emerald-600' : 'text-red-500'
-                    }`}>
-                      {formatRupiah(data.balance)}
-                    </span>
+                  <div key={date}>
+                    <button
+                      onClick={() => setSelectedDay(selectedDay === date ? null : date)}
+                      className={`w-full flex items-center gap-2 text-xs py-1.5 px-2 -mx-2 rounded-lg transition-colors ${
+                        isSelected ? 'bg-emerald-50' : 'active:bg-gray-100'
+                      }`}
+                    >
+                      <span className="w-14 text-left text-gray-500 flex-shrink-0">{dayName} {dateStr}</span>
+                      <div className="flex-1 flex items-center gap-0.5 h-5">
+                        {data.income > 0 && (
+                          <div
+                            className="h-full rounded-sm bg-amber-400 min-w-[2px]"
+                            style={{ width: `${((data.income + data.expense) > 0 ? (data.income / (data.income + data.expense)) * 100 : 0)}%` }}
+                          />
+                        )}
+                        {data.expense > 0 && (
+                          <div
+                            className="h-full rounded-sm bg-red-400 min-w-[2px]"
+                            style={{ width: `${((data.income + data.expense) > 0 ? (data.expense / (data.income + data.expense)) * 100 : 0)}%` }}
+                          />
+                        )}
+                        {data.income === 0 && data.expense === 0 && (
+                          <div className="h-full flex-1" />
+                        )}
+                      </div>
+                      <span className={`w-20 text-right tabular-nums font-medium ${
+                        data.balance >= 0 ? 'text-emerald-600' : 'text-red-500'
+                      }`}>
+                        {formatRupiah(data.balance)}
+                      </span>
+                    </button>
+
+                    {/* Transaction list for selected day */}
+                    {isSelected && hasTransactions && (
+                      <div className="mt-1 space-y-0.5 ml-14 border-l-2 border-emerald-100 pl-3">
+                        {dayTransactions.map((tx) => (
+                          <button
+                            key={tx.id}
+                            onClick={(e) => { e.stopPropagation(); setSelectedTx(tx); }}
+                            className="w-full flex items-center gap-2 py-1.5 px-2 rounded-lg active:bg-gray-100 text-left"
+                          >
+                            <div
+                              className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
+                              style={{ backgroundColor: getCategoryColor(tx.category) + '20' }}
+                            >
+                              <CategoryIcon
+                                categoryId={tx.category}
+                                className="w-3 h-3"
+                                style={{ color: getCategoryColor(tx.category) }}
+                              />
+                            </div>
+                            <span className="flex-1 text-xs text-gray-700 truncate">
+                              {tx.description || getCategoryName(tx.category)}
+                            </span>
+                            <span className={`text-xs tabular-nums font-medium ${
+                              tx.flow === 'in' ? 'text-amber-600' : 'text-red-500'
+                            }`}>
+                              {tx.flow === 'in' ? '+' : '-'}{formatRupiah(tx.amount)}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {isSelected && dayTransactions.length === 0 && (
+                      <p className="text-[10px] text-gray-400 ml-14 mt-1">
+                        Tidak ada transaksi
+                      </p>
+                    )}
                   </div>
                 );
               })}
@@ -263,6 +321,12 @@ export default function RingkasanPage() {
           <p className="text-xs text-gray-400 text-center py-2">Belum ada data</p>
         )}
       </div>
+
+      {/* Detail Popup */}
+      <DetailPopup
+        transaction={selectedTx}
+        onClose={() => setSelectedTx(null)}
+      />
     </div>
   );
 }
