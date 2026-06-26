@@ -5,6 +5,7 @@ export interface Expense {
   description: string;
   date: string; // YYYY-MM-DD
   createdAt: string;
+  updatedAt: string;
   flow: 'in' | 'out';
   account?: 'suami' | 'istri' | 'bersama'; // tambahan untuk breakdown rekening
 }

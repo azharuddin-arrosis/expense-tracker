@@ -38,13 +38,15 @@ function saveExpenses(expenses: Expense[]): void {
 }
 
 export function addExpense(
-  expense: Omit<Expense, 'id' | 'createdAt'>
+  expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>
 ): Expense {
   const expenses = getExpenses();
+  const now = new Date().toISOString();
   const newExpense: Expense = {
     ...expense,
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 9),
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
   };
   expenses.push(newExpense);
   saveExpenses(expenses);
@@ -58,12 +60,12 @@ export function deleteExpense(id: string): void {
 
 export function updateExpense(
   id: string,
-  updates: Partial<Omit<Expense, 'id' | 'createdAt'>>
+  updates: Partial<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>
 ): void {
   const expenses = getExpenses();
   const idx = expenses.findIndex((e) => e.id === id);
   if (idx === -1) return;
-  expenses[idx] = { ...expenses[idx], ...updates };
+  expenses[idx] = { ...expenses[idx], ...updates, updatedAt: new Date().toISOString() };
   saveExpenses(expenses);
 }
 
@@ -386,7 +388,7 @@ export async function getBudgetWithSync(
  * Add expense locally AND sync to cloud in background.
  */
 export function addExpenseAndSync(
-  expense: Omit<Expense, 'id' | 'createdAt'>,
+  expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>,
   email: string | null
 ): Expense {
   const result = addExpense(expense);
@@ -418,7 +420,7 @@ export function deleteExpenseAndSync(
  */
 export function updateExpenseAndSync(
   id: string,
-  updates: Partial<Omit<Expense, 'id' | 'createdAt'>>,
+  updates: Partial<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>,
   email: string | null
 ): void {
   updateExpense(id, updates);

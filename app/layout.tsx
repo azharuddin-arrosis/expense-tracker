@@ -3,6 +3,7 @@ import './globals.css';
 import { AppProvider } from '@/lib/context';
 import { AuthGuard } from '@/components/AuthGuard';
 import { TargetForm } from '@/components/TargetForm';
+import { SyncEngine } from '@/components/SyncEngine';
 import { PwaRegister } from '@/components/PwaRegister';
 
 export const metadata: Metadata = {
@@ -39,6 +40,7 @@ export default function RootLayout({
         <AppProvider>
           <AuthGuard>{children}</AuthGuard>
           <TargetForm />
+          <SyncEngine />
           <PwaRegister />
         </AppProvider>
       </body>
