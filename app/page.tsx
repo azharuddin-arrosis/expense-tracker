@@ -16,6 +16,7 @@ import {
   Lightbulb,
   FileText,
   PieChart,
+  Target,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
@@ -236,12 +237,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Access Menu */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {[
           { label: 'Riwayat', icon: List, path: '/riwayat', color: 'text-blue-600', bg: 'bg-blue-50' },
           { label: 'Wawasan', icon: Lightbulb, path: '/wawasan', color: 'text-violet-600', bg: 'bg-violet-50' },
           { label: 'Rekap', icon: FileText, path: '/ringkasan', color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Statistik', icon: PieChart, path: '/statistik', color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Target', icon: Target, path: '/setting', color: 'text-rose-600', bg: 'bg-rose-50' },
+          { label: 'Kategori', icon: SlidersHorizontal, path: '/setting', color: 'text-cyan-600', bg: 'bg-cyan-50' },
         ].map((item) => {
           const Icon = item.icon;
           return (
