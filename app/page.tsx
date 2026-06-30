@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   TrendingUp,
   TrendingDown,
@@ -11,6 +12,10 @@ import {
   Heart,
   SlidersHorizontal,
   PiggyBank,
+  List,
+  Lightbulb,
+  FileText,
+  PieChart,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
@@ -38,6 +43,7 @@ import { DetailPopup } from '@/components/DetailPopup';
 import { getStoredEmail } from '@/lib/cloud';
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { refreshKey } = useAppContext();
   const [cloudStatus, setCloudStatus] = useState<'checking' | 'connected' | 'local'>('checking');
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -227,6 +233,28 @@ export default function DashboardPage() {
             <Wallet className="w-5 h-5 text-emerald-600" />
           </div>
         </div>
+      </div>
+
+      {/* Quick Access Menu */}
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { label: 'Riwayat', icon: List, path: '/riwayat', color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Wawasan', icon: Lightbulb, path: '/wawasan', color: 'text-violet-600', bg: 'bg-violet-50' },
+          { label: 'Rekap', icon: FileText, path: '/ringkasan', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Statistik', icon: PieChart, path: '/statistik', color: 'text-amber-600', bg: 'bg-amber-50' },
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.label}
+              onClick={() => router.push(item.path)}
+              className={`${item.bg} rounded-xl py-3 flex flex-col items-center gap-1 active:opacity-70 transition-opacity`}
+            >
+              <Icon className={`w-5 h-5 ${item.color}`} />
+              <span className="text-[10px] font-medium text-gray-600">{item.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Date Filter */}

@@ -4,25 +4,17 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   PlusCircle,
-  List,
-  PieChart,
   Settings,
   TrendingDown,
   TrendingUp,
   Crosshair,
-  FileText,
-  Lightbulb,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { BottomSheet } from './BottomSheet';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { label: 'Riwayat', icon: List, path: '/riwayat' },
-  { label: 'Wawasan', icon: Lightbulb, path: '/wawasan' },
   { label: 'Tambah', icon: PlusCircle, path: null, isAdd: true },
-  { label: 'Rekap', icon: FileText, path: '/ringkasan' },
-  { label: 'Statistik', icon: PieChart, path: '/statistik' },
   { label: 'Setting', icon: Settings, path: '/setting' },
 ];
 
@@ -44,7 +36,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-gray-200 z-50 px-2 pb-safe">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-gray-200 z-50 px-6 pb-safe">
         <div className="flex items-center justify-around h-16">
           {navItems.map((item, idx) => {
             const isActive = item.path === pathname;
