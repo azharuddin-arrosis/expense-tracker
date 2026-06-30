@@ -243,8 +243,8 @@ export default function DashboardPage() {
           { label: 'Wawasan', icon: Lightbulb, path: '/wawasan', color: 'text-violet-600', bg: 'bg-violet-50' },
           { label: 'Rekap', icon: FileText, path: '/ringkasan', color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Statistik', icon: PieChart, path: '/statistik', color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Target', icon: Target, path: '/setting', color: 'text-rose-600', bg: 'bg-rose-50' },
-          { label: 'Kategori', icon: SlidersHorizontal, path: '/setting', color: 'text-cyan-600', bg: 'bg-cyan-50' },
+          { label: 'Target', icon: Target, path: '/target', color: 'text-rose-600', bg: 'bg-rose-50' },
+          { label: 'Kategori', icon: SlidersHorizontal, path: '/kategori-budget', color: 'text-cyan-600', bg: 'bg-cyan-50' },
         ].map((item) => {
           const Icon = item.icon;
           return (
