@@ -430,14 +430,19 @@ export function addExpenseAndSync(
 /**
  * Delete expense locally AND sync to cloud in background.
  */
-export function deleteExpenseAndSync(
+export async function deleteExpenseAndSync(
   id: string,
   email: string | null
-): void {
+): Promise<void> {
   deleteExpense(id);
 
   if (email) {
-    syncExpensesToCloud(email).catch(() => {});
+    const { deleteTransactionFromCloud } = await import('./cloud');
+    try {
+      await deleteTransactionFromCloud(email, id);
+    } catch (err) {
+      console.warn('Delete sync to cloud failed:', err);
+    }
   }
 }
 

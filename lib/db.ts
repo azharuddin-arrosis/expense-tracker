@@ -52,6 +52,13 @@ export async function replaceTransactions(email: string, transactions: Expense[]
   }
 }
 
+export async function deleteTransaction(email: string, id: string): Promise<void> {
+  await pool.execute(
+    'DELETE FROM transactions WHERE email = ? AND id = ?',
+    [email, id]
+  );
+}
+
 function mapRowToExpense(row: mysql.RowDataPacket): Expense {
   return {
     id: row.id,

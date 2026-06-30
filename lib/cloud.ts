@@ -144,6 +144,19 @@ export async function loadAllFromCloud(email: string): Promise<CloudData> {
   };
 }
 
+export async function deleteTransactionFromCloud(
+  email: string,
+  id: string
+): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/transactions?email=${encodeURIComponent(email)}&id=${encodeURIComponent(id)}`,
+    { method: 'DELETE' }
+  );
+  if (!res.ok) {
+    throw new Error(`Delete transaction failed: ${res.status} ${res.statusText}`);
+  }
+}
+
 /**
  * Utility to get the stored email from localStorage.
  */

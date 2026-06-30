@@ -51,9 +51,9 @@ export default function RiwayatPage() {
     );
   }, [allExpenses, search, filterCat]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    deleteExpenseAndSync(deleteTarget, email);
+    await deleteExpenseAndSync(deleteTarget, email);
     refreshData();
     setDeleteTarget(null);
   };

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTransactions, replaceTransactions } from '@/lib/db';
+import { getTransactions, replaceTransactions, deleteTransaction } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get('email');
@@ -33,5 +33,22 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('DB POST transactions error:', error);
     return NextResponse.json({ error: 'Failed to save transactions' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const email = request.nextUrl.searchParams.get('email');
+  const id = request.nextUrl.searchParams.get('id');
+
+  if (!email || !id) {
+    return NextResponse.json({ error: 'Email and id are required' }, { status: 400 });
+  }
+
+  try {
+    await deleteTransaction(email, id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('DB DELETE transaction error:', error);
+    return NextResponse.json({ error: 'Failed to delete transaction' }, { status: 500 });
   }
 }
