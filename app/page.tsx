@@ -18,6 +18,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
@@ -27,7 +28,6 @@ import {
   getExpensesByCategory,
   getBudget,
   getExpensesWithSync,
-  getCategoryBudgets,
 } from '@/lib/storage';
 import {
   formatRupiah,
@@ -45,6 +45,7 @@ import { getStoredEmail } from '@/lib/cloud';
 export default function DashboardPage() {
   const router = useRouter();
   const { refreshKey } = useAppContext();
+  const [synced, setSynced] = useState(false);
   const [cloudStatus, setCloudStatus] = useState<'checking' | 'connected' | 'local'>('checking');
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [filterMode, setFilterMode] = useState<'month' | 'week' | 'range'>('month');
@@ -53,32 +54,46 @@ export default function DashboardPage() {
   const email = getStoredEmail();
 
   useEffect(() => {
-    if (!email) { setCloudStatus('local'); return; }
+    if (!email) {
+      setCloudStatus('local');
+      setSynced(true);
+      return;
+    }
     let cancelled = false;
-    const syncFromCloud = async () => {
+    const syncFirst = async () => {
       try {
         await getExpensesWithSync(email);
         if (!cancelled) setCloudStatus('connected');
       } catch {
         if (!cancelled) setCloudStatus('local');
       }
+      if (!cancelled) setSynced(true);
     };
-    syncFromCloud();
+    syncFirst();
     return () => { cancelled = true; };
   }, [email, refreshKey]);
 
   const expenses = useMemo(() => {
+    if (!synced && email) return [];
     if (filterMode === 'month' || !dateRange) return getExpensesByMonth(month);
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'out');
-  }, [month, filterMode, dateRange, refreshKey]);
+  }, [month, filterMode, dateRange, refreshKey, synced, email]);
 
   const incomes = useMemo(() => {
+    if (!synced && email) return [];
     if (filterMode === 'month' || !dateRange) return getIncomesByMonth(month);
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'in');
-  }, [month, filterMode, dateRange, refreshKey]);
+  }, [month, filterMode, dateRange, refreshKey, synced, email]);
 
-  const categoryData = useMemo(() => getExpensesByCategory(month), [month, refreshKey]);
-  const budget = useMemo(() => getBudget(month), [month, refreshKey]);
+  const categoryData = useMemo(() => {
+    if (!synced && email) return {};
+    return getExpensesByCategory(month);
+  }, [month, refreshKey, synced, email]);
+
+  const budget = useMemo(() => {
+    if (!synced && email) return null;
+    return getBudget(month);
+  }, [month, refreshKey, synced, email]);
 
   const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
   const totalIncome = incomes.reduce((sum, e) => sum + e.amount, 0);
@@ -105,6 +120,19 @@ export default function DashboardPage() {
   }, [categoryData, totalExpense]);
 
   const hasAny = expenses.length > 0 || incomes.length > 0;
+
+  if (!synced && email) {
+    return (
+      <div className="flex flex-col items-center justify-center h-dvh bg-white px-6">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm mb-4">
+          <Wallet className="w-6 h-6 text-white" />
+        </div>
+        <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-3" />
+        <p className="text-sm font-medium text-gray-700">Memuat data...</p>
+        <p className="text-xs text-gray-400 mt-1">Menyinkronkan dari cloud</p>
+      </div>
+    );
+  }
 
   return (
     <>
