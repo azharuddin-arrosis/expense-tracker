@@ -15,11 +15,13 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   CalendarDays,
+  Loader2,
+  Wallet as WalletIcon,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { computeMonthlySummary, getBudget, getExpensesByDate, getExpensesByCategory } from '@/lib/storage';
 import { formatRupiah, getMonthName, prevMonth as prevMonthStr } from '@/lib/format';
-import { getStoredEmail } from '@/lib/cloud';
+import { useSyncOnMount } from '@/lib/use-sync';
 import { Expense, getCategoryName, getCategoryColor, EXPENSE_CATEGORIES } from '@/lib/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { DetailPopup } from '@/components/DetailPopup';
@@ -29,7 +31,7 @@ const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 export default function RingkasanPage() {
   const { refreshKey } = useAppContext();
-  const email = getStoredEmail() || 'guest';
+  const { synced, email: syncEmail } = useSyncOnMount([refreshKey]);
 
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -42,9 +44,14 @@ export default function RingkasanPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<Expense | null>(null);
 
+  const email = syncEmail || 'guest';
+
   const summary = useMemo(
-    () => computeMonthlySummary(month, email),
-    [month, email, refreshKey]
+    () => {
+      if (!synced && email !== 'guest') return { month, income: 0, expense: 0, balance: 0, incomeByCategory: {}, expenseByCategory: {}, dailyBalance: {}, byAccount: { suami: { income: 0, expense: 0, balance: 0 }, istri: { income: 0, expense: 0, balance: 0 }, bersama: { income: 0, expense: 0, balance: 0 } }, targets: { saving: { target: 0, achieved: 0 }, liburan: { target: 0, achieved: 0 }, custom: [] } };
+      return computeMonthlySummary(month, email);
+    },
+    [month, email, refreshKey, synced]
   );
 
   const dayTransactions = selectedDay
@@ -53,8 +60,11 @@ export default function RingkasanPage() {
 
   const prevMonth = prevMonthStr(month);
   const prevSummary = useMemo(
-    () => computeMonthlySummary(prevMonth, email),
-    [prevMonth, email, refreshKey]
+    () => {
+      if (!synced && email !== 'guest') return { month, income: 0, expense: 0, balance: 0, incomeByCategory: {}, expenseByCategory: {}, dailyBalance: {}, byAccount: { suami: { income: 0, expense: 0, balance: 0 }, istri: { income: 0, expense: 0, balance: 0 }, bersama: { income: 0, expense: 0, balance: 0 } }, targets: { saving: { target: 0, achieved: 0 }, liburan: { target: 0, achieved: 0 }, custom: [] } };
+      return computeMonthlySummary(prevMonth, email);
+    },
+    [prevMonth, email, refreshKey, synced]
   );
 
   const budget = getBudget(month);
@@ -72,8 +82,11 @@ export default function RingkasanPage() {
 
   // Category breakdown for this month
   const categoryData = useMemo(
-    () => getExpensesByCategory(month),
-    [month, refreshKey]
+    () => {
+      if (!synced && email !== 'guest') return {};
+      return getExpensesByCategory(month);
+    },
+    [month, refreshKey, synced, email]
   );
   const topCategories = useMemo(() => {
     return Object.entries(categoryData)
@@ -85,6 +98,7 @@ export default function RingkasanPage() {
 
   // Goal projection
   const goalProjection = useMemo(() => {
+    if (!synced && email !== 'guest') return [];
     const last3Months = [month, prevMonthStr(month), prevMonthStr(prevMonthStr(month))];
     const summaries = last3Months.map((m) => computeMonthlySummary(m, email));
     const avgSaving = summaries.reduce((s, sm) => s + Math.max(0, sm.income - sm.expense), 0) / summaries.length;
@@ -100,13 +114,26 @@ export default function RingkasanPage() {
       result.push({ target: ct.target, achieved: ct.achieved, label: ct.name, avgMonthly: avgSaving });
     }
     return result;
-  }, [month, email, summary, refreshKey]);
+  }, [month, email, summary, refreshKey, synced]);
 
   const years = useMemo(() => {
     const y = [];
     for (let i = currentYear - 2; i <= currentYear + 1; i++) y.push(i);
     return y;
   }, [currentYear]);
+
+  if (!synced && email !== 'guest') {
+    return (
+      <div className="flex flex-col items-center justify-center h-dvh bg-white px-6">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm mb-4">
+          <WalletIcon className="w-6 h-6 text-white" />
+        </div>
+        <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-3" />
+        <p className="text-sm font-medium text-gray-700">Memuat data...</p>
+        <p className="text-xs text-gray-400 mt-1">Menyinkronkan dari cloud</p>
+      </div>
+    );
+  }
 
   return (
     <>

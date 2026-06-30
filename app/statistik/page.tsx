@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { TrendingUp, TrendingDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowUp, ArrowDown, Loader2, Wallet } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
   getExpensesByMonth,
@@ -11,6 +11,7 @@ import {
 } from '@/lib/storage';
 import { formatRupiah, getMonthName, getCurrentMonthString, prevMonth } from '@/lib/format';
 import { CATEGORIES, getCategoryColor, getCategoryName } from '@/lib/types';
+import { useSyncOnMount } from '@/lib/use-sync';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryBar } from '@/components/CategoryBar';
 import { DateFilter } from '@/components/DateFilter';
@@ -30,20 +31,25 @@ function getLast6Months(from: string): string[] {
 
 export default function StatistikPage() {
   const { refreshKey } = useAppContext();
+  const { synced, email } = useSyncOnMount([refreshKey]);
   const [month, setMonth] = useState(getCurrentMonthString);
   const [filterMode, setFilterMode] = useState<'month' | 'week' | 'range'>('month');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
 
   const expenses = useMemo(() => {
+    if (!synced && email) return [];
     if (filterMode === 'month' || !dateRange) {
       return getExpensesByMonth(month);
     }
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'out');
-  }, [month, filterMode, dateRange, refreshKey]);
+  }, [month, filterMode, dateRange, refreshKey, synced, email]);
 
   const categoryData = useMemo(
-    () => getExpensesByCategory(month),
-    [month, refreshKey]
+    () => {
+      if (!synced && email) return {};
+      return getExpensesByCategory(month);
+    },
+    [month, refreshKey, synced, email]
   );
 
   const totalMonth = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -72,6 +78,7 @@ export default function StatistikPage() {
   // ── Trend Data: last 6 months ──
   const trendMonths = useMemo(() => getLast6Months(month), [month]);
   const trendData = useMemo(() => {
+    if (!synced && email) return trendMonths.map((m) => ({ month: m, expense: 0, income: 0 }));
     return trendMonths.map((m) => {
       const exps = getExpensesByMonth(m);
       const incs = getIncomesByMonth(m);
@@ -81,7 +88,7 @@ export default function StatistikPage() {
         income: incs.reduce((s, e) => s + e.amount, 0),
       };
     });
-  }, [trendMonths, refreshKey]);
+  }, [trendMonths, refreshKey, synced, email]);
 
   const maxVal = Math.max(...trendData.map((d) => Math.max(d.expense, d.income)), 1);
   const chartH = 120;
@@ -90,16 +97,20 @@ export default function StatistikPage() {
   // MoM Comparison
   const prevMonthStr = prevMonth(month);
   const prevExpenses = useMemo(() => {
+    if (!synced && email) return [];
     if (filterMode === 'month' || !dateRange) {
       return getExpensesByMonth(prevMonthStr);
     }
     return [];
-  }, [prevMonthStr, filterMode, dateRange, refreshKey]);
+  }, [prevMonthStr, filterMode, dateRange, refreshKey, synced, email]);
   const prevTotal = prevExpenses.reduce((s, e) => s + e.amount, 0);
   const momChange = prevTotal > 0 ? ((totalMonth - prevTotal) / prevTotal) * 100 : 0;
 
   // Biggest category change
-  const prevCatData = useMemo(() => getExpensesByCategory(prevMonthStr), [prevMonthStr, refreshKey]);
+  const prevCatData = useMemo(() => {
+    if (!synced && email) return {};
+    return getExpensesByCategory(prevMonthStr);
+  }, [prevMonthStr, refreshKey, synced, email]);
   const biggestChangeCat = useMemo(() => {
     let maxDelta = 0;
     let maxCat = '';
@@ -116,6 +127,19 @@ export default function StatistikPage() {
   }, [categoryData, prevCatData]);
 
   const hasData = expenses.length > 0;
+
+  if (!synced && email) {
+    return (
+      <div className="flex flex-col items-center justify-center h-dvh bg-white px-6">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm mb-4">
+          <Wallet className="w-6 h-6 text-white" />
+        </div>
+        <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-3" />
+        <p className="text-sm font-medium text-gray-700">Memuat data...</p>
+        <p className="text-xs text-gray-400 mt-1">Menyinkronkan dari cloud</p>
+      </div>
+    );
+  }
 
   return (
     <>

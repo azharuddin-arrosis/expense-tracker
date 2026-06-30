@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Target, Check } from 'lucide-react';
+import { Target, Check, Loader2, Wallet } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { getBudget, saveBudgetAndSync } from '@/lib/storage';
 import { formatRupiah, getMonthName } from '@/lib/format';
-import { getStoredEmail } from '@/lib/cloud';
+import { useSyncOnMount } from '@/lib/use-sync';
 import { PageHeader } from '@/components/PageHeader';
 
 function formatTargetInput(num: number): string {
@@ -14,12 +14,14 @@ function formatTargetInput(num: number): string {
 
 export default function TargetPage() {
   const { refreshKey, currentMonth, refreshData } = useAppContext();
-  const email = getStoredEmail();
+  const { synced, email } = useSyncOnMount([refreshKey, currentMonth]);
 
   const budget = useMemo(
-    () => getBudget(currentMonth),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentMonth, refreshKey]
+    () => {
+      if (!synced && email) return null;
+      return getBudget(currentMonth);
+    },
+    [currentMonth, refreshKey, synced, email]
   );
 
   const [targetInput, setTargetInput] = useState(
@@ -46,6 +48,19 @@ export default function TargetPage() {
     }
     setTargetInput(formatTargetInput(parseInt(raw)));
   };
+
+  if (!synced && email) {
+    return (
+      <div className="flex flex-col items-center justify-center h-dvh bg-white px-6">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm mb-4">
+          <Wallet className="w-6 h-6 text-white" />
+        </div>
+        <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-3" />
+        <p className="text-sm font-medium text-gray-700">Memuat data...</p>
+        <p className="text-xs text-gray-400 mt-1">Menyinkronkan dari cloud</p>
+      </div>
+    );
+  }
 
   return (
     <>

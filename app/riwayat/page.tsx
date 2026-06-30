@@ -1,12 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search, Trash2, Pencil, TrendingDown, TrendingUp, ChevronLeft } from 'lucide-react';
+import { Search, Trash2, Pencil, TrendingDown, TrendingUp, ChevronLeft, Loader2, Wallet } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { getTransactionsByMonth, getTransactionsByDateRange, deleteExpenseAndSync } from '@/lib/storage';
 import { formatRupiah, formatDate, formatDateFull, getMonthName, getCurrentMonthString } from '@/lib/format';
 import { CATEGORIES, getCategoryColor, getCategoryName, INCOME_CATEGORIES, Expense } from '@/lib/types';
-import { getStoredEmail } from '@/lib/cloud';
+import { useSyncOnMount } from '@/lib/use-sync';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { DateFilter } from '@/components/DateFilter';
 import { DetailPopup } from '@/components/DetailPopup';
@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/PageHeader';
 
 export default function RiwayatPage() {
   const { refreshKey, refreshData, setShowAddExpense, setEditTarget } = useAppContext();
+  const { synced, email } = useSyncOnMount([refreshKey]);
   const [month, setMonth] = useState(getCurrentMonthString);
   const [filterMode, setFilterMode] = useState<'month' | 'week' | 'range'>('month');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
@@ -25,11 +26,12 @@ export default function RiwayatPage() {
   const [detailTarget, setDetailTarget] = useState<Expense | null>(null);
 
   const allExpenses = useMemo(() => {
+    if (!synced && email) return [];
     if (filterMode === 'month' || !dateRange) {
       return getTransactionsByMonth(month);
     }
     return getTransactionsByDateRange(dateRange.start, dateRange.end);
-  }, [month, filterMode, dateRange, refreshKey]);
+  }, [month, filterMode, dateRange, refreshKey, synced, email]);
 
   const filtered = useMemo(() => {
     let result = allExpenses;
@@ -51,7 +53,6 @@ export default function RiwayatPage() {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    const email = getStoredEmail();
     deleteExpenseAndSync(deleteTarget, email);
     refreshData();
     setDeleteTarget(null);
@@ -70,6 +71,19 @@ export default function RiwayatPage() {
       (a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime()
     );
   }, [filtered]);
+
+  if (!synced && email) {
+    return (
+      <div className="flex flex-col items-center justify-center h-dvh bg-white px-6">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm mb-4">
+          <Wallet className="w-6 h-6 text-white" />
+        </div>
+        <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-3" />
+        <p className="text-sm font-medium text-gray-700">Memuat data...</p>
+        <p className="text-xs text-gray-400 mt-1">Menyinkronkan dari cloud</p>
+      </div>
+    );
+  }
 
   return (
     <>

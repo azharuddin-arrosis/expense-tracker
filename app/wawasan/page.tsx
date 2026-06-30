@@ -12,6 +12,7 @@ import {
   Calendar,
   ArrowUp,
   ArrowDown,
+  Loader2,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
@@ -23,7 +24,7 @@ import {
 } from '@/lib/storage';
 import { formatRupiah, getMonthName, getCurrentMonthString, prevMonth } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
-import { getStoredEmail } from '@/lib/cloud';
+import { useSyncOnMount } from '@/lib/use-sync';
 import {
   EXPENSE_CATEGORIES,
   getCategoryColor,
@@ -65,25 +66,46 @@ function InsightCard({ icon: Icon, title, children, color }: InsightCardProps) {
 
 export default function WawasanPage() {
   const { refreshKey } = useAppContext();
-  const email = getStoredEmail() || 'guest';
+  const { synced, email } = useSyncOnMount([refreshKey]);
   const month = getCurrentMonthString();
   const prevMonthStr = prevMonth(month);
 
   const summary = useMemo(
-    () => computeMonthlySummary(month, email),
-    [month, email, refreshKey]
+    () => {
+      if (!synced && email) return { month, income: 0, expense: 0, balance: 0, incomeByCategory: {}, expenseByCategory: {}, dailyBalance: {}, byAccount: { suami: { income: 0, expense: 0, balance: 0 }, istri: { income: 0, expense: 0, balance: 0 }, bersama: { income: 0, expense: 0, balance: 0 } }, targets: { saving: { target: 0, achieved: 0 }, liburan: { target: 0, achieved: 0 }, custom: [] } };
+      return computeMonthlySummary(month, email || 'guest');
+    },
+    [month, email, refreshKey, synced]
   );
 
   const prevSummary = useMemo(
-    () => computeMonthlySummary(prevMonthStr, email),
-    [prevMonthStr, email, refreshKey]
+    () => {
+      if (!synced && email) return { month, income: 0, expense: 0, balance: 0, incomeByCategory: {}, expenseByCategory: {}, dailyBalance: {}, byAccount: { suami: { income: 0, expense: 0, balance: 0 }, istri: { income: 0, expense: 0, balance: 0 }, bersama: { income: 0, expense: 0, balance: 0 } }, targets: { saving: { target: 0, achieved: 0 }, liburan: { target: 0, achieved: 0 }, custom: [] } };
+      return computeMonthlySummary(prevMonthStr, email || 'guest');
+    },
+    [prevMonthStr, email, refreshKey, synced]
   );
 
-  const expenses = useMemo(() => getExpensesByMonth(month), [month, refreshKey]);
-  const incomes = useMemo(() => getIncomesByMonth(month), [month, refreshKey]);
-  const categoryData = useMemo(() => getExpensesByCategory(month), [month, refreshKey]);
-  const prevCatData = useMemo(() => getExpensesByCategory(prevMonthStr), [prevMonthStr, refreshKey]);
-  const budget = useMemo(() => getBudget(month), [month, refreshKey]);
+  const expenses = useMemo(() => {
+    if (!synced && email) return [];
+    return getExpensesByMonth(month);
+  }, [month, refreshKey, synced, email]);
+  const incomes = useMemo(() => {
+    if (!synced && email) return [];
+    return getIncomesByMonth(month);
+  }, [month, refreshKey, synced, email]);
+  const categoryData = useMemo(() => {
+    if (!synced && email) return {};
+    return getExpensesByCategory(month);
+  }, [month, refreshKey, synced, email]);
+  const prevCatData = useMemo(() => {
+    if (!synced && email) return {};
+    return getExpensesByCategory(prevMonthStr);
+  }, [prevMonthStr, refreshKey, synced, email]);
+  const budget = useMemo(() => {
+    if (!synced && email) return null;
+    return getBudget(month);
+  }, [month, refreshKey, synced, email]);
 
   const totalExpense = expenses.reduce((s, e) => s + e.amount, 0);
   const totalIncome = incomes.reduce((s, e) => s + e.amount, 0);
@@ -140,6 +162,19 @@ export default function WawasanPage() {
     : 0;
 
   const hasData = expenses.length > 0 || incomes.length > 0;
+
+  if (!synced && email) {
+    return (
+      <div className="flex flex-col items-center justify-center h-dvh bg-white px-6">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm mb-4">
+          <Wallet className="w-6 h-6 text-white" />
+        </div>
+        <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-3" />
+        <p className="text-sm font-medium text-gray-700">Memuat data...</p>
+        <p className="text-xs text-gray-400 mt-1">Menyinkronkan dari cloud</p>
+      </div>
+    );
+  }
 
   return (
     <>
