@@ -179,6 +179,7 @@ function formatDateTime(d: Date | string): string {
 }
 
 /** Convert ISO datetime string ('2026-06-25T09:15:49.687Z') to MySQL format ('2026-06-25 09:15:49') */
-function toMySqlDatetime(iso: string): string {
+function toMySqlDatetime(iso: string | undefined | null): string {
+  if (!iso) return new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, '');
   return iso.replace('T', ' ').replace(/\.\d+Z$/, '');
 }
