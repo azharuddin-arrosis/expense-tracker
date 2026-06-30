@@ -35,7 +35,8 @@ export async function replaceTransactions(email: string, transactions: Expense[]
     if (transactions.length > 0) {
       const values = transactions.map(tx => [
         tx.id, email, tx.amount, tx.category, tx.description || '',
-        tx.date, tx.flow, tx.account || null, tx.createdAt, tx.updatedAt,
+        tx.date, tx.flow, tx.account || null,
+        toMySqlDatetime(tx.createdAt), toMySqlDatetime(tx.updatedAt),
       ]);
       await conn.query(
         'INSERT INTO transactions (id, email, amount, category, description, date, flow, account, created_at, updated_at) VALUES ?',
@@ -118,7 +119,7 @@ export async function replaceRecurring(email: string, recurring: RecurringTransa
         r.dayOfMonth ?? null, r.dayOfWeek ?? null,
         r.startDate, r.endDate || null,
         r.isActive, r.lastGenerated || null, r.nextDueDate,
-        r.createdAt, r.updatedAt,
+        toMySqlDatetime(r.createdAt), toMySqlDatetime(r.updatedAt),
       ]);
       await conn.query(
         `INSERT INTO recurring_transactions
@@ -170,8 +171,14 @@ function formatDate(d: Date | string): string {
 }
 
 function formatDateTime(d: Date | string): string {
+  if (!d || d === '0000-00-00 00:00:00') return new Date().toISOString();
   if (d instanceof Date) return d.toISOString();
   const str = String(d);
   if (str.includes('T')) return str;
   return str.replace(' ', 'T') + 'Z';
+}
+
+/** Convert ISO datetime string ('2026-06-25T09:15:49.687Z') to MySQL format ('2026-06-25 09:15:49') */
+function toMySqlDatetime(iso: string): string {
+  return iso.replace('T', ' ').replace(/\.\d+Z$/, '');
 }
