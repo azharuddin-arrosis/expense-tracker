@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Crosshair,
   FileText,
+  Lightbulb,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { BottomSheet } from './BottomSheet';
@@ -18,8 +19,9 @@ import { BottomSheet } from './BottomSheet';
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
   { label: 'Riwayat', icon: List, path: '/riwayat' },
-  { label: 'Rekap', icon: FileText, path: '/ringkasan' },
+  { label: 'Wawasan', icon: Lightbulb, path: '/wawasan' },
   { label: 'Tambah', icon: PlusCircle, path: null, isAdd: true },
+  { label: 'Rekap', icon: FileText, path: '/ringkasan' },
   { label: 'Statistik', icon: PieChart, path: '/statistik' },
   { label: 'Setting', icon: Settings, path: '/setting' },
 ];

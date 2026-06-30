@@ -14,10 +14,11 @@ import {
   Users,
   Heart,
   List,
+  Clock,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { computeMonthlySummary, getBudget, getExpensesByDate } from '@/lib/storage';
-import { formatRupiah, getMonthName } from '@/lib/format';
+import { formatRupiah, getMonthName, prevMonth as prevMonthStr } from '@/lib/format';
 import { getStoredEmail } from '@/lib/cloud';
 import { Expense, getCategoryName, getCategoryColor } from '@/lib/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -63,6 +64,40 @@ export default function RingkasanPage() {
     budget && budget.target > 0
       ? Math.min((summary.expense / budget.target) * 100, 100)
       : 0;
+
+  // Goal projection: average monthly saving over last 3 months
+  const goalProjection = useMemo(() => {
+    const last3Months = [month, prevMonthStr(month), prevMonthStr(prevMonthStr(month))];
+    const summaries = last3Months.map((m) => computeMonthlySummary(m, email));
+    const avgSaving = summaries.reduce((s, sm) => s + Math.max(0, sm.income - sm.expense), 0) / summaries.length;
+
+    const result: { target: number; achieved: number; label: string; avgMonthly: number }[] = [];
+    if (summary.targets.saving.target > 0) {
+      result.push({
+        target: summary.targets.saving.target,
+        achieved: summary.targets.saving.achieved,
+        label: 'Tabungan',
+        avgMonthly: avgSaving,
+      });
+    }
+    if (summary.targets.liburan.target > 0) {
+      result.push({
+        target: summary.targets.liburan.target,
+        achieved: summary.targets.liburan.achieved,
+        label: 'Liburan',
+        avgMonthly: avgSaving,
+      });
+    }
+    for (const ct of summary.targets.custom) {
+      result.push({
+        target: ct.target,
+        achieved: ct.achieved,
+        label: ct.name,
+        avgMonthly: avgSaving,
+      });
+    }
+    return result;
+  }, [month, email, summary, refreshKey]);
 
   return (
     <div className="px-4 pt-4 pb-6 space-y-4">
@@ -223,6 +258,61 @@ export default function RingkasanPage() {
             </p>
           )}
         </div>
+
+        {/* Goal Projections */}
+        {goalProjection.length > 0 && (
+          <div className="border-t border-gray-200/60 pt-3 space-y-2">
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-[11px] font-medium text-gray-500">Proyeksi Target</span>
+            </div>
+            {goalProjection.map((g) => {
+              const remaining = g.target - g.achieved;
+              if (remaining <= 0) {
+                return (
+                  <p key={g.label} className="text-xs text-emerald-600 font-medium">
+                    Target {g.label} tercapai!
+                  </p>
+                );
+              }
+              if (g.avgMonthly <= 0) {
+                return (
+                  <p key={g.label} className="text-xs text-amber-600">
+                    Belum ada surplus bulan ini. Mulai sisihkan minimal{' '}
+                    <span className="font-semibold">{formatRupiah(Math.round(g.target / 12))}</span>/bulan
+                    {' '}untuk mencapai target {g.label}.
+                  </p>
+                );
+              }
+              const monthsNeeded = Math.ceil(remaining / g.avgMonthly);
+              const targetDate = new Date();
+              targetDate.setMonth(targetDate.getMonth() + monthsNeeded);
+              const targetDateStr = targetDate.toLocaleDateString('id-ID', {
+                month: 'long', year: 'numeric',
+              });
+              return (
+                <div key={g.label} className="space-y-1">
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Dengan rata-rata surplus{' '}
+                    <span className="font-semibold tabular-nums text-emerald-600">{formatRupiah(Math.round(g.avgMonthly))}</span>/bulan
+                    {' '}(3 bulan terakhir), target <span className="font-semibold">{g.label}</span>{' '}
+                    Rp <span className="font-semibold tabular-nums">{formatRupiah(g.target)}</span>{' '}
+                    akan tercapai dalam{' '}
+                    <span className="font-semibold tabular-nums">{monthsNeeded}</span> bulan
+                    {' '}(sekitar {targetDateStr}).
+                  </p>
+                  {/* Mini progress bar with projection marker */}
+                  <div className="relative w-full h-1.5 bg-white rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-emerald-500"
+                      style={{ width: `${Math.min((g.achieved / g.target) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Daily Balance */}

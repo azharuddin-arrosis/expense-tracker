@@ -8,6 +8,9 @@ import {
   AlertTriangle,
   Cloud,
   CloudOff,
+  Heart,
+  SlidersHorizontal,
+  PiggyBank,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
@@ -17,6 +20,8 @@ import {
   getExpensesByCategory,
   getBudget,
   getExpensesWithSync,
+  getCategoryBudgets,
+  getSavingTargets,
 } from '@/lib/storage';
 import {
   formatRupiah,
@@ -27,8 +32,9 @@ import {
 import { CategoryBar } from '@/components/CategoryBar';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { DateFilter } from '@/components/DateFilter';
-import { EXPENSE_CATEGORIES, getCategoryColor, getCategoryName } from '@/lib/types';
+import { EXPENSE_CATEGORIES, getCategoryColor, getCategoryName, Expense } from '@/lib/types';
 import { EmptyState } from '@/components/EmptyState';
+import { DetailPopup } from '@/components/DetailPopup';
 import { getStoredEmail } from '@/lib/cloud';
 
 export default function DashboardPage() {
@@ -38,6 +44,10 @@ export default function DashboardPage() {
   const [filterMode, setFilterMode] = useState<'month' | 'week' | 'range'>('month');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
 
+  const [detailTarget, setDetailTarget] = useState<Expense | null>(null);
+  const [showSimulasi, setShowSimulasi] = useState(false);
+  const [simulasiCategory, setSimulasiCategory] = useState('');
+  const [simulasiPct, setSimulasiPct] = useState(10);
   const email = getStoredEmail();
 
   // Background sync: try to refresh localStorage from cloud on mount
@@ -148,6 +158,48 @@ export default function DashboardPage() {
 
     return `conic-gradient(${parts.join(', ')})`;
   }, [categoryData]);
+
+  // ── Financial Health Score ──
+  const categoryBudgets = useMemo(() => getCategoryBudgets(email || 'guest'), [email, refreshKey]);
+
+  const healthScore = useMemo(() => {
+    let score = 0;
+    // 1. Budget compliance (3 pts)
+    if (budget && budget.target > 0) {
+      score += Math.max(0, Math.min(3, (1 - totalExpense / budget.target) * 3));
+    }
+    // 2. Saving rate (3 pts)
+    if (totalIncome > 0) {
+      const rate = (totalIncome - totalExpense) / totalIncome;
+      score += Math.max(0, Math.min(3, rate * 3));
+    }
+    // 3. Category diversity (2 pts)
+    const activeCats = Object.keys(categoryData).length;
+    if (activeCats >= 5) score += 2;
+    else if (activeCats >= 3) score += 1;
+    // 4. Income stability (2 pts)
+    if (totalIncome > 0) score += 2;
+
+    return Math.round(score * 10) / 10;
+  }, [budget, totalExpense, totalIncome, categoryData]);
+
+  const healthLabel = healthScore >= 8 ? 'Sangat Sehat' : healthScore >= 5 ? 'Cukup' : 'Perlu Perhatian';
+  const healthColor = healthScore >= 8 ? '#10B981' : healthScore >= 5 ? '#F59E0B' : '#EF4444';
+
+  // ── What-If Simulator ──
+  const simulasiCategoryTotal = simulasiCategory ? (categoryData[simulasiCategory] || 0) : 0;
+  const simulasiSavings = Math.round(simulasiCategoryTotal * (simulasiPct / 100));
+  const simulasiProjected = totalExpense - simulasiSavings;
+
+  // Saving target info for simulasi
+  const savingTargets = useMemo(
+    () => email ? getSavingTargets(email || 'guest') : [],
+    [email]
+  );
+  const primaryTarget = savingTargets.find((t) => t.id === 'saving');
+  const simulasiTargetMonths = primaryTarget && primaryTarget.target > 0 && simulasiSavings > 0
+    ? Math.round(primaryTarget.target / simulasiSavings)
+    : 0;
 
   const hasExpenses = expenses.length > 0;
 
@@ -352,6 +404,36 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Financial Health Score */}
+      <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+        <div className="relative w-16 h-16 flex-shrink-0">
+          <svg className="w-16 h-16 -rotate-90" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="15.5" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+            <circle
+              cx="18" cy="18" r="15.5" fill="none"
+              stroke={healthColor} strokeWidth="3"
+              strokeDasharray={`${(healthScore / 10) * 100} 100`}
+              strokeLinecap="round"
+            />
+          </svg>
+          <span className="absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums" style={{ color: healthColor }}>
+            {healthScore.toFixed(1)}
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <Heart className="w-4 h-4" style={{ color: healthColor }} />
+            <h3 className="text-sm font-semibold text-gray-800">Skor Kesehatan Finansial</h3>
+          </div>
+          <p className="text-sm font-semibold mt-0.5" style={{ color: healthColor }}>
+            {healthLabel}
+          </p>
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            Dari budget, tabungan, diversifikasi & stabilitas
+          </p>
+        </div>
+      </div>
+
       {/* Pie Chart & Largest Category */}
       <div className="bg-gray-50 rounded-xl p-5">
         <h3 className="text-sm font-semibold text-gray-800 mb-4">
@@ -429,7 +511,100 @@ export default function DashboardPage() {
         <h3 className="text-sm font-semibold text-gray-800 mb-3">
           Rincian per Kategori
         </h3>
-        <CategoryBar data={categoryData} total={totalExpense} />
+        <CategoryBar data={categoryData} total={totalExpense} categoryBudgets={categoryBudgets} />
+      </div>
+
+      {/* What-If Simulator */}
+      <div className="bg-gray-50 rounded-xl overflow-hidden">
+        <button
+          onClick={() => setShowSimulasi(!showSimulasi)}
+          className="w-full flex items-center justify-between px-4 py-3 active:bg-gray-100 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-violet-500" />
+            <span className="text-sm font-semibold text-gray-800">Simulasi Pengeluaran</span>
+          </div>
+          <span className={`text-xs text-gray-400 transition-transform ${showSimulasi ? 'rotate-180' : ''}`}>
+            ▼
+          </span>
+        </button>
+
+        {showSimulasi && (
+          <div className="px-4 pb-4 space-y-3">
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Pilih Kategori</label>
+              <select
+                value={simulasiCategory}
+                onChange={(e) => setSimulasiCategory(e.target.value)}
+                className="w-full h-10 rounded-xl border border-gray-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white"
+              >
+                <option value="">Pilih kategori...</option>
+                {EXPENSE_CATEGORIES.filter((cat) => (categoryData[cat.id] || 0) > 0).map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {simulasiCategory && (
+              <>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">
+                    Kurangi {getCategoryName(simulasiCategory)} sebesar: {simulasiPct}%
+                  </label>
+                  <input
+                    type="range"
+                    min="5"
+                    max="50"
+                    step="5"
+                    value={simulasiPct}
+                    onChange={(e) => setSimulasiPct(parseInt(e.target.value))}
+                    className="w-full accent-violet-500"
+                  />
+                </div>
+
+                <div className="bg-white rounded-xl p-3 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-500">Saat ini ({getCategoryName(simulasiCategory)})</span>
+                    <span className="font-semibold tabular-nums text-gray-900">
+                      {formatRupiah(simulasiCategoryTotal)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-500">Total pengeluaran</span>
+                    <span className="font-semibold tabular-nums text-gray-900">
+                      {formatRupiah(totalExpense)}
+                    </span>
+                  </div>
+                  <div className="border-t border-gray-100 pt-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-emerald-600 font-medium">Jika dikurangi {simulasiPct}%</span>
+                      <span className="font-semibold tabular-nums text-emerald-600">
+                        {formatRupiah(simulasiProjected)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs mt-0.5">
+                      <span className="text-violet-600 font-medium">Hemat</span>
+                      <span className="font-semibold tabular-nums text-violet-600">
+                        {formatRupiah(simulasiSavings)}/bulan
+                      </span>
+                    </div>
+                  </div>
+
+                  {simulasiTargetMonths > 0 && (
+                    <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
+                      <PiggyBank className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-[10px] text-gray-500">
+                        Hemat setara{' '}
+                        <span className="font-semibold text-emerald-600">{simulasiTargetMonths} bulan</span>{' '}
+                        target {primaryTarget?.name || 'Tabungan'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Top Expenses */}
@@ -442,7 +617,8 @@ export default function DashboardPage() {
             {topExpenses.map((exp) => (
               <div
                 key={exp.id}
-                className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3"
+                onClick={() => setDetailTarget(exp)}
+                className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 active:bg-gray-100 transition-colors cursor-pointer"
               >
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
@@ -478,6 +654,12 @@ export default function DashboardPage() {
           description={`Belum ada catatan untuk ${getMonthName(month)}. Tambahkan transaksi pertama kamu!`}
         />
       )}
+
+      {/* Detail Popup */}
+      <DetailPopup
+        transaction={detailTarget}
+        onClose={() => setDetailTarget(null)}
+      />
     </div>
   );
 }

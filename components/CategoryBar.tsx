@@ -14,9 +14,10 @@ interface CategoryBarProps {
   data: Record<string, number>;
   total: number;
   showPercentage?: boolean;
+  categoryBudgets?: Record<string, number>;
 }
 
-export function CategoryBar({ data, total, showPercentage = true }: CategoryBarProps) {
+export function CategoryBar({ data, total, showPercentage = true, categoryBudgets }: CategoryBarProps) {
   const items: CategoryTotal[] = CATEGORIES.map((cat) => ({
     categoryId: cat.id,
     total: data[cat.id] || 0,
@@ -54,6 +55,18 @@ export function CategoryBar({ data, total, showPercentage = true }: CategoryBarP
               </span>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
+              {categoryBudgets && categoryBudgets[item.categoryId] > 0 && (
+                <span
+                  className={`inline-block w-2 h-2 rounded-full ${
+                    item.total >= categoryBudgets[item.categoryId]
+                      ? 'bg-red-500'
+                      : item.total >= categoryBudgets[item.categoryId] * 0.8
+                        ? 'bg-amber-500'
+                        : 'bg-emerald-500'
+                  }`}
+                  title={`Budget: ${formatRupiah(categoryBudgets[item.categoryId])}`}
+                />
+              )}
               <span className="text-sm font-semibold text-gray-900 tabular-nums">
                 {formatRupiah(item.total)}
               </span>

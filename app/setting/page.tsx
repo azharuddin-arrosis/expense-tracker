@@ -21,10 +21,13 @@ import {
   saveBudgetAndSync,
   getExpenses,
   syncAllToCloud,
+  getCategoryBudgets,
+  saveCategoryBudgets,
 } from '@/lib/storage';
 import { formatRupiah, getMonthName } from '@/lib/format';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { getStoredEmail, clearStoredEmail } from '@/lib/cloud';
+import { EXPENSE_CATEGORIES, getCategoryColor } from '@/lib/types';
 
 export default function SettingPage() {
   const router = useRouter();
@@ -46,6 +49,16 @@ export default function SettingPage() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const email = getStoredEmail();
+
+  const [categoryBudgets, setCategoryBudgets] = useState<Record<string, string>>(() => {
+    const saved = getCategoryBudgets(email || 'guest');
+    const formatted: Record<string, string> = {};
+    for (const [cat, val] of Object.entries(saved)) {
+      formatted[cat] = formatTargetInput(val);
+    }
+    return formatted;
+  });
+  const [catBudgetSaved, setCatBudgetSaved] = useState(false);
 
   // Reset sync status after success/error
   useEffect(() => {
@@ -321,6 +334,88 @@ export default function SettingPage() {
             akan menampilkan sisa budget dan peringatan jika pengeluaran mendekati
             atau melebihi target.
           </p>
+        </div>
+      </section>
+
+      {/* ── Per-Category Budget ── */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Target className="w-5 h-5 text-emerald-600" />
+          <h2 className="text-base font-semibold text-gray-800">
+            Budget per Kategori
+          </h2>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+          <p className="text-sm text-gray-600">
+            Atur batas pengeluaran per kategori untuk {getMonthName(currentMonth)}.
+          </p>
+
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {EXPENSE_CATEGORIES.map((cat) => {
+              const currentVal = categoryBudgets[cat.id] || '';
+              return (
+                <div key={cat.id} className="flex items-center gap-3">
+                  <div
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: cat.color }}
+                  />
+                  <span className="text-xs text-gray-700 w-24 flex-shrink-0">
+                    {cat.name}
+                  </span>
+                  <div className="relative flex-1">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rp</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={currentVal}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                        if (raw === '') {
+                          setCategoryBudgets((prev) => ({ ...prev, [cat.id]: '' }));
+                          return;
+                        }
+                        setCategoryBudgets((prev) => ({
+                          ...prev,
+                          [cat.id]: formatTargetInput(parseInt(raw)),
+                        }));
+                      }}
+                      placeholder="0"
+                      className="w-full h-9 pl-8 pr-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => {
+              const email = getStoredEmail() || 'guest';
+              const toSave: Record<string, number> = {};
+              for (const [cat, val] of Object.entries(categoryBudgets)) {
+                const num = parseInt(val.replace(/[^0-9]/g, ''));
+                if (num > 0) toSave[cat] = num;
+              }
+              saveCategoryBudgets(email, toSave);
+              setCatBudgetSaved(true);
+              setTimeout(() => setCatBudgetSaved(false), 2000);
+            }}
+            className={`w-full h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+              catBudgetSaved
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-emerald-500 text-white active:bg-emerald-600'
+            }`}
+          >
+            {catBudgetSaved ? (
+              <>
+                <Check className="w-4 h-4" />
+                Tersimpan
+              </>
+            ) : (
+              'Simpan Budget per Kategori'
+            )}
+          </button>
         </div>
       </section>
 

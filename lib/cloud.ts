@@ -154,16 +154,20 @@ export function getStoredEmail(): string | null {
 
 /**
  * Utility to save email to localStorage.
+ * Dispatches a custom event so the app can react to email changes.
  */
 export function setStoredEmail(email: string): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem('expense-email', email);
+  window.dispatchEvent(new CustomEvent('expense-email-changed', { detail: email }));
 }
 
 /**
  * Utility to clear stored email (logout).
+ * Dispatches a custom event so the app can react to email changes.
  */
 export function clearStoredEmail(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('expense-email');
+  window.dispatchEvent(new CustomEvent('expense-email-changed', { detail: null }));
 }

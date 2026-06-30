@@ -139,6 +139,29 @@ export function getAllMonths(): string[] {
 }
 
 // ═══════════════════════════════════════════════════
+// Per-Category Budgets
+// ═══════════════════════════════════════════════════
+
+const CATEGORY_BUDGET_PREFIX = 'expense-tracker-category-budgets:';
+
+export function getCategoryBudgets(email: string): Record<string, number> {
+  if (!isBrowser()) return {};
+  try {
+    const key = CATEGORY_BUDGET_PREFIX + email;
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveCategoryBudgets(email: string, budgets: Record<string, number>): void {
+  if (!isBrowser()) return;
+  const key = CATEGORY_BUDGET_PREFIX + email;
+  localStorage.setItem(key, JSON.stringify(budgets));
+}
+
+// ═══════════════════════════════════════════════════
 // Recurring Transactions
 // ═══════════════════════════════════════════════════
 
@@ -318,11 +341,14 @@ export async function syncBudgetToCloud(email: string, month: string): Promise<v
 export async function syncAllToCloud(email: string): Promise<void> {
   const { syncAllToCloud: syncAll } = await import('./cloud');
   const transactions = getExpenses();
-  const key = getEmailKey(BUDGET_PREFIX);
-  const data = localStorage.getItem(key);
-  const budgets: Budget[] = data ? JSON.parse(data) : [];
+  const budgetKey = getEmailKey(BUDGET_PREFIX);
+  const budgetData = localStorage.getItem(budgetKey);
+  const budgets: Budget[] = budgetData ? JSON.parse(budgetData) : [];
+  const recurringKey = getEmailKey(RECURRING_PREFIX);
+  const recurringData = localStorage.getItem(recurringKey);
+  const recurring: RecurringTransaction[] = recurringData ? JSON.parse(recurringData) : [];
   try {
-    await syncAll(email, { transactions, budgets });
+    await syncAll(email, { transactions, budgets, recurring });
   } catch {
     console.warn('Full sync failed (offline?)');
   }
@@ -602,7 +628,7 @@ export function computeMonthlySummary(
   }
 
   // Targets
-  const targets = getSavingTargets('guest'); // or email-specific
+  const targets = getSavingTargets(email);
   const savingTarget = targets.find((t) => t.id === 'saving');
   const liburanTarget = targets.find((t) => t.id === 'liburan');
   const customTargets = targets.filter((t) => !['saving', 'liburan'].includes(t.id));
