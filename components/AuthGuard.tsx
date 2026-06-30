@@ -15,9 +15,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const email = getStoredEmail();
 
-    // Skip redirect if on login page
     if (pathname === '/login') {
-      setChecked(true);
+      if (email) {
+        router.replace('/');
+      } else {
+        setChecked(true);
+      }
       return;
     }
 

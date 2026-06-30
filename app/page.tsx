@@ -7,20 +7,17 @@ import {
   TrendingDown,
   Wallet,
   AlertTriangle,
-  Heart,
-  SlidersHorizontal,
-  PiggyBank,
   List,
   Lightbulb,
   FileText,
   PieChart,
   Target,
-  ChevronRight,
+  SlidersHorizontal,
+  Zap,
+  User,
   ArrowUpRight,
   ArrowDownRight,
-  Zap,
-  LayoutGrid,
-  User,
+  ChevronRight,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
@@ -31,7 +28,6 @@ import {
   getBudget,
   getExpensesWithSync,
   getCategoryBudgets,
-  getSavingTargets,
 } from '@/lib/storage';
 import {
   formatRupiah,
@@ -39,7 +35,6 @@ import {
   getMonthName,
   getTodayString,
 } from '@/lib/format';
-import { CategoryBar } from '@/components/CategoryBar';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { DateFilter } from '@/components/DateFilter';
 import { EXPENSE_CATEGORIES, getCategoryColor, getCategoryName, Expense } from '@/lib/types';
@@ -54,21 +49,12 @@ export default function DashboardPage() {
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [filterMode, setFilterMode] = useState<'month' | 'week' | 'range'>('month');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
-
   const [detailTarget, setDetailTarget] = useState<Expense | null>(null);
-  const [showSimulasi, setShowSimulasi] = useState(false);
-  const [simulasiCategory, setSimulasiCategory] = useState('');
-  const [simulasiPct, setSimulasiPct] = useState(10);
   const email = getStoredEmail();
 
   useEffect(() => {
-    if (!email) {
-      setCloudStatus('local');
-      return;
-    }
-
+    if (!email) { setCloudStatus('local'); return; }
     let cancelled = false;
-
     const syncFromCloud = async () => {
       try {
         await getExpensesWithSync(email);
@@ -77,133 +63,51 @@ export default function DashboardPage() {
         if (!cancelled) setCloudStatus('local');
       }
     };
-
     syncFromCloud();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [email, refreshKey]);
 
   const expenses = useMemo(() => {
-    if (filterMode === 'month' || !dateRange) {
-      return getExpensesByMonth(month);
-    }
+    if (filterMode === 'month' || !dateRange) return getExpensesByMonth(month);
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'out');
   }, [month, filterMode, dateRange, refreshKey]);
 
   const incomes = useMemo(() => {
-    if (filterMode === 'month' || !dateRange) {
-      return getIncomesByMonth(month);
-    }
+    if (filterMode === 'month' || !dateRange) return getIncomesByMonth(month);
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'in');
   }, [month, filterMode, dateRange, refreshKey]);
 
-  const categoryData = useMemo(
-    () => getExpensesByCategory(month),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [month, refreshKey]
-  );
+  const categoryData = useMemo(() => getExpensesByCategory(month), [month, refreshKey]);
+  const budget = useMemo(() => getBudget(month), [month, refreshKey]);
 
-  const budget = useMemo(
-    () => getBudget(month),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [month, refreshKey]
-  );
-
-  const todayStr = getTodayString();
   const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
   const totalIncome = incomes.reduce((sum, e) => sum + e.amount, 0);
   const balance = totalIncome - totalExpense;
   const remaining = budget ? budget.target - totalExpense : null;
-  const usagePercent =
-    budget && budget.target > 0
-      ? (totalExpense / budget.target) * 100
-      : 0;
+  const usagePercent = budget && budget.target > 0 ? (totalExpense / budget.target) * 100 : 0;
   const isWarning = usagePercent >= 80 && usagePercent < 100;
   const isOverspent = usagePercent >= 100;
 
-  const topExpenses = [...expenses]
-    .sort((a, b) => b.amount - a.amount)
-    .slice(0, 3);
+  const recentExpenses = [...expenses]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
 
-  const categoryEntries = useMemo(() => {
+  const topCategories = useMemo(() => {
     return Object.entries(categoryData)
       .map(([id, total]) => ({
-        id,
-        total,
+        id, total,
         name: getCategoryName(id),
         color: getCategoryColor(id),
         percentage: totalExpense > 0 ? (total / totalExpense) * 100 : 0,
       }))
-      .sort((a, b) => b.total - a.total);
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 4);
   }, [categoryData, totalExpense]);
 
-  const largestCategory = categoryEntries.length > 0 ? categoryEntries[0] : null;
-
-  const pieGradient = useMemo(() => {
-    const items = EXPENSE_CATEGORIES.filter(
-      (cat) => (categoryData[cat.id] || 0) > 0
-    );
-    if (items.length === 0) return 'conic-gradient(#e5e7eb 0deg 360deg)';
-
-    const total = items.reduce(
-      (sum, cat) => sum + (categoryData[cat.id] || 0),
-      0
-    );
-    let currentDeg = 0;
-    const parts: string[] = [];
-
-    for (const cat of items) {
-      const pct = ((categoryData[cat.id] || 0) / total) * 360;
-      const start = currentDeg;
-      currentDeg += pct;
-      parts.push(`${cat.color} ${start}deg ${currentDeg}deg`);
-    }
-
-    return `conic-gradient(${parts.join(', ')})`;
-  }, [categoryData]);
-
-  const categoryBudgets = useMemo(() => getCategoryBudgets(email || 'guest'), [email, refreshKey]);
-
-  const healthScore = useMemo(() => {
-    let score = 0;
-    if (budget && budget.target > 0) {
-      score += Math.max(0, Math.min(3, (1 - totalExpense / budget.target) * 3));
-    }
-    if (totalIncome > 0) {
-      const rate = (totalIncome - totalExpense) / totalIncome;
-      score += Math.max(0, Math.min(3, rate * 3));
-    }
-    const activeCats = Object.keys(categoryData).length;
-    if (activeCats >= 5) score += 2;
-    else if (activeCats >= 3) score += 1;
-    if (totalIncome > 0) score += 2;
-
-    return Math.round(score * 10) / 10;
-  }, [budget, totalExpense, totalIncome, categoryData]);
-
-  const healthLabel = healthScore >= 8 ? 'Sangat Sehat' : healthScore >= 5 ? 'Cukup' : 'Perlu Perhatian';
-  const healthColor = healthScore >= 8 ? '#10B981' : healthScore >= 5 ? '#F59E0B' : '#EF4444';
-
-  const simulasiCategoryTotal = simulasiCategory ? (categoryData[simulasiCategory] || 0) : 0;
-  const simulasiSavings = Math.round(simulasiCategoryTotal * (simulasiPct / 100));
-  const simulasiProjected = totalExpense - simulasiSavings;
-
-  const savingTargets = useMemo(
-    () => email ? getSavingTargets(email || 'guest') : [],
-    [email]
-  );
-  const primaryTarget = savingTargets.find((t) => t.id === 'saving');
-  const simulasiTargetMonths = primaryTarget && primaryTarget.target > 0 && simulasiSavings > 0
-    ? Math.round(primaryTarget.target / simulasiSavings)
-    : 0;
-
-  const hasExpenses = expenses.length > 0;
+  const hasAny = expenses.length > 0 || incomes.length > 0;
 
   return (
     <>
-      {/* ── Header ── */}
       <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4">
         <div className="h-12 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -214,11 +118,11 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             {cloudStatus === 'checking' ? (
-              <div className="w-2 h-2 rounded-full bg-gray-300" title="Memeriksa koneksi..." />
+              <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" />
             ) : cloudStatus === 'connected' ? (
-              <div className="w-2 h-2 rounded-full bg-emerald-500" title="Tersimpan di Cloud" />
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
             ) : (
-              <div className="w-2 h-2 rounded-full bg-gray-400" title="Hanya Lokal" />
+              <div className="w-2 h-2 rounded-full bg-gray-400" />
             )}
             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
               <User className="w-4 h-4 text-gray-500" />
@@ -227,17 +131,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="px-4 pt-5 pb-6 space-y-5">
+      <div className="px-4 pt-5 pb-6 space-y-4">
 
-      {/* ── Saldo Card (Gojek-style gradient) ── */}
       <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 p-5 text-white shadow-lg">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[11px] font-medium text-emerald-100 tracking-wide uppercase">
             Saldo Bersih
           </p>
-          <div className="flex items-center gap-1 text-emerald-200">
-            <Wallet className="w-3.5 h-3.5" />
-          </div>
+          <Wallet className="w-3.5 h-3.5 text-emerald-200" />
         </div>
         <p className="text-3xl font-bold tracking-tight tabular-nums mb-4">
           {formatRupiah(balance)}
@@ -268,7 +169,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Quick Action Grid (Gojek-style) ── */}
       <div className="grid grid-cols-3 gap-y-4 gap-x-2">
         {[
           { label: 'Riwayat', icon: List, path: '/riwayat', color: '#6366F1', bg: '#EEF2FF' },
@@ -297,7 +197,6 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* ── Date Filter ── */}
       <DateFilter
         month={month}
         onMonthChange={setMonth}
@@ -307,7 +206,6 @@ export default function DashboardPage() {
         onFilterModeChange={setFilterMode}
       />
 
-      {/* ── Budget Card (White Card with Shadow) ── */}
       {budget ? (
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
@@ -319,28 +217,20 @@ export default function DashboardPage() {
               ) : (
                 <Zap className="w-4 h-4 text-emerald-500" />
               )}
-              <span className="text-sm font-semibold text-gray-800">
-                Budget Bulanan
-              </span>
+              <span className="text-sm font-semibold text-gray-800">Budget Bulanan</span>
             </div>
             <span className="text-xs font-medium text-gray-500 tabular-nums">
               {formatRupiah(budget.target)}
             </span>
           </div>
-
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                isOverspent
-                  ? 'bg-red-500'
-                  : isWarning
-                    ? 'bg-amber-500'
-                    : 'bg-emerald-500'
+                isOverspent ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'
               }`}
               style={{ width: `${Math.min(usagePercent, 100)}%` }}
             />
           </div>
-
           <div className="flex items-center justify-between">
             {isOverspent ? (
               <span className="text-xs font-semibold text-red-600">
@@ -357,243 +247,62 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+          <span className="text-sm text-gray-500">Belum ada target budget</span>
+          <a href="/target" className="text-xs font-semibold text-emerald-600">Atur Target</a>
+        </div>
+      )}
+
+      {hasAny && topCategories.length > 0 && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">
-              Belum ada target budget
-            </span>
-            <a
-              href="/setting"
-              className="text-xs font-semibold text-emerald-600 active:text-emerald-700"
+            <h3 className="text-sm font-semibold text-gray-800">Kategori Teratas</h3>
+            <button
+              onClick={() => router.push('/statistik')}
+              className="text-xs font-medium text-emerald-600 flex items-center gap-0.5"
             >
-              Atur Target
-            </a>
+              Detail <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="space-y-2.5">
+            {topCategories.map((cat, idx) => (
+              <div key={cat.id} className="flex items-center gap-3">
+                <span className="text-[11px] font-medium text-gray-400 w-4 tabular-nums text-center">
+                  {idx + 1}
+                </span>
+                <div
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: cat.color }}
+                />
+                <span className="text-xs text-gray-700 flex-1 truncate">{cat.name}</span>
+                <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: cat.color, width: `${cat.percentage}%` }}
+                  />
+                </div>
+                <span className="text-xs font-semibold text-gray-900 tabular-nums w-16 text-right">
+                  {formatRupiah(cat.total)}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* ── Health Score (compact card) ── */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4">
-        <div className="relative w-14 h-14 flex-shrink-0">
-          <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
-            <circle cx="18" cy="18" r="15.5" fill="none" stroke="#f3f4f6" strokeWidth="3" />
-            <circle
-              cx="18" cy="18" r="15.5" fill="none"
-              stroke={healthColor} strokeWidth="3"
-              strokeDasharray={`${(healthScore / 10) * 100} 100`}
-              strokeLinecap="round"
-            />
-          </svg>
-          <span className="absolute inset-0 flex items-center justify-center text-xs font-bold tabular-nums" style={{ color: healthColor }}>
-            {healthScore.toFixed(1)}
-          </span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <Heart className="w-3.5 h-3.5" style={{ color: healthColor }} />
-            <h3 className="text-sm font-semibold text-gray-800">Skor Kesehatan</h3>
-          </div>
-          <p className="text-xs font-semibold mt-0.5" style={{ color: healthColor }}>
-            {healthLabel}
-          </p>
-        </div>
-        <ChevronRight className="w-4 h-4 text-gray-300" />
-      </div>
-
-      {/* ── Pie Chart (white card) ── */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-800">
-            Pengeluaran per Kategori
-          </h3>
-          {largestCategory && (
-            <span
-              className="inline-block w-2.5 h-2.5 rounded-full"
-              style={{ backgroundColor: largestCategory.color }}
-            />
-          )}
-        </div>
-
-        {hasExpenses ? (
-          <div className="flex flex-col items-center gap-4">
-            <div
-              className="w-40 h-40 rounded-full shadow-sm"
-              style={{ background: pieGradient }}
-            />
-
-            {largestCategory && (
-              <div className="bg-gray-50 rounded-xl px-4 py-2.5 w-full text-center">
-                <p className="text-xs text-gray-600">
-                  <span
-                    className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-middle"
-                    style={{ backgroundColor: largestCategory.color }}
-                  />
-                  <span className="font-semibold text-gray-900">
-                    {largestCategory.name}
-                  </span>{' '}
-                  terbesar ({largestCategory.percentage.toFixed(0)}%)
-                </p>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 w-full">
-              {EXPENSE_CATEGORIES.filter(
-                (cat) => (categoryData[cat.id] || 0) > 0
-              )
-                .sort(
-                  (a, b) =>
-                    (categoryData[b.id] || 0) - (categoryData[a.id] || 0)
-                )
-                .map((cat) => {
-                  const pct =
-                    totalExpense > 0
-                      ? ((categoryData[cat.id] || 0) / totalExpense) * 100
-                      : 0;
-                  return (
-                    <div key={cat.id} className="flex items-center gap-2">
-                      <div
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                      <span className="text-xs text-gray-600 truncate">
-                        {cat.name}
-                      </span>
-                      <span className="text-xs text-gray-400 tabular-nums ml-auto">
-                        {pct.toFixed(0)}%
-                      </span>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        ) : (
-          <p className="text-center py-6 text-sm text-gray-400">
-            Belum ada pengeluaran bulan ini
-          </p>
-        )}
-      </div>
-
-      {/* ── Category Breakdown Bars ── */}
-      <div>
-        <h3 className="text-sm font-semibold text-gray-800 mb-3 px-0.5">
-          Rincian per Kategori
-        </h3>
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <CategoryBar data={categoryData} total={totalExpense} categoryBudgets={categoryBudgets} />
-        </div>
-      </div>
-
-      {/* ── What-If Simulator ── */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <button
-          onClick={() => setShowSimulasi(!showSimulasi)}
-          className="w-full flex items-center justify-between px-4 py-3.5 active:bg-gray-50 transition-colors"
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center">
-              <SlidersHorizontal className="w-4 h-4 text-violet-500" />
-            </div>
-            <span className="text-sm font-semibold text-gray-800">Simulasi Pengeluaran</span>
-          </div>
-          <span className={`text-xs text-gray-400 transition-transform ${showSimulasi ? 'rotate-180' : ''}`}>
-            ▼
-          </span>
-        </button>
-
-        {showSimulasi && (
-          <div className="px-4 pb-4 space-y-3">
-            <div>
-              <label className="text-xs text-gray-500 mb-1.5 block">Pilih Kategori</label>
-              <select
-                value={simulasiCategory}
-                onChange={(e) => setSimulasiCategory(e.target.value)}
-                className="w-full h-10 rounded-xl border border-gray-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white"
-              >
-                <option value="">Pilih kategori...</option>
-                {EXPENSE_CATEGORIES.filter((cat) => (categoryData[cat.id] || 0) > 0).map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {simulasiCategory && (
-              <>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1.5 block">
-                    Kurangi {getCategoryName(simulasiCategory)} sebesar: {simulasiPct}%
-                  </label>
-                  <input
-                    type="range"
-                    min="5"
-                    max="50"
-                    step="5"
-                    value={simulasiPct}
-                    onChange={(e) => setSimulasiPct(parseInt(e.target.value))}
-                    className="w-full accent-violet-500"
-                  />
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Saat ini ({getCategoryName(simulasiCategory)})</span>
-                    <span className="font-semibold tabular-nums text-gray-900">
-                      {formatRupiah(simulasiCategoryTotal)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Total pengeluaran</span>
-                    <span className="font-semibold tabular-nums text-gray-900">
-                      {formatRupiah(totalExpense)}
-                    </span>
-                  </div>
-                  <div className="border-t border-gray-100 pt-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-emerald-600 font-medium">Jika dikurangi {simulasiPct}%</span>
-                      <span className="font-semibold tabular-nums text-emerald-600">
-                        {formatRupiah(simulasiProjected)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs mt-0.5">
-                      <span className="text-violet-600 font-medium">Hemat</span>
-                      <span className="font-semibold tabular-nums text-violet-600">
-                        {formatRupiah(simulasiSavings)}/bulan
-                      </span>
-                    </div>
-                  </div>
-
-                  {simulasiTargetMonths > 0 && (
-                    <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
-                      <PiggyBank className="w-3.5 h-3.5 text-emerald-500" />
-                      <span className="text-[10px] text-gray-500">
-                        Hemat setara{' '}
-                        <span className="font-semibold text-emerald-600">{simulasiTargetMonths} bulan</span>{' '}
-                        target {primaryTarget?.name || 'Tabungan'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ── Top Expenses ── */}
-      {topExpenses.length > 0 && (
+      {recentExpenses.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3 px-0.5">
-            <h3 className="text-sm font-semibold text-gray-800">
-              Pengeluaran Terbesar
-            </h3>
+            <h3 className="text-sm font-semibold text-gray-800">Pengeluaran Terbaru</h3>
             <button
               onClick={() => router.push('/riwayat')}
-              className="text-xs font-medium text-emerald-600"
+              className="text-xs font-medium text-emerald-600 flex items-center gap-0.5"
             >
-              Lihat Semua
+              Semua <ChevronRight className="w-3 h-3" />
             </button>
           </div>
           <div className="space-y-2">
-            {topExpenses.map((exp) => (
+            {recentExpenses.map((exp) => (
               <div
                 key={exp.id}
                 onClick={() => setDetailTarget(exp)}
@@ -601,9 +310,7 @@ export default function DashboardPage() {
               >
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{
-                    backgroundColor: getCategoryColor(exp.category) + '15',
-                  }}
+                  style={{ backgroundColor: getCategoryColor(exp.category) + '15' }}
                 >
                   <CategoryIcon
                     categoryId={exp.category}
@@ -626,15 +333,13 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Empty State ── */}
-      {expenses.length === 0 && incomes.length === 0 && (
+      {!hasAny && (
         <EmptyState
           title="Belum ada transaksi"
-          description={`Belum ada catatan untuk ${getMonthName(month)}. Tambahkan transaksi pertama kamu!`}
+          description={`Belum ada catatan untuk ${getMonthName(month)}. Tambahkan transaksi pertama!`}
         />
       )}
 
-      {/* ── Detail Popup ── */}
       <DetailPopup
         transaction={detailTarget}
         onClose={() => setDetailTarget(null)}
