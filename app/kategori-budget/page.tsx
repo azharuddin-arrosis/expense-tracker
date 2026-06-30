@@ -1,20 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Target, Check, ChevronLeft, SlidersHorizontal } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Target, Check, SlidersHorizontal } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { getCategoryBudgets, saveCategoryBudgets } from '@/lib/storage';
 import { formatRupiah, getMonthName } from '@/lib/format';
 import { getStoredEmail } from '@/lib/cloud';
 import { EXPENSE_CATEGORIES } from '@/lib/types';
+import { PageHeader } from '@/components/PageHeader';
 
 function formatTargetInput(num: number): string {
   return new Intl.NumberFormat('id-ID').format(num);
 }
 
 export default function KategoriBudgetPage() {
-  const router = useRouter();
   const { currentMonth } = useAppContext();
   const email = getStoredEmail() || 'guest';
 
@@ -29,18 +28,10 @@ export default function KategoriBudgetPage() {
   const [saved, setSaved] = useState(false);
 
   return (
-    <div className="px-4 pt-4 pb-6 space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => router.back()}
-          className="w-8 h-8 rounded-full flex items-center justify-center active:bg-gray-100 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <h1 className="text-xl font-bold text-gray-900">Budget per Kategori</h1>
-      </div>
+    <>
+      <PageHeader title="Budget per Kategori" />
 
+      <div className="px-4 pb-6 space-y-4">
       <div className="flex items-center gap-2">
         <SlidersHorizontal className="w-5 h-5 text-emerald-600" />
         <h2 className="text-base font-semibold text-gray-800">
@@ -116,8 +107,9 @@ export default function KategoriBudgetPage() {
           ) : (
             'Simpan Budget per Kategori'
           )}
-        </button>
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

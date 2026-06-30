@@ -1,19 +1,18 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Target, Check, ChevronLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Target, Check } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { getBudget, saveBudgetAndSync } from '@/lib/storage';
 import { formatRupiah, getMonthName } from '@/lib/format';
 import { getStoredEmail } from '@/lib/cloud';
+import { PageHeader } from '@/components/PageHeader';
 
 function formatTargetInput(num: number): string {
   return new Intl.NumberFormat('id-ID').format(num);
 }
 
 export default function TargetPage() {
-  const router = useRouter();
   const { refreshKey, currentMonth, refreshData } = useAppContext();
   const email = getStoredEmail();
 
@@ -49,18 +48,10 @@ export default function TargetPage() {
   };
 
   return (
-    <div className="px-4 pt-4 pb-6 space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => router.back()}
-          className="w-8 h-8 rounded-full flex items-center justify-center active:bg-gray-100 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <h1 className="text-xl font-bold text-gray-900">Target Bulanan</h1>
-      </div>
+    <>
+      <PageHeader title="Target Bulanan" />
 
+      <div className="px-4 pb-6 space-y-4">
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Target className="w-5 h-5 text-emerald-600" />
@@ -129,5 +120,6 @@ export default function TargetPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

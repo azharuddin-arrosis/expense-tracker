@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getStoredEmail } from '@/lib/cloud';
 import { BottomNav } from '@/components/BottomNav';
+import { FAB } from '@/components/FAB';
 import { ExpenseFormGlobal } from '@/components/ExpenseFormGlobal';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -44,7 +45,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // All other pages get the standard app shell
   return (
     <div className="min-h-screen max-w-[480px] mx-auto bg-white shadow-sm relative">
-      <main className="pb-20 min-h-screen">{children}</main>
+      <main className="pb-24 min-h-screen">{children}</main>
+      <FAB />
       <BottomNav />
       <ExpenseFormGlobal />
     </div>

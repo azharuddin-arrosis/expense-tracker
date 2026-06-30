@@ -23,6 +23,7 @@ import { getStoredEmail } from '@/lib/cloud';
 import { Expense, getCategoryName, getCategoryColor } from '@/lib/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { DetailPopup } from '@/components/DetailPopup';
+import { PageHeader } from '@/components/PageHeader';
 
 export default function RingkasanPage() {
   const { refreshKey } = useAppContext();
@@ -100,10 +101,10 @@ export default function RingkasanPage() {
   }, [month, email, summary, refreshKey]);
 
   return (
-    <div className="px-4 pt-4 pb-6 space-y-4">
-      {/* Header */}
-      <h1 className="text-xl font-bold text-gray-900">Rekap Bulanan</h1>
+    <>
+      <PageHeader title="Rekap Bulanan" />
 
+      <div className="px-4 pb-6 space-y-4">
       {/* Month Navigator */}
       <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
         <button onClick={prevMonth} className="p-1 rounded-lg active:bg-gray-200 transition-colors">
@@ -418,6 +419,7 @@ export default function RingkasanPage() {
         onClose={() => setSelectedTx(null)}
       />
     </div>
+    </>
   );
 }
 

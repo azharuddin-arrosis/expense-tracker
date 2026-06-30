@@ -22,6 +22,7 @@ import {
   computeMonthlySummary,
 } from '@/lib/storage';
 import { formatRupiah, getMonthName, getCurrentMonthString, prevMonth } from '@/lib/format';
+import { PageHeader } from '@/components/PageHeader';
 import { getStoredEmail } from '@/lib/cloud';
 import {
   EXPENSE_CATEGORIES,
@@ -141,19 +142,12 @@ export default function WawasanPage() {
   const hasData = expenses.length > 0 || incomes.length > 0;
 
   return (
-    <div className="px-4 pt-4 pb-6 space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <Lightbulb className="w-5 h-5 text-emerald-600" />
-        <h1 className="text-xl font-bold text-gray-900">Wawasan</h1>
-      </div>
+    <>
+      <PageHeader title="Wawasan" subtitle={`Analisis keuangan untuk ${getMonthName(month)}`} />
 
+      <div className="px-4 pb-6 space-y-4">
       {hasData ? (
         <>
-          <p className="text-xs text-gray-400">
-            Analisis keuangan untuk {getMonthName(month)}
-          </p>
-
           {/* 1. Largest Category */}
           {largestCat.id && (
             <InsightCard icon={TrendingUp} title="Kategori Terbesar" color="text-red-500">
@@ -308,5 +302,6 @@ export default function WawasanPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -15,6 +15,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryBar } from '@/components/CategoryBar';
 import { DateFilter } from '@/components/DateFilter';
 import { EmptyState } from '@/components/EmptyState';
+import { PageHeader } from '@/components/PageHeader';
 
 function getLast6Months(from: string): string[] {
   const months: string[] = [];
@@ -117,10 +118,10 @@ export default function StatistikPage() {
   const hasData = expenses.length > 0;
 
   return (
-    <div className="px-4 pt-4 pb-6 space-y-4">
-      {/* Header */}
-      <h1 className="text-xl font-bold text-gray-900">Statistik</h1>
+    <>
+      <PageHeader title="Statistik" />
 
+      <div className="px-4 pb-6 space-y-4">
       {/* Date Filter */}
       <DateFilter
         month={month}
@@ -320,5 +321,6 @@ export default function StatistikPage() {
         />
       )}
     </div>
+    </>
   );
 }

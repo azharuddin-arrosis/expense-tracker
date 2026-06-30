@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search, Trash2, Pencil, TrendingDown, TrendingUp } from 'lucide-react';
+import { Search, Trash2, Pencil, TrendingDown, TrendingUp, ChevronLeft } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { getTransactionsByMonth, getTransactionsByDateRange, deleteExpenseAndSync } from '@/lib/storage';
 import { formatRupiah, formatDate, formatDateFull, getMonthName, getCurrentMonthString } from '@/lib/format';
@@ -12,6 +12,7 @@ import { DateFilter } from '@/components/DateFilter';
 import { DetailPopup } from '@/components/DetailPopup';
 import { EmptyState } from '@/components/EmptyState';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { PageHeader } from '@/components/PageHeader';
 
 export default function RiwayatPage() {
   const { refreshKey, refreshData, setShowAddExpense, setEditTarget } = useAppContext();
@@ -71,10 +72,10 @@ export default function RiwayatPage() {
   }, [filtered]);
 
   return (
-    <div className="px-4 pt-4 pb-6 space-y-4">
-      {/* Header */}
-      <h1 className="text-xl font-bold text-gray-900">Riwayat</h1>
+    <>
+      <PageHeader title="Riwayat" />
 
+      <div className="px-4 pb-6 space-y-4">
       {/* Date Filter */}
       <DateFilter
         month={month}
@@ -255,5 +256,6 @@ export default function RiwayatPage() {
         onClose={() => setDetailTarget(null)}
       />
     </div>
+    </>
   );
 }

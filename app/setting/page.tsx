@@ -26,6 +26,7 @@ import {
 } from '@/lib/storage';
 import { formatRupiah, getMonthName } from '@/lib/format';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { PageHeader } from '@/components/PageHeader';
 import { getStoredEmail, clearStoredEmail } from '@/lib/cloud';
 import { EXPENSE_CATEGORIES, getCategoryColor } from '@/lib/types';
 
@@ -174,10 +175,10 @@ export default function SettingPage() {
   };
 
   return (
-    <div className="px-4 pt-4 pb-6 space-y-4">
-      {/* Header */}
-      <h1 className="text-xl font-bold text-gray-900">Pengaturan</h1>
+    <>
+      <PageHeader title="Pengaturan" />
 
+      <div className="px-4 pb-6 space-y-4">
       {/* ── Akun & Cloud ── */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
@@ -520,5 +521,6 @@ export default function SettingPage() {
         onCancel={() => setShowLogoutConfirm(false)}
       />
     </div>
+    </>
   );
 }
