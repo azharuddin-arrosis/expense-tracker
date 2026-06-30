@@ -24,6 +24,7 @@ export default function RiwayatPage() {
   const [filterCat, setFilterCat] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [detailTarget, setDetailTarget] = useState<Expense | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const allExpenses = useMemo(() => {
     if (!synced && email) return [];
@@ -53,9 +54,14 @@ export default function RiwayatPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await deleteExpenseAndSync(deleteTarget, email);
-    refreshData();
-    setDeleteTarget(null);
+    setDeleteError(null);
+    try {
+      await deleteExpenseAndSync(deleteTarget, email);
+      refreshData();
+      setDeleteTarget(null);
+    } catch (err: any) {
+      setDeleteError(err.message || 'Gagal menghapus transaksi dari cloud');
+    }
   };
 
   const totalFiltered = filtered.reduce((sum, e) => sum + e.amount, 0);
@@ -90,6 +96,12 @@ export default function RiwayatPage() {
       <PageHeader title="Riwayat" />
 
       <div className="px-4 pt-5 pb-6 space-y-4">
+      {deleteError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs flex items-center justify-between">
+          <span>{deleteError}</span>
+          <button onClick={() => setDeleteError(null)} className="font-bold ml-2">OK</button>
+        </div>
+      )}
       {/* Date Filter */}
       <DateFilter
         month={month}

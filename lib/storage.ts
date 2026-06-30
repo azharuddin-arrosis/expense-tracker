@@ -442,6 +442,7 @@ export async function deleteExpenseAndSync(
       await deleteTransactionFromCloud(email, id);
     } catch (err) {
       console.warn('Delete sync to cloud failed:', err);
+      throw err; // Re-throw the error so the caller knows
     }
   }
 }
