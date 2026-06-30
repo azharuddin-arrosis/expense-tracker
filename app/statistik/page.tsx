@@ -136,19 +136,19 @@ export default function StatistikPage() {
         <>
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-gray-50 rounded-xl p-3 text-center">
+            <div className="bg-white rounded-2xl shadow-sm p-3 text-center">
               <p className="text-xs text-gray-500 mb-0.5">Total</p>
               <p className="text-sm font-bold text-gray-900 tabular-nums">
                 {formatRupiah(totalMonth)}
               </p>
             </div>
-            <div className="bg-gray-50 rounded-xl p-3 text-center">
+            <div className="bg-white rounded-2xl shadow-sm p-3 text-center">
               <p className="text-xs text-gray-500 mb-0.5">Rata-rata</p>
               <p className="text-sm font-bold text-gray-900 tabular-nums">
                 {formatRupiah(Math.round(avgPerDay))}
               </p>
             </div>
-            <div className="bg-gray-50 rounded-xl p-3 text-center">
+            <div className="bg-white rounded-2xl shadow-sm p-3 text-center">
               <p className="text-xs text-gray-500 mb-0.5">Transaksi</p>
               <p className="text-sm font-bold text-gray-900 tabular-nums">
                 {transactionCount}
@@ -158,7 +158,7 @@ export default function StatistikPage() {
 
           {/* MoM Comparison & Biggest Change */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-gray-50 rounded-xl p-3">
+            <div className="bg-white rounded-2xl shadow-sm p-3">
               <p className="text-xs text-gray-500 mb-1">vs Bulan Lalu</p>
               <div className="flex items-center gap-1">
                 {momChange > 0 ? (
@@ -175,7 +175,7 @@ export default function StatistikPage() {
               </p>
             </div>
             {biggestChangeCat.id && (
-              <div className="bg-gray-50 rounded-xl p-3">
+              <div className="bg-white rounded-2xl shadow-sm p-3">
                 <p className="text-xs text-gray-500 mb-1">Perubahan Terbesar</p>
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryColor(biggestChangeCat.id) }} />
@@ -192,7 +192,7 @@ export default function StatistikPage() {
 
           {/* SVG Trend Chart */}
           {trendData.some((d) => d.expense > 0 || d.income > 0) && (
-            <div className="bg-gray-50 rounded-xl p-4">
+            <div className="bg-white rounded-2xl shadow-sm p-4">
               <h3 className="text-sm font-semibold text-gray-800 mb-3">Tren 6 Bulan</h3>
               <svg viewBox={`0 0 ${chartW} ${chartH + 20}`} className="w-full h-auto">
                 {/* Y-axis grid lines */}
@@ -260,7 +260,7 @@ export default function StatistikPage() {
           )}
 
           {/* Pie Chart */}
-          <div className="bg-gray-50 rounded-xl p-5">
+          <div className="bg-white rounded-2xl shadow-sm p-5">
             <h3 className="text-sm font-semibold text-gray-800 mb-4">
               Pie Chart Kategori
             </h3>

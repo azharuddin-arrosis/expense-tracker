@@ -39,7 +39,7 @@ export default function KategoriBudgetPage() {
         </h2>
       </div>
 
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+      <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
         <p className="text-sm text-gray-600">
           Atur batas pengeluaran per kategori untuk {getMonthName(currentMonth)}.
         </p>

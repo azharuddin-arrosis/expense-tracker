@@ -51,7 +51,7 @@ interface InsightCardProps {
 
 function InsightCard({ icon: Icon, title, children, color }: InsightCardProps) {
   return (
-    <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+    <div className="bg-white rounded-2xl shadow-sm p-4 space-y-2">
       <div className="flex items-center gap-2">
         <Icon className={`w-4 h-4 ${color || 'text-emerald-600'}`} />
         <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
@@ -294,7 +294,7 @@ export default function WawasanPage() {
           )}
         </>
       ) : (
-        <div className="bg-gray-50 rounded-xl p-8 text-center">
+        <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
           <Lightbulb className="w-8 h-8 text-gray-300 mx-auto mb-3" />
           <p className="text-sm text-gray-500">
             Belum ada data untuk {getMonthName(month)}. Wawasan akan muncul setelah kamu mencatat transaksi.

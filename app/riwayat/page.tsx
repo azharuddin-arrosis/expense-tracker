@@ -134,7 +134,7 @@ export default function RiwayatPage() {
 
       {/* Total filtered */}
       {filtered.length > 0 && (
-        <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-2.5">
+        <div className="flex items-center justify-between bg-white rounded-2xl shadow-sm px-4 py-2.5">
           <span className="text-sm text-gray-600">
             {filtered.length} transaksi
           </span>
@@ -157,7 +157,7 @@ export default function RiwayatPage() {
                   <div
                     key={exp.id}
                     onClick={() => setDetailTarget(exp)}
-                    className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-100 active:bg-gray-50 transition-colors cursor-pointer"
+                    className="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl shadow-sm active:bg-gray-50 transition-colors cursor-pointer"
                   >
                     <div className="relative flex-shrink-0">
                       <div

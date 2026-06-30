@@ -188,7 +188,7 @@ export default function SettingPage() {
           </h2>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
           {/* Email */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -277,7 +277,7 @@ export default function SettingPage() {
           </h2>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
           <p className="text-sm text-gray-600">
             Atur target pengeluaran untuk{' '}
             <span className="font-semibold text-gray-800">
@@ -347,7 +347,7 @@ export default function SettingPage() {
           </h2>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
           <p className="text-sm text-gray-600">
             Atur batas pengeluaran per kategori untuk {getMonthName(currentMonth)}.
           </p>
@@ -429,7 +429,7 @@ export default function SettingPage() {
           </h2>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
           <p className="text-sm text-gray-600">
             Download atau salin data pengeluaran untuk backup atau analisis
             lebih lanjut.

@@ -202,28 +202,32 @@ export default function DashboardPage() {
   const hasExpenses = expenses.length > 0;
 
   return (
-    <div className="px-4 pt-4 pb-6 space-y-5">
+    <>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
-            <Wallet className="w-4 h-4 text-white" />
+      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4">
+        <div className="h-12 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
+              <Wallet className="w-4 h-4 text-white" />
+            </div>
+            <h1 className="text-lg font-bold text-gray-900">Duit</h1>
           </div>
-          <h1 className="text-lg font-bold text-gray-900">Duit</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {cloudStatus === 'checking' ? (
-            <div className="w-2 h-2 rounded-full bg-gray-300" title="Memeriksa koneksi..." />
-          ) : cloudStatus === 'connected' ? (
-            <div className="w-2 h-2 rounded-full bg-emerald-500" title="Tersimpan di Cloud" />
-          ) : (
-            <div className="w-2 h-2 rounded-full bg-gray-400" title="Hanya Lokal" />
-          )}
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-            <User className="w-4 h-4 text-gray-500" />
+          <div className="flex items-center gap-2">
+            {cloudStatus === 'checking' ? (
+              <div className="w-2 h-2 rounded-full bg-gray-300" title="Memeriksa koneksi..." />
+            ) : cloudStatus === 'connected' ? (
+              <div className="w-2 h-2 rounded-full bg-emerald-500" title="Tersimpan di Cloud" />
+            ) : (
+              <div className="w-2 h-2 rounded-full bg-gray-400" title="Hanya Lokal" />
+            )}
+            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+              <User className="w-4 h-4 text-gray-500" />
+            </div>
           </div>
         </div>
       </div>
+
+      <div className="px-4 pt-5 pb-6 space-y-5">
 
       {/* ── Saldo Card (Gojek-style gradient) ── */}
       <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 p-5 text-white shadow-lg">
@@ -593,7 +597,7 @@ export default function DashboardPage() {
               <div
                 key={exp.id}
                 onClick={() => setDetailTarget(exp)}
-                className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm active:bg-gray-50 transition-colors cursor-pointer"
+                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 shadow-sm active:bg-gray-50 transition-colors cursor-pointer"
               >
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -636,5 +640,6 @@ export default function DashboardPage() {
         onClose={() => setDetailTarget(null)}
       />
     </div>
+    </>
   );
 }

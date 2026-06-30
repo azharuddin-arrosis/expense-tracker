@@ -60,7 +60,7 @@ export default function TargetPage() {
           </h2>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
           <p className="text-sm text-gray-600">
             Atur target pengeluaran untuk{' '}
             <span className="font-semibold text-gray-800">

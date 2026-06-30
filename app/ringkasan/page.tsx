@@ -106,7 +106,7 @@ export default function RingkasanPage() {
 
       <div className="px-4 pb-6 space-y-4">
       {/* Month Navigator */}
-      <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+      <div className="flex items-center justify-between bg-white rounded-2xl shadow-sm px-4 py-3">
         <button onClick={prevMonth} className="p-1 rounded-lg active:bg-gray-200 transition-colors">
           <ChevronLeft className="w-5 h-5 text-gray-600" />
         </button>
@@ -157,7 +157,7 @@ export default function RingkasanPage() {
 
       {/* Budget vs Actual */}
       {budget && (
-        <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Target className="w-4 h-4 text-emerald-600" />
@@ -185,7 +185,7 @@ export default function RingkasanPage() {
       )}
 
       {/* By Account */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+      <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-emerald-600" />
           <h3 className="text-sm font-semibold text-gray-800">Per Rekening</h3>
@@ -219,7 +219,7 @@ export default function RingkasanPage() {
       </div>
 
       {/* Saving Targets Progress */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+      <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
         <div className="flex items-center gap-2">
           <PiggyBank className="w-4 h-4 text-emerald-600" />
           <h3 className="text-sm font-semibold text-gray-800">Target Tabungan</h3>
@@ -317,7 +317,7 @@ export default function RingkasanPage() {
       </div>
 
       {/* Daily Balance */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+      <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
         <div className="flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-emerald-600" />
           <h3 className="text-sm font-semibold text-gray-800">Saldo Harian</h3>
