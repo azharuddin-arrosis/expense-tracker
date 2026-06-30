@@ -31,21 +31,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-dvh max-w-[480px] mx-auto flex flex-col bg-gray-50">
-      {/* ── Header (sama persis dashboard) ── */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4">
-        <div className="h-12 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
-              <Wallet className="w-4 h-4 text-white" />
-            </div>
-            <h1 className="text-lg font-bold text-gray-900">Duit</h1>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Content area (pt-5 sama kayak dashboard) ── */}
-      <div className="relative flex-1 flex flex-col bg-gradient-to-b from-emerald-600 via-emerald-500 to-teal-600 pt-5 pb-6 px-4 overflow-hidden">
+    <div className="min-h-dvh max-w-[480px] mx-auto flex flex-col">
+      <div className="relative flex-1 flex flex-col bg-gradient-to-b from-emerald-600 via-emerald-500 to-teal-600 pt-14 pb-6 px-4 overflow-hidden">
         {/* Decorative blobs */}
         <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/[0.06]" />
         <div className="absolute top-10 -left-10 w-60 h-60 rounded-full bg-emerald-400/[0.08]" />

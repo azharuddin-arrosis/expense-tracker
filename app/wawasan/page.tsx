@@ -180,6 +180,8 @@ export default function WawasanPage() {
     <>
       <PageHeader title="Wawasan" subtitle={`Analisis keuangan untuk ${getMonthName(month)}`} />
 
+      <div className="px-4 pt-5 pb-6 space-y-4">
+
       <div className="px-4 pb-6 space-y-4">
       {hasData ? (
         <>
