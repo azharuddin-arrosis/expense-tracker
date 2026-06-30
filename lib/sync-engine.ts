@@ -7,7 +7,7 @@ const EXPENSES_PREFIX = 'expense-tracker-expenses-v2:';
 const BUDGET_PREFIX = 'expense-tracker-budgets-v2:';
 const RECURRING_PREFIX = 'expense-tracker-recurring-v2:';
 
-const POLL_INTERVAL = 15000;
+const POLL_INTERVAL = 60000;
 
 function getEmailKey(prefix: string, email: string): string {
   return prefix + email;
