@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { kv } from '@/lib/kv';
-import { Expense, Budget, RecurringTransaction } from '@/lib/types';
+import { getTransactions, replaceTransactions, getBudgets, replaceBudgets, getRecurring, replaceRecurring } from '@/lib/db';
 
-/**
- * GET /api/sync?email=xxx
- * Returns all data (transactions + budgets + recurring) for the given email.
- */
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get('email');
   if (!email) {
@@ -13,35 +8,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const txKey = `user:${email}:transactions`;
-    const bdKey = `user:${email}:budgets`;
-    const rtKey = `user:${email}:recurring`;
-
     const [transactions, budgets, recurring] = await Promise.all([
-      kv.get<Expense[]>(txKey),
-      kv.get<Budget[]>(bdKey),
-      kv.get<RecurringTransaction[]>(rtKey),
+      getTransactions(email),
+      getBudgets(email),
+      getRecurring(email),
     ]);
-
-    return NextResponse.json({
-      transactions: transactions ?? [],
-      budgets: budgets ?? [],
-      recurring: recurring ?? [],
-    });
+    return NextResponse.json({ transactions, budgets, recurring });
   } catch (error) {
-    console.error('KV GET sync error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch data' },
-      { status: 500 }
-    );
+    console.error('DB GET sync error:', error);
+    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
   }
 }
 
-/**
- * POST /api/sync?email=xxx
- * Body: { email, transactions, budgets, recurring }
- * Saves all data for the given email (full sync).
- */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -51,29 +29,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    const txKey = `user:${email}:transactions`;
-    const bdKey = `user:${email}:budgets`;
-    const rtKey = `user:${email}:recurring`;
+    const ops = [];
+    if (Array.isArray(transactions)) ops.push(replaceTransactions(email, transactions));
+    if (Array.isArray(budgets)) ops.push(replaceBudgets(email, budgets));
+    if (Array.isArray(recurring)) ops.push(replaceRecurring(email, recurring));
 
-    const operations = [];
-    if (Array.isArray(transactions)) {
-      operations.push(kv.set(txKey, transactions));
-    }
-    if (Array.isArray(budgets)) {
-      operations.push(kv.set(bdKey, budgets));
-    }
-    if (Array.isArray(recurring)) {
-      operations.push(kv.set(rtKey, recurring));
-    }
-
-    await Promise.all(operations);
-
+    await Promise.all(ops);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('KV POST sync error:', error);
-    return NextResponse.json(
-      { error: 'Failed to save data' },
-      { status: 500 }
-    );
+    console.error('DB POST sync error:', error);
+    return NextResponse.json({ error: 'Failed to save data' }, { status: 500 });
   }
 }

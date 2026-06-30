@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { kv } from '@/lib/kv';
-import { RecurringTransaction } from '@/lib/types';
+import { getRecurring, replaceRecurring } from '@/lib/db';
 
-/**
- * GET /api/recurring?email=xxx
- * Returns all recurring transactions for the given email.
- */
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get('email');
   if (!email) {
@@ -13,23 +8,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const key = `user:${email}:recurring`;
-    const recurring = await kv.get<RecurringTransaction[]>(key);
-    return NextResponse.json({ recurring: recurring ?? [] });
+    const recurring = await getRecurring(email);
+    return NextResponse.json({ recurring });
   } catch (error) {
-    console.error('KV GET recurring error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch recurring transactions' },
-      { status: 500 }
-    );
+    console.error('DB GET recurring error:', error);
+    return NextResponse.json({ error: 'Failed to fetch recurring transactions' }, { status: 500 });
   }
 }
 
-/**
- * POST /api/recurring?email=xxx
- * Body: { email: string, recurring: RecurringTransaction[] }
- * Saves recurring transactions for the given email (overwrites).
- */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -38,23 +24,14 @@ export async function POST(request: NextRequest) {
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
-
     if (!Array.isArray(recurring)) {
-      return NextResponse.json(
-        { error: 'Recurring must be an array' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Recurring must be an array' }, { status: 400 });
     }
 
-    const key = `user:${email}:recurring`;
-    await kv.set(key, recurring);
-
+    await replaceRecurring(email, recurring);
     return NextResponse.json({ success: true, count: recurring.length });
   } catch (error) {
-    console.error('KV POST recurring error:', error);
-    return NextResponse.json(
-      { error: 'Failed to save recurring transactions' },
-      { status: 500 }
-    );
+    console.error('DB POST recurring error:', error);
+    return NextResponse.json({ error: 'Failed to save recurring transactions' }, { status: 500 });
   }
 }
