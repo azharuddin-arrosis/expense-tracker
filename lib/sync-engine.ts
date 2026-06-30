@@ -156,8 +156,8 @@ export async function pushToCloud(email: string): Promise<boolean> {
 }
 
 async function doSync(email: string): Promise<void> {
-  const pushed = await pushToCloud(email);
   const pulled = await pullFromCloud(email);
+  const pushed = await pushToCloud(email);
   if ((pushed || pulled) && onSyncCallback) {
     onSyncCallback();
   }
