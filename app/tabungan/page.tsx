@@ -88,7 +88,8 @@ export default function TabunganPage() {
 
   const handleDeleteGoal = () => {
     if (!deleteId) return;
-    deleteGoal(deleteId);
+    const returned = deleteGoal(deleteId);
+    if (email) syncAllToCloud(email).catch(() => {});
     setDeleteId(null);
     refreshData();
   };

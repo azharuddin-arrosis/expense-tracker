@@ -841,9 +841,23 @@ export function updateGoal(id: string, updates: Partial<Omit<SavingGoal, 'id' | 
   saveGoals(goals);
 }
 
-export function deleteGoal(id: string): void {
+export function deleteGoal(id: string): Expense | null {
   const goals = getGoals();
+  const goal = goals.find((g) => g.id === id);
+  if (!goal || goal.saved <= 0) {
+    saveGoals(goals.filter((g) => g.id !== id));
+    return null;
+  }
   saveGoals(goals.filter((g) => g.id !== id));
+  // Return the saved amount as income so balance is restored
+  return addExpense({
+    amount: goal.saved,
+    category: 'lainnya_in',
+    description: `Pengembalian tabungan: ${goal.name}`,
+    date: new Date().toISOString().slice(0, 10),
+    flow: 'in',
+    account: 'bersama',
+  });
 }
 
 export function addContribution(goalId: string, amount: number, note?: string): Expense {
