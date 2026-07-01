@@ -12,6 +12,7 @@ import { formatRupiah, getMonthName, getCurrentMonthString } from '@/lib/format'
 import { DateFilter } from '@/components/DateFilter';
 import { PageHeader } from '@/components/PageHeader';
 import { useSyncOnMount } from '@/lib/use-sync';
+import { getCategoryName, getCategoryColor } from '@/lib/types';
 
 function fmt(d: string): string {
   return `${d.slice(8, 10)}/${d.slice(5, 7)}`;
@@ -103,8 +104,18 @@ export default function WawasanPage() {
                   <tr key={t.id} className="hover:bg-gray-50">
                     <td className={c}>{fmt(t.date)}</td>
                     <td className={c}>
-                      <span className="font-medium text-gray-800">{t.description || '-'}</span>
-                      <span className="text-gray-400 ml-1">({t.category})</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-gray-800 truncate">{t.description || '-'}</span>
+                        <span
+                          className="inline-block px-1.5 py-[1px] rounded text-[9px] font-medium leading-tight whitespace-nowrap"
+                          style={{
+                            color: getCategoryColor(t.category),
+                            backgroundColor: getCategoryColor(t.category) + '18',
+                          }}
+                        >
+                          {t.flow === 'in' ? 'Pemasukan' : getCategoryName(t.category)}
+                        </span>
+                      </div>
                     </td>
                     <td className={c}>{t.account || '-'}</td>
                     <td className={`${cr} ${t.flow === 'in' ? 'text-emerald-700 font-medium' : 'text-gray-200'}`}>
