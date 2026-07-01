@@ -41,6 +41,7 @@ export const EXPENSE_CATEGORIES: Category[] = [
   { id: 'dapur', name: 'Dapur', color: '#A3E635' },
   { id: 'olahraga', name: 'Olahraga', color: '#22D3EE' },
   { id: 'hiburan', name: 'Hiburan', color: '#8B5CF6' },
+  { id: 'investasi', name: 'Investasi', color: '#065F46' },
   { id: 'lainnya', name: 'Lainnya', color: '#6B7280' },
 ];
 
