@@ -428,9 +428,6 @@ export default function TabunganPage() {
         </div>
       </BottomSheet>
 
-      </div>
-      </BottomSheet>
-
       {/* Bottom Sheet: Goal Detail */}
       <BottomSheet open={detailGoalId !== null && detailView === 'contributions'} onClose={() => { setDetailGoalId(null); setDetailView(null); }} title="Detail Tabungan">
         {selectedGoalDetail && (
