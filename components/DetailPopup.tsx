@@ -30,12 +30,12 @@ export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps
   };
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} />
 
       {/* Bottom Sheet */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl animate-slide-up max-h-[90vh] overflow-y-auto pb-safe">
+      <div className="relative w-full max-w-[480px] bg-white rounded-t-2xl shadow-xl animate-slide-up max-h-[90vh] overflow-y-auto pb-safe">
         {/* Drag handle indicator */}
         <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-white rounded-t-2xl">
           <div className="w-10 h-1 rounded-full bg-gray-300" />
