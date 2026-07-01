@@ -6,7 +6,7 @@ import {
   INCOME_CATEGORIES,
   getCategoryColor,
 } from '@/lib/types';
-import { addExpenseAndSync, updateExpenseAndSync } from '@/lib/storage';
+import { addExpenseAndSync, updateExpenseAndSync, getAutoSisih, addContribution, syncAllToCloud } from '@/lib/storage';
 import { useAppContext } from '@/lib/context';
 import { getTodayString } from '@/lib/format';
 import { getStoredEmail } from '@/lib/cloud';
@@ -96,12 +96,24 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
           email
         );
       } else {
-        addExpenseAndSync(
+        const tx = addExpenseAndSync(
           { amount: amountNum, category, description: description.trim(), date, flow },
           email
         );
+
+        // Auto-sisih: if income and auto-sisih enabled, create contribution
+        if (flow === 'in') {
+          const auto = getAutoSisih();
+          if (auto.enabled && auto.goalId) {
+            const sisihAmount = Math.round(amountNum * auto.persen / 100);
+            if (sisihAmount > 0) {
+              addContribution(auto.goalId, sisihAmount, `Auto-sisih ${auto.persen}% dari ${tx.description || 'pemasukan'}`);
+            }
+          }
+        }
       }
 
+      if (email) syncAllToCloud(email).catch(() => {});
       refreshData();
       handleClose();
       onSuccess();

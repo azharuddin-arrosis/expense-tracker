@@ -42,6 +42,7 @@ export const EXPENSE_CATEGORIES: Category[] = [
   { id: 'olahraga', name: 'Olahraga', color: '#22D3EE' },
   { id: 'hiburan', name: 'Hiburan', color: '#8B5CF6' },
   { id: 'investasi', name: 'Investasi', color: '#065F46' },
+  { id: 'tabungan', name: 'Tabungan', color: '#06B6D4' },
   { id: 'lainnya', name: 'Lainnya', color: '#6B7280' },
 ];
 
@@ -169,6 +170,31 @@ export function getPeriodLabel(periodKey: string, settings: PeriodSettings): str
   const endLabel = endDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   return `${startLabel} - ${endLabel}`;
 }
+
+// ===== Tabungan / Savings Goals =====
+
+export interface SavingGoal {
+  id: string;
+  name: string;
+  target: number;
+  saved: number;
+  icon?: string;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AutoSisihSettings {
+  enabled: boolean;
+  persen: number;
+  goalId: string | null;
+}
+
+export const DEFAULT_AUTO_SISIH: AutoSisihSettings = {
+  enabled: false,
+  persen: 10,
+  goalId: null,
+};
 
 export interface RecurringTransaction {
   id: string;

@@ -1,4 +1,4 @@
-import { Expense, Budget, RecurringTransaction, PeriodSettings } from './types';
+import { Expense, Budget, RecurringTransaction, PeriodSettings, SavingGoal, AutoSisihSettings } from './types';
 
 const API_BASE = '/api';
 
@@ -7,6 +7,8 @@ export interface CloudData {
   budgets: Budget[];
   recurring?: RecurringTransaction[];
   settings?: PeriodSettings | null;
+  goals?: SavingGoal[];
+  autoSisih?: AutoSisihSettings | null;
 }
 
 /**
@@ -143,6 +145,8 @@ export async function loadAllFromCloud(email: string): Promise<CloudData> {
     budgets: data.budgets ?? [],
     recurring: data.recurring ?? [],
     settings: data.settings ?? null,
+    goals: data.goals ?? [],
+    autoSisih: data.autoSisih ?? null,
   };
 }
 

@@ -1,4 +1,4 @@
-import { Expense, Budget, RecurringTransaction, SavingTarget, DEFAULT_SAVING_TARGETS, MonthlySummary, PeriodSettings, getDefaultPeriodSettings, getPeriodDateRange } from './types';
+import { Expense, Budget, RecurringTransaction, SavingTarget, DEFAULT_SAVING_TARGETS, MonthlySummary, PeriodSettings, getDefaultPeriodSettings, getPeriodDateRange, SavingGoal, AutoSisihSettings, DEFAULT_AUTO_SISIH } from './types';
 import { getStoredEmail } from './cloud';
 
 const EXPENSES_PREFIX = 'expense-tracker-expenses-v2:';
@@ -401,7 +401,9 @@ export async function syncAllToCloud(email: string): Promise<void> {
   const recurringData = localStorage.getItem(recurringKey);
   const recurring: RecurringTransaction[] = recurringData ? JSON.parse(recurringData) : [];
   const settings = getPeriodSettings();
-  await syncAll(email, { transactions, budgets, recurring, settings });
+  const goals = getGoals();
+  const autoSisih = getAutoSisih();
+  await syncAll(email, { transactions, budgets, recurring, settings, goals, autoSisih });
   markSyncDone();
 }
 
@@ -460,6 +462,16 @@ export async function getExpensesWithSync(
     if (cloudData.settings) {
       const key = 'expense-tracker-period-settings';
       localStorage.setItem(key, JSON.stringify(cloudData.settings));
+    }
+
+    // Goals
+    if (cloudData.goals && cloudData.goals.length > 0) {
+      localStorage.setItem(getGoalsKey(), JSON.stringify(cloudData.goals));
+    }
+
+    // Auto-sisih
+    if (cloudData.autoSisih) {
+      localStorage.setItem(AUTO_SISIH_KEY, JSON.stringify(cloudData.autoSisih));
     }
 
     markSyncDone();
@@ -777,4 +789,90 @@ export function computeMonthlySummary(
       })),
     },
   };
+}
+
+// ═══════════════════════════════════════════════════
+// Tabungan — Savings Goals
+// ═══════════════════════════════════════════════════
+
+const GOALS_PREFIX = 'expense-tracker-goals:';
+const AUTO_SISIH_KEY = 'expense-tracker-auto-sisih';
+
+function getGoalsKey(): string {
+  const email = getStoredEmail();
+  return GOALS_PREFIX + (email || 'guest');
+}
+
+export function getGoals(): SavingGoal[] {
+  if (!isBrowser()) return [];
+  try {
+    const data = localStorage.getItem(getGoalsKey());
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveGoals(goals: SavingGoal[]): void {
+  if (!isBrowser()) return;
+  localStorage.setItem(getGoalsKey(), JSON.stringify(goals));
+}
+
+export function addGoal(goal: Omit<SavingGoal, 'id' | 'createdAt' | 'updatedAt'>): SavingGoal {
+  const goals = getGoals();
+  const now = new Date().toISOString();
+  const newGoal: SavingGoal = {
+    ...goal,
+    id: 'goal_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9),
+    createdAt: now,
+    updatedAt: now,
+  };
+  goals.push(newGoal);
+  saveGoals(goals);
+  return newGoal;
+}
+
+export function updateGoal(id: string, updates: Partial<Omit<SavingGoal, 'id' | 'createdAt'>>): void {
+  const goals = getGoals();
+  const idx = goals.findIndex((g) => g.id === id);
+  if (idx === -1) return;
+  goals[idx] = { ...goals[idx], ...updates, updatedAt: new Date().toISOString() };
+  saveGoals(goals);
+}
+
+export function deleteGoal(id: string): void {
+  const goals = getGoals();
+  saveGoals(goals.filter((g) => g.id !== id));
+}
+
+export function addContribution(goalId: string, amount: number, note?: string): Expense {
+  const goal = getGoals().find((g) => g.id === goalId);
+  if (!goal) throw new Error('Goal not found');
+  updateGoal(goalId, { saved: goal.saved + amount });
+  const tx = addExpense({
+    amount,
+    category: 'tabungan',
+    description: note || `Tabungan: ${goal.name}`,
+    date: new Date().toISOString().slice(0, 10),
+    flow: 'out',
+    account: 'bersama',
+  });
+  return tx;
+}
+
+// ── Auto-Sisih Settings ──
+
+export function getAutoSisih(): AutoSisihSettings {
+  if (!isBrowser()) return DEFAULT_AUTO_SISIH;
+  try {
+    const data = localStorage.getItem(AUTO_SISIH_KEY);
+    return data ? JSON.parse(data) : DEFAULT_AUTO_SISIH;
+  } catch {
+    return DEFAULT_AUTO_SISIH;
+  }
+}
+
+export function saveAutoSisih(settings: AutoSisihSettings): void {
+  if (!isBrowser()) return;
+  localStorage.setItem(AUTO_SISIH_KEY, JSON.stringify(settings));
 }

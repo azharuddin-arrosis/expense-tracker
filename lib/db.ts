@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import { Expense, Budget, RecurringTransaction } from './types';
+import { Expense, Budget, RecurringTransaction, SavingGoal, AutoSisihSettings } from './types';
 
 function getEnv(name: string): string | undefined {
   const prefixed = `expensetracker_${name}`;
@@ -208,6 +208,106 @@ function formatDateTime(d: Date | string): string {
   const str = String(d);
   if (str.includes('T')) return str;
   return str.replace(' ', 'T') + 'Z';
+}
+
+// ── Goals ──
+
+let tablesInitialized = false;
+
+export async function initGoalTables(): Promise<void> {
+  if (tablesInitialized) return;
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS goals (
+        id VARCHAR(100) PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        target DECIMAL(15,2) DEFAULT 0,
+        saved DECIMAL(15,2) DEFAULT 0,
+        icon VARCHAR(50),
+        color VARCHAR(20) DEFAULT '#06B6D4',
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL,
+        INDEX idx_goals_email (email)
+      )
+    `);
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS auto_sisih (
+        email VARCHAR(255) PRIMARY KEY,
+        settings_json TEXT NOT NULL
+      )
+    `);
+    tablesInitialized = true;
+  } catch (e) {
+    console.error('initGoalTables error:', e);
+  }
+}
+
+export async function getGoals(email: string): Promise<SavingGoal[]> {
+  try {
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+      'SELECT * FROM goals WHERE email = ?',
+      [email]
+    );
+    return rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      target: Number(r.target),
+      saved: Number(r.saved),
+      icon: r.icon || undefined,
+      color: r.color,
+      createdAt: formatDateTime(r.created_at),
+      updatedAt: formatDateTime(r.updated_at),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function replaceGoals(email: string, goals: SavingGoal[]): Promise<void> {
+  try {
+    await pool.execute('DELETE FROM goals WHERE email = ?', [email]);
+    if (goals.length > 0) {
+      const values = goals.map(g => [
+        g.id, email, g.name, g.target, g.saved,
+        g.icon || null, g.color,
+        toMySqlDatetime(g.createdAt), toMySqlDatetime(g.updatedAt),
+      ]);
+      await pool.query(
+        'INSERT INTO goals (id, email, name, target, saved, icon, color, created_at, updated_at) VALUES ?',
+        [values]
+      );
+    }
+  } catch (e) {
+    console.error('replaceGoals error:', e);
+  }
+}
+
+// ── Auto-Sisih ──
+
+export async function getAutoSisih(email: string): Promise<AutoSisihSettings | null> {
+  try {
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+      'SELECT settings_json FROM auto_sisih WHERE email = ?',
+      [email]
+    );
+    if (rows.length === 0) return null;
+    return JSON.parse(rows[0].settings_json);
+  } catch {
+    return null;
+  }
+}
+
+export async function replaceAutoSisih(email: string, settings: AutoSisihSettings): Promise<void> {
+  try {
+    const json = JSON.stringify(settings);
+    await pool.execute(
+      'REPLACE INTO auto_sisih (email, settings_json) VALUES (?, ?)',
+      [email, json]
+    );
+  } catch (e) {
+    console.error('replaceAutoSisih error:', e);
+  }
 }
 
 /** Convert ISO datetime string ('2026-06-25T09:15:49.687Z') to MySQL format ('2026-06-25 09:15:49') */
