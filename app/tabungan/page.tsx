@@ -53,11 +53,11 @@ export default function TabunganPage() {
 
   // Add goal form
   const [goalName, setGoalName] = useState('');
-  const [goalTarget, setGoalTarget] = useState(0);
+  const [goalTargetInput, setGoalTargetInput] = useState('');
   const [goalColor, setGoalColor] = useState('#06B6D4');
 
   // Top up form
-  const [topUpAmount, setTopUpAmount] = useState(0);
+  const [topUpAmountInput, setTopUpAmountInput] = useState('');
   const [topUpNote, setTopUpNote] = useState('');
 
   // Auto-sisih form
@@ -66,19 +66,21 @@ export default function TabunganPage() {
   const [asGoalId, setAsGoalId] = useState(autoSisih.goalId);
 
   const handleAddGoal = () => {
-    if (!goalName || goalTarget <= 0) return;
-    addGoal({ name: goalName, target: goalTarget, saved: 0, color: goalColor });
+    const num = parseInt(goalTargetInput.replace(/[^0-9]/g, '')) || 0;
+    if (!goalName || num <= 0) return;
+    addGoal({ name: goalName, target: num, saved: 0, color: goalColor });
     setGoalName('');
-    setGoalTarget(0);
+    setGoalTargetInput('');
     setShowAddGoal(false);
     refreshData();
   };
 
   const handleTopUp = () => {
-    if (!showTopUp || topUpAmount <= 0) return;
-    const tx = addContribution(showTopUp, topUpAmount, topUpNote || undefined);
+    const num = parseInt(topUpAmountInput.replace(/[^0-9]/g, '')) || 0;
+    if (!showTopUp || num <= 0) return;
+    addContribution(showTopUp, num, topUpNote || undefined);
     if (email) syncAllToCloud(email).catch(() => {});
-    setTopUpAmount(0);
+    setTopUpAmountInput('');
     setTopUpNote('');
     setShowTopUp(null);
     refreshData();
@@ -176,7 +178,7 @@ export default function TabunganPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => { setShowTopUp(goal.id); setTopUpAmount(0); setTopUpNote(''); }}
+                        onClick={() => { setShowTopUp(goal.id); setTopUpAmountInput(''); setTopUpNote(''); }}
                         className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center active:bg-emerald-100 transition-colors"
                       >
                         <Plus className="w-4 h-4 text-emerald-600" />
@@ -220,7 +222,7 @@ export default function TabunganPage() {
 
         {/* Add Goal Button */}
         <button
-          onClick={() => { setGoalName(''); setGoalTarget(0); setGoalColor('#06B6D4'); setShowAddGoal(true); }}
+          onClick={() => { setGoalName(''); setGoalTargetInput(''); setGoalColor('#06B6D4'); setShowAddGoal(true); }}
           className="w-full h-12 rounded-2xl border-2 border-dashed border-gray-300 text-gray-500 font-medium text-sm flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
         >
           <Plus className="w-5 h-5" />
@@ -243,13 +245,21 @@ export default function TabunganPage() {
           </div>
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block">Target Nominal</label>
-            <input
-              type="number"
-              value={goalTarget}
-              onChange={(e) => setGoalTarget(Number(e.target.value))}
-              placeholder="0"
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">Rp</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={goalTargetInput}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, '');
+                  if (raw === '') { setGoalTargetInput(''); return; }
+                  setGoalTargetInput(new Intl.NumberFormat('id-ID').format(parseInt(raw)));
+                }}
+                placeholder="0"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
+              />
+            </div>
           </div>
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block">Warna</label>
@@ -266,7 +276,7 @@ export default function TabunganPage() {
           </div>
           <button
             onClick={handleAddGoal}
-            disabled={!goalName || goalTarget <= 0}
+            disabled={!goalName || !goalTargetInput || parseInt(goalTargetInput.replace(/[^0-9]/g, '')) <= 0}
             className="w-full h-11 rounded-xl bg-cyan-500 text-white font-semibold text-sm disabled:opacity-50 active:bg-cyan-600 transition-colors"
           >
             Buat Goal
@@ -293,13 +303,21 @@ export default function TabunganPage() {
           })()}
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block">Nominal</label>
-            <input
-              type="number"
-              value={topUpAmount}
-              onChange={(e) => setTopUpAmount(Number(e.target.value))}
-              placeholder="0"
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">Rp</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={topUpAmountInput}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, '');
+                  if (raw === '') { setTopUpAmountInput(''); return; }
+                  setTopUpAmountInput(new Intl.NumberFormat('id-ID').format(parseInt(raw)));
+                }}
+                placeholder="0"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
+              />
+            </div>
           </div>
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block">Catatan (opsional)</label>
@@ -315,7 +333,7 @@ export default function TabunganPage() {
           </p>
           <button
             onClick={handleTopUp}
-            disabled={topUpAmount <= 0}
+            disabled={!topUpAmountInput || parseInt(topUpAmountInput.replace(/[^0-9]/g, '')) <= 0}
             className="w-full h-11 rounded-xl bg-cyan-500 text-white font-semibold text-sm disabled:opacity-50 active:bg-cyan-600 transition-colors"
           >
             Simpan ke Tabungan
