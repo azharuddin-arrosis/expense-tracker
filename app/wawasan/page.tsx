@@ -1,13 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Wallet, TrendingUp, TrendingDown } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { getExpenseByPeriod, getIncomeByPeriod } from '@/lib/storage';
 import { formatRupiah, getMonthName, getCurrentMonthString } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { useSyncOnMount } from '@/lib/use-sync';
-import { getCategoryName, getCategoryColor } from '@/lib/types';
 
 function getLast6Months(from: string): string[] {
   const months: string[] = [];
@@ -15,17 +13,19 @@ function getLast6Months(from: string): string[] {
   for (let i = 0; i < 6; i++) {
     months.push(`${y}-${String(m).padStart(2, '0')}`);
     m--;
-    if (m === 0) {
-      m = 12;
-      y--;
-    }
+    if (m === 0) { m = 12; y--; }
   }
   return months;
 }
 
-function formatShortDate(dateStr: string): string {
-  return `${dateStr.slice(8, 10)}/${dateStr.slice(5, 7)}`;
+function formatDate(d: string): string {
+  return `${d.slice(8, 10)}/${d.slice(5, 7)}`;
 }
+
+const cellStyle = 'border border-gray-300 px-2 py-1.5 text-[11px]';
+const cellRight = 'border border-gray-300 px-2 py-1.5 text-[11px] text-right tabular-nums';
+const headerStyle = 'border border-gray-400 px-2 py-1.5 text-[10px] font-bold text-gray-600 uppercase tracking-wider bg-gray-100';
+const headerRight = 'border border-gray-400 px-2 py-1.5 text-[10px] font-bold text-gray-600 uppercase tracking-wider bg-gray-100 text-right';
 
 export default function WawasanPage() {
   const { refreshKey } = useAppContext();
@@ -44,16 +44,8 @@ export default function WawasanPage() {
     [selectedMonth, refreshKey]
   );
 
-  const totalDebit = useMemo(
-    () => incomes.reduce((s, e) => s + e.amount, 0),
-    [incomes]
-  );
-
-  const totalKredit = useMemo(
-    () => expenses.reduce((s, e) => s + e.amount, 0),
-    [expenses]
-  );
-
+  const totalDebit = incomes.reduce((s, e) => s + e.amount, 0);
+  const totalKredit = expenses.reduce((s, e) => s + e.amount, 0);
   const saldo = totalDebit - totalKredit;
 
   const allTransactions = useMemo(() => {
@@ -64,172 +56,87 @@ export default function WawasanPage() {
 
   const hasData = allTransactions.length > 0;
 
-  // Group by date for date dividers
-  const groupedByDate = useMemo(() => {
-    const groups: Record<string, typeof allTransactions> = {};
-    for (const t of allTransactions) {
-      if (!groups[t.date]) groups[t.date] = [];
-      groups[t.date].push(t);
-    }
-    return groups;
-  }, [allTransactions]);
-
   return (
     <>
-      <PageHeader title="Wawasan" subtitle="Buku kas debit/kredit" />
+      <PageHeader title="Buku Kas" subtitle="Debit / Kredit" />
 
-      <div className="px-4 pt-5 pb-6 space-y-4">
-        {/* ── Month Selector ── */}
+      <div className="px-4 pt-4 pb-8 space-y-3">
+
+        {/* Month selector */}
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
-          className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 text-sm font-medium text-gray-700 border-0 focus:ring-2 focus:ring-emerald-500 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_12px_center] bg-no-repeat"
+          className="w-full bg-white rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_8px_center] bg-no-repeat"
         >
           {allMonths.map((m) => (
-            <option key={m} value={m}>
-              {getMonthName(m)}
-            </option>
+            <option key={m} value={m}>{getMonthName(m)}</option>
           ))}
         </select>
 
-        {/* ── Summary Cards ── */}
-        <div className="grid grid-cols-3 gap-2">
-          {/* Debit */}
-          <div className="bg-white rounded-2xl shadow-sm p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                Debit
-              </span>
-            </div>
-            <p className="text-sm font-semibold tabular-nums text-emerald-600">
-              {formatRupiah(totalDebit)}
-            </p>
+        {/* Summary */}
+        <div className="flex gap-1">
+          <div className="flex-1 border border-gray-300 rounded px-2 py-1.5 bg-emerald-50/30">
+            <p className="text-[9px] text-gray-500 uppercase tracking-wider">Debit</p>
+            <p className="text-xs font-bold text-emerald-700 tabular-nums">{formatRupiah(totalDebit)}</p>
           </div>
-
-          {/* Kredit */}
-          <div className="bg-white rounded-2xl shadow-sm p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                Kredit
-              </span>
-            </div>
-            <p className="text-sm font-semibold tabular-nums text-red-500">
-              {formatRupiah(totalKredit)}
-            </p>
+          <div className="flex-1 border border-gray-300 rounded px-2 py-1.5 bg-red-50/30">
+            <p className="text-[9px] text-gray-500 uppercase tracking-wider">Kredit</p>
+            <p className="text-xs font-bold text-red-600 tabular-nums">{formatRupiah(totalKredit)}</p>
           </div>
-
-          {/* Saldo */}
-          <div className="bg-white rounded-2xl shadow-sm p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Wallet className="w-3.5 h-3.5 text-gray-700" />
-              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                Saldo
-              </span>
-            </div>
-            <p
-              className={`text-sm font-semibold tabular-nums ${
-                saldo >= 0 ? 'text-emerald-600' : 'text-red-500'
-              }`}
-            >
+          <div className="flex-1 border border-gray-300 rounded px-2 py-1.5">
+            <p className="text-[9px] text-gray-500 uppercase tracking-wider">Saldo</p>
+            <p className={`text-xs font-bold tabular-nums ${saldo >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
               {formatRupiah(saldo)}
             </p>
           </div>
         </div>
 
-        {/* ── Ledger Table ── */}
-        <div className="bg-white rounded-2xl shadow-sm p-4">
-          {hasData ? (
-            <>
-              {/* Table header (hidden on mobile — semantic only) */}
-              <div className="hidden items-center text-xs font-medium text-gray-400 mb-2 pb-2 border-b border-gray-100">
-                <div className="flex-1">Keterangan</div>
-                <div className="w-[92px] text-right">Debit</div>
-                <div className="w-[92px] text-right">Kredit</div>
-              </div>
+        {/* Excel-style table */}
+        {hasData ? (
+          <div className="overflow-x-auto -mx-4">
+            <table className="w-full text-[11px] border-collapse" style={{ minWidth: 360 }}>
+              <thead>
+                <tr>
+                  <th className={headerStyle} style={{ width: 48 }}>Tgl</th>
+                  <th className={headerStyle}>Keterangan</th>
+                  <th className={headerStyle} style={{ width: 28 }}>Akun</th>
+                  <th className={headerRight} style={{ width: 80 }}>Debit</th>
+                  <th className={headerRight} style={{ width: 80 }}>Kredit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allTransactions.map((t) => (
+                  <tr key={t.id} className="hover:bg-gray-50">
+                    <td className={cellStyle}>{formatDate(t.date)}</td>
+                    <td className={cellStyle}>
+                      <span className="font-medium text-gray-800">{t.description || '-'}</span>
+                      <span className="text-gray-400 ml-1">({t.category})</span>
+                    </td>
+                    <td className={cellStyle}>{t.account || '-'}</td>
+                    <td className={`${cellRight} ${t.flow === 'in' ? 'text-emerald-700 font-medium' : 'text-gray-200'}`}>
+                      {t.flow === 'in' ? formatRupiah(t.amount) : '-'}
+                    </td>
+                    <td className={`${cellRight} ${t.flow === 'out' ? 'text-red-600 font-medium' : 'text-gray-200'}`}>
+                      {t.flow === 'out' ? formatRupiah(t.amount) : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gray-50 font-bold">
+                  <td colSpan={3} className="border border-gray-400 px-2 py-1.5 text-[11px] text-gray-700">TOTAL</td>
+                  <td className="border border-gray-400 px-2 py-1.5 text-[11px] text-right tabular-nums text-emerald-700">{formatRupiah(totalDebit)}</td>
+                  <td className="border border-gray-400 px-2 py-1.5 text-[11px] text-right tabular-nums text-red-600">{formatRupiah(totalKredit)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-12 border border-gray-200 rounded-lg">
+            <p className="text-xs text-gray-400">Belum ada transaksi</p>
+          </div>
+        )}
 
-              {/* Grouped rows by date */}
-              {Object.entries(groupedByDate).map(([date, txs]) => (
-                <div key={date}>
-                  {/* Date divider */}
-                  <div className="flex items-center gap-2 py-1.5">
-                    <span className="text-xs font-medium text-gray-400">
-                      {formatShortDate(date)}
-                    </span>
-                    <div className="flex-1 border-b border-gray-100" />
-                  </div>
-
-                  {/* Transactions for this date */}
-                  {txs.map((t, idx) => (
-                    <div key={t.id}>
-                      <div className="flex items-start py-2.5">
-                        <div className="flex-1 min-w-0 pr-3">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {t.description || getCategoryName(t.category)}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {getCategoryName(t.category)}
-                          </p>
-                        </div>
-                        <div className="flex shrink-0 gap-2">
-                          {/* Debit column (income) */}
-                          <div className="w-[92px] text-right">
-                            {t.flow === 'in' ? (
-                              <span className="text-sm font-semibold tabular-nums text-emerald-600">
-                                {formatRupiah(t.amount)}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-200">&mdash;</span>
-                            )}
-                          </div>
-                          {/* Kredit column (expense) */}
-                          <div className="w-[92px] text-right">
-                            {t.flow === 'out' ? (
-                              <span className="text-sm font-semibold tabular-nums text-red-500">
-                                {formatRupiah(t.amount)}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-200">&mdash;</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      {idx < txs.length - 1 && (
-                        <div className="border-b border-gray-50" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ))}
-
-              {/* Footer — totals */}
-              <div className="border-t border-gray-200 mt-2 pt-3 flex items-start">
-                <div className="flex-1">
-                  <span className="text-sm font-bold text-gray-900">TOTAL</span>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <div className="w-[92px] text-right">
-                    <span className="text-sm font-bold tabular-nums text-emerald-600">
-                      {formatRupiah(totalDebit)}
-                    </span>
-                  </div>
-                  <div className="w-[92px] text-right">
-                    <span className="text-sm font-bold tabular-nums text-red-500">
-                      {formatRupiah(totalKredit)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            /* ── Empty state ── */
-            <div className="py-12 text-center">
-              <Wallet className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">Belum ada transaksi</p>
-            </div>
-          )}
-        </div>
       </div>
     </>
   );
