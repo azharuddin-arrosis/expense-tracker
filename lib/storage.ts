@@ -419,8 +419,10 @@ export async function getExpensesWithSync(
   try {
     const { loadTransactionsFromCloud } = await import('./cloud');
     const cloudData = await loadTransactionsFromCloud(email);
-    saveExpenses(cloudData);
-    return cloudData;
+    if (cloudData.length > 0) {
+      saveExpenses(cloudData);
+      return cloudData;
+    }
   } catch {
     // Offline — fall through to localStorage
   }
