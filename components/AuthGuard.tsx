@@ -7,7 +7,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { FAB } from '@/components/FAB';
 import { ExpenseFormGlobal } from '@/components/ExpenseFormGlobal';
 
-const FAB_PAGES = ['/', '/riwayat', '/wawasan'];
+const FAB_PAGES = ['/', '/riwayat', '/setting'];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
