@@ -165,7 +165,7 @@ export function getExpenseByPeriod(periodKey: string): Expense[] {
 }
 
 export function getExpenseByCategoryPeriod(periodKey: string): Record<string, number> {
-  const expenses = getExpenseByPeriod(periodKey);
+  const expenses = getExpenseByPeriod(periodKey).filter((e) => e.category !== 'tabungan');
   const totals: Record<string, number> = {};
   for (const exp of expenses) {
     totals[exp.category] = (totals[exp.category] || 0) + exp.amount;
@@ -691,24 +691,25 @@ export function computeMonthlySummary(
   
   const income = transactions.filter((e) => e.flow === 'in');
   const expense = transactions.filter((e) => e.flow === 'out');
+  const expenseSpent = expense.filter((e) => e.category !== 'tabungan'); // exclude savings from pengeluaran
   
   const totalIncome = income.reduce((s, e) => s + e.amount, 0);
-  const totalExpense = expense.reduce((s, e) => s + e.amount, 0);
+  const totalExpense = expenseSpent.reduce((s, e) => s + e.amount, 0);
 
-  // Running balance from all transactions up to period end
+  // Running balance from all transactions up to period end (includes savings)
   const upToEnd = all.filter((e) => e.date <= end);
   const cumIn = upToEnd.filter((e) => e.flow === 'in').reduce((s, e) => s + e.amount, 0);
   const cumOut = upToEnd.filter((e) => e.flow === 'out').reduce((s, e) => s + e.amount, 0);
   const balance = cumIn - cumOut;
 
-  // By category
+  // By category (exclude tabungan from expense categories)
   const incomeByCategory: Record<string, number> = {};
   const expenseByCategory: Record<string, number> = {};
   
   for (const t of income) {
     incomeByCategory[t.category] = (incomeByCategory[t.category] || 0) + t.amount;
   }
-  for (const t of expense) {
+  for (const t of expenseSpent) {
     expenseByCategory[t.category] = (expenseByCategory[t.category] || 0) + t.amount;
   }
 

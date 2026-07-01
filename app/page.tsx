@@ -84,7 +84,7 @@ export default function DashboardPage() {
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'in');
   }, [month, filterMode, dateRange, refreshKey, synced, email]);
 
-  const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalExpense = expenses.filter((e) => e.category !== 'tabungan').reduce((sum, e) => sum + e.amount, 0);
   const totalIncome = incomes.reduce((sum, e) => sum + e.amount, 0);
   const balance = useMemo(() => {
     if (filterMode !== 'month') return totalIncome - totalExpense;
