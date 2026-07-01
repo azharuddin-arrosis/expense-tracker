@@ -19,18 +19,19 @@ import {
   Wallet as WalletIcon,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
-import { computeMonthlySummary, getBudget, getExpensesByDate, getExpenseByCategoryPeriod } from '@/lib/storage';
+import { computeMonthlySummary, getBudget, getExpensesByDate, getExpenseByCategoryPeriod, deleteExpenseAndSync } from '@/lib/storage';
 import { formatRupiah, getMonthName, prevMonth as prevMonthStr } from '@/lib/format';
 import { useSyncOnMount } from '@/lib/use-sync';
 import { Expense, getCategoryName, getCategoryColor, EXPENSE_CATEGORIES } from '@/lib/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { DetailPopup } from '@/components/DetailPopup';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { PageHeader } from '@/components/PageHeader';
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 export default function RingkasanPage() {
-  const { refreshKey } = useAppContext();
+  const { refreshKey, refreshData } = useAppContext();
   const { synced, email: syncEmail } = useSyncOnMount([refreshKey]);
 
   const today = new Date();
@@ -43,6 +44,8 @@ export default function RingkasanPage() {
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<Expense | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const email = syncEmail || 'guest';
 
@@ -115,6 +118,18 @@ export default function RingkasanPage() {
     }
     return result;
   }, [month, email, summary, refreshKey, synced]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteError(null);
+    try {
+      await deleteExpenseAndSync(deleteTarget, email);
+      refreshData();
+      setDeleteTarget(null);
+    } catch (err: any) {
+      setDeleteError(err.message || 'Gagal menghapus transaksi dari cloud');
+    }
+  };
 
   const years = useMemo(() => {
     const y = [];
@@ -447,8 +462,32 @@ export default function RingkasanPage() {
         </div>
       </div>
 
-      {/* Detail Popup */}
-      <DetailPopup transaction={selectedTx} onClose={() => setSelectedTx(null)} />
+      {/* Delete Error Banner */}
+      {deleteError && (
+        <div className="mx-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs flex items-center justify-between">
+          <span>{deleteError}</span>
+          <button onClick={() => setDeleteError(null)} className="font-bold ml-2">OK</button>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Hapus Transaksi?"
+        message="Data yang sudah dihapus tidak dapat dikembalikan."
+        confirmLabel="Ya, Hapus"
+        cancelLabel="Batal"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {/* Detail Bottom Sheet */}
+      <DetailPopup
+        transaction={selectedTx}
+        onClose={() => setSelectedTx(null)}
+        onDelete={(id) => setDeleteTarget(id)}
+      />
     </>
   );
 }

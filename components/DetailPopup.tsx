@@ -1,60 +1,85 @@
 'use client';
 
-import { X, TrendingUp, TrendingDown, Calendar, Tag, FileText, Wallet } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Calendar, Tag, FileText, Pencil, Trash2 } from 'lucide-react';
 import { Expense } from '@/lib/types';
 import { formatRupiah, formatDateFull } from '@/lib/format';
 import { getCategoryColor, getCategoryName } from '@/lib/types';
 import { CategoryIcon } from './CategoryIcon';
+import { useAppContext } from '@/lib/context';
 
 interface DetailPopupProps {
   transaction: Expense | null;
   onClose: () => void;
+  onDelete: (id: string) => void;
 }
 
-export function DetailPopup({ transaction, onClose }: DetailPopupProps) {
+export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps) {
+  const { setEditTarget, setShowAddExpense } = useAppContext();
+
   if (!transaction) return null;
 
+  const handleEdit = () => {
+    setEditTarget(transaction);
+    setShowAddExpense(true);
+    onClose();
+  };
+
+  const handleDelete = () => {
+    onDelete(transaction.id);
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-5">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-fade-in">
+    <div className="fixed inset-0 z-50">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} />
+
+      {/* Bottom Sheet */}
+      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl animate-slide-up max-h-[90vh] overflow-y-auto pb-safe">
+        {/* Drag handle indicator */}
+        <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-white rounded-t-2xl">
+          <div className="w-10 h-1 rounded-full bg-gray-300" />
+        </div>
+
         {/* Header */}
-        <div className={`px-5 py-4 flex items-center justify-between ${
+        <div className={`mx-4 px-5 py-4 rounded-xl ${
           transaction.flow === 'in' ? 'bg-amber-50' : 'bg-red-50'
         }`}>
-          <div className="flex items-center gap-3">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{
-                backgroundColor: transaction.flow === 'in'
-                  ? '#F59E0B20'
-                  : getCategoryColor(transaction.category) + '20',
-              }}
-            >
-              <CategoryIcon
-                categoryId={transaction.category}
-                className="w-6 h-6"
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center"
                 style={{
-                  color: transaction.flow === 'in' ? '#F59E0B' : getCategoryColor(transaction.category),
+                  backgroundColor: transaction.flow === 'in'
+                    ? '#F59E0B20'
+                    : getCategoryColor(transaction.category) + '20',
                 }}
-              />
+              >
+                <CategoryIcon
+                  categoryId={transaction.category}
+                  className="w-6 h-6"
+                  style={{
+                    color: transaction.flow === 'in' ? '#F59E0B' : getCategoryColor(transaction.category),
+                  }}
+                />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">
+                  {transaction.flow === 'in' ? 'Pemasukan' : 'Pengeluaran'}
+                </p>
+                <p className="text-lg font-bold text-gray-900 tabular-nums">
+                  {transaction.flow === 'in' ? '+' : '-'}{formatRupiah(transaction.amount)}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">
-                {transaction.flow === 'in' ? 'Pemasukan' : 'Pengeluaran'}
-              </p>
-              <p className="text-lg font-bold text-gray-900 tabular-nums">
-                {transaction.flow === 'in' ? '+' : '-'}{formatRupiah(transaction.amount)}
-              </p>
-            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-full bg-black/5 active:bg-black/10 transition-colors"
+              aria-label="Tutup"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full bg-black/5 active:bg-black/10 transition-colors"
-            aria-label="Tutup"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
         </div>
 
         {/* Detail Rows */}
@@ -109,8 +134,22 @@ export function DetailPopup({ transaction, onClose }: DetailPopupProps) {
           </div>
         </div>
 
-        {/* Close Button */}
-        <div className="px-5 pb-4">
+        {/* Action Buttons */}
+        <div className="px-5 pb-6 space-y-2">
+          <button
+            onClick={handleEdit}
+            className="w-full h-11 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+          >
+            <Pencil className="w-4 h-4" />
+            Edit Transaksi
+          </button>
+          <button
+            onClick={handleDelete}
+            className="w-full h-11 rounded-xl bg-red-50 text-red-600 font-semibold text-sm active:bg-red-100 transition-colors flex items-center justify-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            Hapus Transaksi
+          </button>
           <button
             onClick={onClose}
             className="w-full h-11 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm active:bg-gray-200 transition-colors"

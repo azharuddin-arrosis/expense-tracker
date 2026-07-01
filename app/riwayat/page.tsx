@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search, Trash2, Pencil, TrendingDown, TrendingUp, ChevronLeft, Loader2, Wallet } from 'lucide-react';
+import { Search, Loader2, Wallet } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { getTransactionsByPeriod, getTransactionsByDateRange, deleteExpenseAndSync } from '@/lib/storage';
 import { formatRupiah, formatDate, formatDateFull, getMonthName, getCurrentMonthString } from '@/lib/format';
@@ -15,7 +15,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { PageHeader } from '@/components/PageHeader';
 
 export default function RiwayatPage() {
-  const { refreshKey, refreshData, setShowAddExpense, setEditTarget } = useAppContext();
+  const { refreshKey, refreshData } = useAppContext();
   const { synced, email } = useSyncOnMount([refreshKey]);
   const [month, setMonth] = useState(getCurrentMonthString);
   const [filterMode, setFilterMode] = useState<'month' | 'week' | 'range'>('month');
@@ -185,7 +185,7 @@ export default function RiwayatPage() {
                     onClick={() => setDetailTarget(exp)}
                     className="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl shadow-sm active:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    <div className="relative flex-shrink-0">
+                    <div className="flex-shrink-0">
                       <div
                         className="w-9 h-9 rounded-full flex items-center justify-center"
                         style={{
@@ -202,50 +202,21 @@ export default function RiwayatPage() {
                           }}
                         />
                       </div>
-                      <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${
-                        exp.flow === 'in' ? 'bg-amber-500' : 'bg-red-400'
-                      }`}>
-                        {exp.flow === 'in'
-                          ? <TrendingUp className="w-2.5 h-2.5 text-white" />
-                          : <TrendingDown className="w-2.5 h-2.5 text-white" />
-                        }
-                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {exp.description || getCategoryName(exp.category)}
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {exp.description || getCategoryName(exp.category)}
+                        </p>
+                        <span className={`text-sm font-semibold tabular-nums flex-shrink-0 ml-3 ${
+                          exp.flow === 'in' ? 'text-amber-600' : 'text-gray-900'
+                        }`}>
+                          {exp.flow === 'in' ? '+' : '-'}{formatRupiah(exp.amount)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {getCategoryName(exp.category)} · {formatDate(exp.date)}
                       </p>
-                      <p className="text-xs text-gray-400">
-                        {getCategoryName(exp.category)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <span className={`text-sm font-semibold tabular-nums ${
-                        exp.flow === 'in' ? 'text-amber-600' : 'text-gray-900'
-                      }`}>
-                        {exp.flow === 'in' ? '+' : '-'}{formatRupiah(exp.amount)}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditTarget(exp);
-                          setShowAddExpense(true);
-                        }}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 active:bg-blue-50 active:text-blue-500 transition-colors"
-                        aria-label="Edit"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteTarget(exp.id);
-                        }}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 active:bg-red-50 active:text-red-500 transition-colors"
-                        aria-label="Hapus"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -276,10 +247,11 @@ export default function RiwayatPage() {
         onCancel={() => setDeleteTarget(null)}
       />
 
-      {/* Detail Popup */}
+      {/* Detail Bottom Sheet */}
       <DetailPopup
         transaction={detailTarget}
         onClose={() => setDetailTarget(null)}
+        onDelete={(id) => setDeleteTarget(id)}
       />
     </div>
     </>

@@ -419,17 +419,8 @@ export async function getExpensesWithSync(
   try {
     const { loadTransactionsFromCloud } = await import('./cloud');
     const cloudData = await loadTransactionsFromCloud(email);
-    if (cloudData.length > 0) {
-      // Merge: cloud is source of truth, but merge with local
-      const localData = getExpenses();
-      const cloudIds = new Set(cloudData.map((e) => e.id));
-      const onlyLocal = localData.filter((e) => !cloudIds.has(e.id));
-      const merged = [...cloudData, ...onlyLocal];
-      if (merged.length > 0) {
-        saveExpenses(merged);
-      }
-      return merged;
-    }
+    saveExpenses(cloudData);
+    return cloudData;
   } catch {
     // Offline — fall through to localStorage
   }

@@ -32,6 +32,7 @@ import {
   getBudget,
   getPeriodSettings,
   getExpensesWithSync,
+  deleteExpenseAndSync,
 } from '@/lib/storage';
 import {
   formatRupiah,
@@ -44,17 +45,20 @@ import { DateFilter } from '@/components/DateFilter';
 import { EXPENSE_CATEGORIES, getCategoryColor, getCategoryName, Expense, getPeriodDateRange } from '@/lib/types';
 import { EmptyState } from '@/components/EmptyState';
 import { DetailPopup } from '@/components/DetailPopup';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { getStoredEmail } from '@/lib/cloud';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { refreshKey } = useAppContext();
+  const { refreshKey, refreshData } = useAppContext();
   const [synced, setSynced] = useState(false);
   const [cloudStatus, setCloudStatus] = useState<'checking' | 'connected' | 'local'>('checking');
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [filterMode, setFilterMode] = useState<'month' | 'week' | 'range'>('month');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [detailTarget, setDetailTarget] = useState<Expense | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const email = getStoredEmail();
 
   useEffect(() => {
@@ -131,6 +135,18 @@ export default function DashboardPage() {
   }, [categoryData, totalExpense]);
 
   const hasAny = expenses.length > 0 || incomes.length > 0;
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteError(null);
+    try {
+      await deleteExpenseAndSync(deleteTarget, email);
+      refreshData();
+      setDeleteTarget(null);
+    } catch (err: any) {
+      setDeleteError(err.message || 'Gagal menghapus transaksi dari cloud');
+    }
+  };
 
   if (!synced && email) {
     return (
@@ -379,9 +395,30 @@ export default function DashboardPage() {
         />
       )}
 
+      {/* Delete Error Banner */}
+      {deleteError && (
+        <div className="mx-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs flex items-center justify-between">
+          <span>{deleteError}</span>
+          <button onClick={() => setDeleteError(null)} className="font-bold ml-2">OK</button>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Hapus Transaksi?"
+        message="Data yang sudah dihapus tidak dapat dikembalikan."
+        confirmLabel="Ya, Hapus"
+        cancelLabel="Batal"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
       <DetailPopup
         transaction={detailTarget}
         onClose={() => setDetailTarget(null)}
+        onDelete={(id) => setDeleteTarget(id)}
       />
     </div>
     </>
