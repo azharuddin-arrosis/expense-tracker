@@ -60,7 +60,7 @@ export default function SettingPage() {
     [currentPeriodKey, periodStart, periodEnd]
   );
 
-  const handleSavePeriod = () => {
+  const handleSavePeriod = async () => {
     const s = Math.max(1, Math.min(28, periodStart));
     const e = Math.max(1, Math.min(28, periodEnd));
     setPeriodStart(s);
@@ -68,6 +68,14 @@ export default function SettingPage() {
     savePeriodSettings({ startDay: s, endDay: e });
     setPeriodSaved(true);
     setTimeout(() => setPeriodSaved(false), 2000);
+
+    if (email) {
+      try {
+        await syncAllToCloud(email);
+      } catch {
+        // silent
+      }
+    }
   };
 
   useEffect(() => {

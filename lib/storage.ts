@@ -401,11 +401,7 @@ export async function syncAllToCloud(email: string): Promise<void> {
   const recurringData = localStorage.getItem(recurringKey);
   const recurring: RecurringTransaction[] = recurringData ? JSON.parse(recurringData) : [];
   const settings = getPeriodSettings();
-  try {
-    await syncAll(email, { transactions, budgets, recurring, settings });
-  } catch {
-    console.warn('Full sync failed (offline?)');
-  }
+  await syncAll(email, { transactions, budgets, recurring, settings });
 }
 
 /**
