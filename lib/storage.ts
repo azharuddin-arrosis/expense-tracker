@@ -438,11 +438,6 @@ export async function getExpensesWithSync(
 ): Promise<Expense[]> {
   if (!email) return getExpenses();
 
-  // Use cached local data if recently synced
-  if (isSyncFresh()) {
-    return getExpenses();
-  }
-
   try {
     const { loadAllFromCloud } = await import('./cloud');
     const cloudData = await loadAllFromCloud(email);
