@@ -207,7 +207,7 @@ export default function DashboardPage() {
           { label: 'Rekap', icon: FileText, path: '/ringkasan', color: '#10B981', bg: '#ECFDF5' },
           { label: 'Statistik', icon: PieChart, path: '/statistik', color: '#F59E0B', bg: '#FFFBEB' },
           { label: 'Pengaturan', icon: SlidersHorizontal, path: '/setting', color: '#EF4444', bg: '#FEF2F2' },
-          { label: 'Kategori', icon: Target, path: '/kategori-budget', color: '#06B6D4', bg: '#ECFEFF' },
+          { label: 'Tabungan', icon: Target, path: '/tabungan', color: '#06B6D4', bg: '#ECFEFF' },
         ].map((item) => {
           const Icon = item.icon;
           return (
