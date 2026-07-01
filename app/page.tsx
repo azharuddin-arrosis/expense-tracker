@@ -245,17 +245,24 @@ export default function DashboardPage() {
               Detail <ChevronRight className="w-3 h-3" />
             </button>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {topCategories.map((cat) => {
               const pct = totalExpense > 0 ? (cat.total / totalExpense) * 100 : 0;
               return (
-                <div key={cat.id} className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
-                  <span className="text-xs text-gray-600 flex-1 truncate">{cat.name}</span>
-                  <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ backgroundColor: cat.color, width: `${pct}%` }} />
+                <div key={cat.id}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                      <span className="text-sm font-medium text-gray-800 truncate">{cat.name}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 tabular-nums flex-shrink-0 ml-3">{formatRupiah(cat.total)}</span>
                   </div>
-                  <span className="text-xs font-semibold text-gray-900 tabular-nums w-14 text-right">{formatRupiah(cat.total)}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{ backgroundColor: cat.color, width: `${pct}%` }} />
+                    </div>
+                    <span className="text-[11px] text-gray-400 tabular-nums w-8 text-right">{pct.toFixed(0)}%</span>
+                  </div>
                 </div>
               );
             })}
