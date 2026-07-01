@@ -5,9 +5,6 @@ import {
   TrendingUp,
   Wallet,
   Target,
-  User,
-  Users,
-  Heart,
   ArrowUpRight,
   ArrowDownRight,
   Loader2,
@@ -272,37 +269,6 @@ export default function RingkasanPage() {
             </div>
           </div>
         )}
-
-        {/* By Account */}
-        <div className="bg-white rounded-2xl shadow-sm p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-800">Per Rekening</h3>
-          <div className="space-y-2">
-            {[
-              { key: 'suami' as const, label: 'Suami', icon: User, color: '#3B82F6' },
-              { key: 'istri' as const, label: 'Istri', icon: Heart, color: '#EC4899' },
-              { key: 'bersama' as const, label: 'Bersama', icon: Users, color: '#10B981' },
-            ].map(({ key, label, icon: Icon, color }) => {
-              const data = summary.byAccount[key];
-              return (
-                <div key={key} className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color + '15' }}>
-                    <Icon className="w-4 h-4" style={{ color }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-700">{label}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-amber-600 font-medium tabular-nums">+{formatRupiah(data.income)}</span>
-                      <span className="text-[10px] text-red-500 font-medium tabular-nums">-{formatRupiah(data.expense)}</span>
-                    </div>
-                  </div>
-                  <span className={`text-xs font-bold tabular-nums ${data.balance >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                    {formatRupiah(data.balance)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
       </div>
 
