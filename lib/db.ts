@@ -13,18 +13,25 @@ export const pool = mysql.createPool({
   password: getEnv('MYSQL_PASSWORD'),
   database: getEnv('MYSQL_DATABASE'),
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 5,
   queueLimit: 0,
+  connectTimeout: 5000,
+  acquireTimeout: 5000,
 });
 
 // ── Transactions ──
 
 export async function getTransactions(email: string): Promise<Expense[]> {
-  const [rows] = await pool.execute<mysql.RowDataPacket[]>(
-    'SELECT id, email, amount, category, description, date, flow, account, created_at, updated_at FROM transactions WHERE email = ? ORDER BY date DESC',
-    [email]
-  );
-  return rows.map(mapRowToExpense);
+  try {
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+      'SELECT id, email, amount, category, description, date, flow, account, created_at, updated_at FROM transactions WHERE email = ? ORDER BY date DESC',
+      [email]
+    );
+    return rows.map(mapRowToExpense);
+  } catch (e) {
+    console.error('getTransactions error:', e);
+    return [];
+  }
 }
 
 export async function replaceTransactions(email: string, transactions: Expense[]): Promise<void> {
@@ -46,17 +53,21 @@ export async function replaceTransactions(email: string, transactions: Expense[]
     await conn.commit();
   } catch (e) {
     await conn.rollback();
-    throw e;
+    console.error('replaceTransactions error:', e);
   } finally {
     conn.release();
   }
 }
 
 export async function deleteTransaction(email: string, id: string): Promise<void> {
-  await pool.execute(
-    'DELETE FROM transactions WHERE email = ? AND id = ?',
-    [email, id]
-  );
+  try {
+    await pool.execute(
+      'DELETE FROM transactions WHERE email = ? AND id = ?',
+      [email, id]
+    );
+  } catch (e) {
+    console.error('deleteTransaction error:', e);
+  }
 }
 
 function mapRowToExpense(row: mysql.RowDataPacket): Expense {
@@ -76,11 +87,16 @@ function mapRowToExpense(row: mysql.RowDataPacket): Expense {
 // ── Budgets ──
 
 export async function getBudgets(email: string): Promise<Budget[]> {
-  const [rows] = await pool.execute<mysql.RowDataPacket[]>(
-    'SELECT month, target FROM budgets WHERE email = ?',
-    [email]
-  );
-  return rows.map(r => ({ month: r.month, target: Number(r.target) }));
+  try {
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+      'SELECT month, target FROM budgets WHERE email = ?',
+      [email]
+    );
+    return rows.map(r => ({ month: r.month, target: Number(r.target) }));
+  } catch (e) {
+    console.error('getBudgets error:', e);
+    return [];
+  }
 }
 
 export async function replaceBudgets(email: string, budgets: Budget[]): Promise<void> {
