@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
+  getExpenses,
   getExpensesByMonth,
   getIncomesByMonth,
   getTransactionsByDateRange,
@@ -97,7 +98,10 @@ export default function DashboardPage() {
 
   const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
   const totalIncome = incomes.reduce((sum, e) => sum + e.amount, 0);
-  const balance = totalIncome - totalExpense;
+  const balance = filterMode === 'month'
+    ? getExpenses().filter((e) => e.date.startsWith(month) || e.date < month)
+        .reduce((s, e) => s + (e.flow === 'in' ? e.amount : -e.amount), 0)
+    : totalIncome - totalExpense;
   const remaining = budget ? budget.target - totalExpense : null;
   const usagePercent = budget && budget.target > 0 ? (totalExpense / budget.target) * 100 : 0;
   const isWarning = usagePercent >= 80 && usagePercent < 100;
