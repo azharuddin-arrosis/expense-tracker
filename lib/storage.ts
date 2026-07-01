@@ -582,14 +582,20 @@ export function computeMonthlySummary(
   month: string,
   email: string
 ): MonthlySummary {
-  const transactions = getExpenses().filter((e) => e.date.startsWith(month));
+  const all = getExpenses();
+  const transactions = all.filter((e) => e.date.startsWith(month));
   
   const income = transactions.filter((e) => e.flow === 'in');
   const expense = transactions.filter((e) => e.flow === 'out');
   
   const totalIncome = income.reduce((s, e) => s + e.amount, 0);
   const totalExpense = expense.reduce((s, e) => s + e.amount, 0);
-  const balance = totalIncome - totalExpense;
+
+  // Running balance from all transactions up to this month (carryover)
+  const upToMonth = all.filter((e) => e.date.startsWith(month) || e.date < month);
+  const cumIn = upToMonth.filter((e) => e.flow === 'in').reduce((s, e) => s + e.amount, 0);
+  const cumOut = upToMonth.filter((e) => e.flow === 'out').reduce((s, e) => s + e.amount, 0);
+  const balance = cumIn - cumOut;
 
   // By category
   const incomeByCategory: Record<string, number> = {};
