@@ -106,6 +106,70 @@ export const DEFAULT_SAVING_TARGETS: SavingTarget[] = [
   { id: 'liburan', name: 'Liburan', target: 0, category: 'liburan', month: 'all', color: '#06B6D4', icon: 'Plane' },
 ];
 
+export interface PeriodSettings {
+  startDay: number; // 1-28, when period starts (e.g., 26)
+  endDay: number;   // 1-28, when period ends/closing (e.g., 25)
+}
+
+export function getDefaultPeriodSettings(): PeriodSettings {
+  return { startDay: 1, endDay: 31 };
+}
+
+export function getPeriodDateRange(
+  periodKey: string,
+  settings: PeriodSettings
+): { start: string; end: string } {
+  const [year, month] = periodKey.split('-').map(Number);
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevYear = month === 1 ? year - 1 : year;
+
+  const prevMonthStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+  const prevDays = new Date(prevYear, prevMonth, 0).getDate();
+  const thisDays = new Date(year, month, 0).getDate();
+
+  const sDay = Math.min(settings.startDay, prevDays);
+  const eDay = Math.min(settings.endDay, thisDays);
+
+  const start = `${prevMonthStr}-${String(sDay).padStart(2, '0')}`;
+  const end = `${periodKey}-${String(eDay).padStart(2, '0')}`;
+
+  return { start, end };
+}
+
+export function getCurrentPeriodKey(settings: PeriodSettings): string {
+  const now = new Date();
+  const today = now.getDate();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const eDay = Math.min(settings.endDay, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate());
+
+  if (today <= eDay) return thisMonth;
+
+  // past closing day — next period
+  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function getPrevPeriodKey(periodKey: string): string {
+  const [year, month] = periodKey.split('-').map(Number);
+  const d = new Date(year, month - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function getNextPeriodKey(periodKey: string): string {
+  const [year, month] = periodKey.split('-').map(Number);
+  const d = new Date(year, month, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function getPeriodLabel(periodKey: string, settings: PeriodSettings): string {
+  const { start, end } = getPeriodDateRange(periodKey, settings);
+  const startDate = new Date(start + 'T00:00:00');
+  const endDate = new Date(end + 'T00:00:00');
+  const startLabel = startDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  const endLabel = endDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  return `${startLabel} - ${endLabel}`;
+}
+
 export interface RecurringTransaction {
   id: string;
   userEmail: string;

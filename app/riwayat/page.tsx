@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Search, Trash2, Pencil, TrendingDown, TrendingUp, ChevronLeft, Loader2, Wallet } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
-import { getTransactionsByMonth, getTransactionsByDateRange, deleteExpenseAndSync } from '@/lib/storage';
+import { getTransactionsByPeriod, getTransactionsByDateRange, deleteExpenseAndSync } from '@/lib/storage';
 import { formatRupiah, formatDate, formatDateFull, getMonthName, getCurrentMonthString } from '@/lib/format';
 import { CATEGORIES, getCategoryColor, getCategoryName, INCOME_CATEGORIES, Expense } from '@/lib/types';
 import { useSyncOnMount } from '@/lib/use-sync';
@@ -29,7 +29,7 @@ export default function RiwayatPage() {
   const allExpenses = useMemo(() => {
     if (!synced && email) return [];
     if (filterMode === 'month' || !dateRange) {
-      return getTransactionsByMonth(month);
+      return getTransactionsByPeriod(month);
     }
     return getTransactionsByDateRange(dateRange.start, dateRange.end);
   }, [month, filterMode, dateRange, refreshKey, synced, email]);

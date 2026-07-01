@@ -26,8 +26,11 @@ import {
   getExpensesByMonth,
   getIncomesByMonth,
   getTransactionsByDateRange,
-  getExpensesByCategory,
+  getExpenseByCategoryPeriod,
+  getExpenseByPeriod,
+  getIncomeByPeriod,
   getBudget,
+  getPeriodSettings,
   getExpensesWithSync,
 } from '@/lib/storage';
 import {
@@ -38,7 +41,7 @@ import {
 } from '@/lib/format';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { DateFilter } from '@/components/DateFilter';
-import { EXPENSE_CATEGORIES, getCategoryColor, getCategoryName, Expense } from '@/lib/types';
+import { EXPENSE_CATEGORIES, getCategoryColor, getCategoryName, Expense, getPeriodDateRange } from '@/lib/types';
 import { EmptyState } from '@/components/EmptyState';
 import { DetailPopup } from '@/components/DetailPopup';
 import { getStoredEmail } from '@/lib/cloud';
@@ -76,19 +79,19 @@ export default function DashboardPage() {
 
   const expenses = useMemo(() => {
     if (!synced && email) return [];
-    if (filterMode === 'month' || !dateRange) return getExpensesByMonth(month);
+    if (filterMode === 'month' || !dateRange) return getExpenseByPeriod(month);
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'out');
   }, [month, filterMode, dateRange, refreshKey, synced, email]);
 
   const incomes = useMemo(() => {
     if (!synced && email) return [];
-    if (filterMode === 'month' || !dateRange) return getIncomesByMonth(month);
+    if (filterMode === 'month' || !dateRange) return getIncomeByPeriod(month);
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'in');
   }, [month, filterMode, dateRange, refreshKey, synced, email]);
 
   const categoryData = useMemo(() => {
     if (!synced && email) return {};
-    return getExpensesByCategory(month);
+    return getExpenseByCategoryPeriod(month);
   }, [month, refreshKey, synced, email]);
 
   const budget = useMemo(() => {
@@ -98,10 +101,14 @@ export default function DashboardPage() {
 
   const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
   const totalIncome = incomes.reduce((sum, e) => sum + e.amount, 0);
-  const balance = filterMode === 'month'
-    ? getExpenses().filter((e) => e.date.startsWith(month) || e.date < month)
-        .reduce((s, e) => s + (e.flow === 'in' ? e.amount : -e.amount), 0)
-    : totalIncome - totalExpense;
+  const balance = useMemo(() => {
+    if (filterMode !== 'month') return totalIncome - totalExpense;
+    const settings = getPeriodSettings();
+    const { end } = getPeriodDateRange(month, settings);
+    return getExpenses()
+      .filter((e) => e.date <= end)
+      .reduce((s, e) => s + (e.flow === 'in' ? e.amount : -e.amount), 0);
+  }, [month, filterMode, totalIncome, totalExpense, refreshKey]);
   const remaining = budget ? budget.target - totalExpense : null;
   const usagePercent = budget && budget.target > 0 ? (totalExpense / budget.target) * 100 : 0;
   const isWarning = usagePercent >= 80 && usagePercent < 100;

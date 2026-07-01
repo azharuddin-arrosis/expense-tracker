@@ -1,4 +1,4 @@
-import { Expense, Budget, RecurringTransaction, SavingTarget, DEFAULT_SAVING_TARGETS, MonthlySummary } from './types';
+import { Expense, Budget, RecurringTransaction, SavingTarget, DEFAULT_SAVING_TARGETS, MonthlySummary, PeriodSettings, getDefaultPeriodSettings, getPeriodDateRange } from './types';
 import { getStoredEmail } from './cloud';
 
 const EXPENSES_PREFIX = 'expense-tracker-expenses-v2:';
@@ -127,6 +127,59 @@ export function saveBudget(budget: Budget): void {
     all.push(budget);
   }
   localStorage.setItem(key, JSON.stringify(all));
+}
+
+// ── Period Settings ──
+
+const PERIOD_SETTINGS_KEY = 'expense-tracker-period-settings';
+
+export function getPeriodSettings(): PeriodSettings {
+  if (!isBrowser()) return getDefaultPeriodSettings();
+  try {
+    const data = localStorage.getItem(PERIOD_SETTINGS_KEY);
+    return data ? JSON.parse(data) : getDefaultPeriodSettings();
+  } catch {
+    return getDefaultPeriodSettings();
+  }
+}
+
+export function savePeriodSettings(settings: PeriodSettings): void {
+  if (!isBrowser()) return;
+  localStorage.setItem(PERIOD_SETTINGS_KEY, JSON.stringify(settings));
+}
+
+// ── Period-based helpers ──
+
+export function getTransactionsByPeriod(periodKey: string): Expense[] {
+  const settings = getPeriodSettings();
+  const { start, end } = getPeriodDateRange(periodKey, settings);
+  return getExpenses().filter((e) => e.date >= start && e.date <= end);
+}
+
+export function getIncomeByPeriod(periodKey: string): Expense[] {
+  return getTransactionsByPeriod(periodKey).filter((e) => e.flow === 'in');
+}
+
+export function getExpenseByPeriod(periodKey: string): Expense[] {
+  return getTransactionsByPeriod(periodKey).filter((e) => e.flow === 'out');
+}
+
+export function getExpenseByCategoryPeriod(periodKey: string): Record<string, number> {
+  const expenses = getExpenseByPeriod(periodKey);
+  const totals: Record<string, number> = {};
+  for (const exp of expenses) {
+    totals[exp.category] = (totals[exp.category] || 0) + exp.amount;
+  }
+  return totals;
+}
+
+export function getAllPeriods(): string[] {
+  const expenses = getExpenses();
+  const periods = new Set<string>();
+  for (const exp of expenses) {
+    periods.add(exp.date.slice(0, 7));
+  }
+  return Array.from(periods).sort();
 }
 
 export function getAllMonths(): string[] {
@@ -575,15 +628,17 @@ export function updateSavingTargetAndSync(
 }
 
 /**
- * Compute monthly summary for a given month and email.
- * Runs entirely on client using localStorage (offline-first).
+ * Compute monthly summary for a given period and email.
+ * Uses custom period settings (startDay/endDay) if configured.
  */
 export function computeMonthlySummary(
-  month: string,
+  periodKey: string,
   email: string
 ): MonthlySummary {
+  const settings = getPeriodSettings();
+  const { start, end } = getPeriodDateRange(periodKey, settings);
   const all = getExpenses();
-  const transactions = all.filter((e) => e.date.startsWith(month));
+  const transactions = all.filter((e) => e.date >= start && e.date <= end);
   
   const income = transactions.filter((e) => e.flow === 'in');
   const expense = transactions.filter((e) => e.flow === 'out');
@@ -591,10 +646,10 @@ export function computeMonthlySummary(
   const totalIncome = income.reduce((s, e) => s + e.amount, 0);
   const totalExpense = expense.reduce((s, e) => s + e.amount, 0);
 
-  // Running balance from all transactions up to this month (carryover)
-  const upToMonth = all.filter((e) => e.date.startsWith(month) || e.date < month);
-  const cumIn = upToMonth.filter((e) => e.flow === 'in').reduce((s, e) => s + e.amount, 0);
-  const cumOut = upToMonth.filter((e) => e.flow === 'out').reduce((s, e) => s + e.amount, 0);
+  // Running balance from all transactions up to period end
+  const upToEnd = all.filter((e) => e.date <= end);
+  const cumIn = upToEnd.filter((e) => e.flow === 'in').reduce((s, e) => s + e.amount, 0);
+  const cumOut = upToEnd.filter((e) => e.flow === 'out').reduce((s, e) => s + e.amount, 0);
   const balance = cumIn - cumOut;
 
   // By category
@@ -667,7 +722,7 @@ export function computeMonthlySummary(
   }
 
   return {
-    month,
+    month: periodKey,
     income: totalIncome,
     expense: totalExpense,
     balance,

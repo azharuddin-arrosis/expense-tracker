@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Info,
   Shield,
+  Calendar,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/lib/context';
@@ -21,8 +22,12 @@ import {
   getBudget,
   getExpenses,
   syncAllToCloud,
+  getPeriodSettings,
+  savePeriodSettings,
+  getTransactionsByPeriod,
 } from '@/lib/storage';
-import { formatRupiah, getMonthName } from '@/lib/format';
+import { formatRupiah, getMonthName, getCurrentMonthString } from '@/lib/format';
+import { PeriodSettings, getPeriodDateRange, getPeriodLabel } from '@/lib/types';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { PageHeader } from '@/components/PageHeader';
 import { getStoredEmail, clearStoredEmail } from '@/lib/cloud';
@@ -39,6 +44,31 @@ export default function SettingPage() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const email = getStoredEmail();
+
+  const initPeriod = getPeriodSettings();
+  const [periodStart, setPeriodStart] = useState(initPeriod.startDay);
+  const [periodEnd, setPeriodEnd] = useState(initPeriod.endDay);
+  const [periodSaved, setPeriodSaved] = useState(false);
+
+  const currentPeriodKey = getCurrentMonthString();
+  const periodRange = useMemo(
+    () => getPeriodDateRange(currentPeriodKey, { startDay: periodStart, endDay: periodEnd }),
+    [currentPeriodKey, periodStart, periodEnd]
+  );
+  const periodLabel = useMemo(
+    () => getPeriodLabel(currentPeriodKey, { startDay: periodStart, endDay: periodEnd }),
+    [currentPeriodKey, periodStart, periodEnd]
+  );
+
+  const handleSavePeriod = () => {
+    const s = Math.max(1, Math.min(28, periodStart));
+    const e = Math.max(1, Math.min(28, periodEnd));
+    setPeriodStart(s);
+    setPeriodEnd(e);
+    savePeriodSettings({ startDay: s, endDay: e });
+    setPeriodSaved(true);
+    setTimeout(() => setPeriodSaved(false), 2000);
+  };
 
   useEffect(() => {
     if (syncStatus === 'success' || syncStatus === 'error') {
@@ -185,6 +215,55 @@ export default function SettingPage() {
               <p className="text-xs text-red-500">Gagal. Periksa koneksi.</p>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ── Periode Laporan ── */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 px-1">
+          <Calendar className="w-5 h-5 text-emerald-600" />
+          <h2 className="text-base font-semibold text-gray-800">Periode Laporan</h2>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-4">
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <p className="text-xs text-gray-400 mb-1.5">Tanggal Mulai</p>
+              <select
+                value={periodStart}
+                onChange={(e) => setPeriodStart(Number(e.target.value))}
+                className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+              >
+                {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-gray-400 mb-1.5">Tanggal Tutup</p>
+              <select
+                value={periodEnd}
+                onChange={(e) => setPeriodEnd(Number(e.target.value))}
+                className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+              >
+                {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-3 space-y-1">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Periode Saat Ini</p>
+            <p className="text-sm font-semibold text-gray-800">{periodLabel}</p>
+          </div>
+
+          <button
+            onClick={handleSavePeriod}
+            className="w-full h-11 rounded-xl bg-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 active:bg-emerald-600 transition-colors"
+          >
+            {periodSaved ? 'Tersimpan' : 'Simpan Periode'}
+          </button>
         </div>
       </section>
 

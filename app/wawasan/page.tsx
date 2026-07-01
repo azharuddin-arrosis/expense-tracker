@@ -16,9 +16,9 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
-  getExpensesByMonth,
-  getIncomesByMonth,
-  getExpensesByCategory,
+  getExpenseByPeriod,
+  getIncomeByPeriod,
+  getExpenseByCategoryPeriod,
   getBudget,
   computeMonthlySummary,
 } from '@/lib/storage';
@@ -88,19 +88,19 @@ export default function WawasanPage() {
 
   const expenses = useMemo(() => {
     if (!synced && email) return [];
-    return getExpensesByMonth(month);
+    return getExpenseByPeriod(month);
   }, [month, refreshKey, synced, email]);
   const incomes = useMemo(() => {
     if (!synced && email) return [];
-    return getIncomesByMonth(month);
+    return getIncomeByPeriod(month);
   }, [month, refreshKey, synced, email]);
   const categoryData = useMemo(() => {
     if (!synced && email) return {};
-    return getExpensesByCategory(month);
+    return getExpenseByCategoryPeriod(month);
   }, [month, refreshKey, synced, email]);
   const prevCatData = useMemo(() => {
     if (!synced && email) return {};
-    return getExpensesByCategory(prevMonthStr);
+    return getExpenseByCategoryPeriod(prevMonthStr);
   }, [prevMonthStr, refreshKey, synced, email]);
   const budget = useMemo(() => {
     if (!synced && email) return null;

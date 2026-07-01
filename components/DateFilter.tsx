@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { getMonthName, prevMonth, nextMonth, getTodayString } from '@/lib/format';
+import { getPeriodLabel } from '@/lib/types';
+import { getPeriodSettings } from '@/lib/storage';
 
 type FilterMode = 'month' | 'week' | 'range';
 
@@ -70,9 +72,15 @@ export function DateFilter({
   const diffDays = (a: string, b: string) => Math.round((new Date(b).getTime() - new Date(a).getTime()) / (1000 * 60 * 60 * 24));
   const shiftDays = (d: string, n: number) => { const date = new Date(d); date.setDate(date.getDate() + n); return fmt(date); };
 
+  const periodLabel = useMemo(() => {
+    const settings = getPeriodSettings();
+    if (settings.startDay === 1 && settings.endDay >= 31) return getMonthName(month);
+    return getPeriodLabel(month, settings);
+  }, [month]);
+
   const rangeLabel = dateRange && filterMode !== 'month'
     ? `${formatDateShort(dateRange.start)} - ${formatDateShort(dateRange.end)}`
-    : getMonthName(month);
+    : periodLabel;
 
   return (
     <div className="bg-gray-50 rounded-xl px-3 py-2.5 space-y-2">

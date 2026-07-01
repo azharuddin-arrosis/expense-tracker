@@ -4,9 +4,9 @@ import { useMemo, useState } from 'react';
 import { TrendingUp, TrendingDown, ArrowUp, ArrowDown, Loader2, Wallet } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
-  getExpensesByMonth,
-  getIncomesByMonth,
-  getExpensesByCategory,
+  getExpenseByPeriod,
+  getIncomeByPeriod,
+  getExpenseByCategoryPeriod,
   getTransactionsByDateRange,
 } from '@/lib/storage';
 import { formatRupiah, getMonthName, getCurrentMonthString, prevMonth } from '@/lib/format';
@@ -39,7 +39,7 @@ export default function StatistikPage() {
   const expenses = useMemo(() => {
     if (!synced && email) return [];
     if (filterMode === 'month' || !dateRange) {
-      return getExpensesByMonth(month);
+      return getExpenseByPeriod(month);
     }
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'out');
   }, [month, filterMode, dateRange, refreshKey, synced, email]);
@@ -47,7 +47,7 @@ export default function StatistikPage() {
   const categoryData = useMemo(
     () => {
       if (!synced && email) return {};
-      return getExpensesByCategory(month);
+      return getExpenseByCategoryPeriod(month);
     },
     [month, refreshKey, synced, email]
   );
@@ -80,8 +80,8 @@ export default function StatistikPage() {
   const trendData = useMemo(() => {
     if (!synced && email) return trendMonths.map((m) => ({ month: m, expense: 0, income: 0 }));
     return trendMonths.map((m) => {
-      const exps = getExpensesByMonth(m);
-      const incs = getIncomesByMonth(m);
+      const exps = getExpenseByPeriod(m);
+      const incs = getIncomeByPeriod(m);
       return {
         month: m,
         expense: exps.reduce((s, e) => s + e.amount, 0),
@@ -99,7 +99,7 @@ export default function StatistikPage() {
   const prevExpenses = useMemo(() => {
     if (!synced && email) return [];
     if (filterMode === 'month' || !dateRange) {
-      return getExpensesByMonth(prevMonthStr);
+      return getExpenseByPeriod(prevMonthStr);
     }
     return [];
   }, [prevMonthStr, filterMode, dateRange, refreshKey, synced, email]);
@@ -109,7 +109,7 @@ export default function StatistikPage() {
   // Biggest category change
   const prevCatData = useMemo(() => {
     if (!synced && email) return {};
-    return getExpensesByCategory(prevMonthStr);
+    return getExpenseByCategoryPeriod(prevMonthStr);
   }, [prevMonthStr, refreshKey, synced, email]);
   const biggestChangeCat = useMemo(() => {
     let maxDelta = 0;

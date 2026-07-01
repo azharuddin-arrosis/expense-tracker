@@ -19,7 +19,7 @@ import {
   Wallet as WalletIcon,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
-import { computeMonthlySummary, getBudget, getExpensesByDate, getExpensesByCategory } from '@/lib/storage';
+import { computeMonthlySummary, getBudget, getExpensesByDate, getExpenseByCategoryPeriod } from '@/lib/storage';
 import { formatRupiah, getMonthName, prevMonth as prevMonthStr } from '@/lib/format';
 import { useSyncOnMount } from '@/lib/use-sync';
 import { Expense, getCategoryName, getCategoryColor, EXPENSE_CATEGORIES } from '@/lib/types';
@@ -84,7 +84,7 @@ export default function RingkasanPage() {
   const categoryData = useMemo(
     () => {
       if (!synced && email !== 'guest') return {};
-      return getExpensesByCategory(month);
+      return getExpenseByCategoryPeriod(month);
     },
     [month, refreshKey, synced, email]
   );
