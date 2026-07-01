@@ -108,7 +108,7 @@ export default function MigratePage() {
         </div>
       </div>
 
-      <div className="px-4 pt-5 pb-6 space-y-4">
+      <div className="px-4 pt-6 pb-6 space-y-4">
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
           <p className="text-sm text-gray-600">
             Aplikasi sekarang pake MySQL sebagai database. Klik tombol di bawah untuk migrasi data dari

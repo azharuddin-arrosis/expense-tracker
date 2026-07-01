@@ -95,7 +95,7 @@ export default function RiwayatPage() {
     <>
       <PageHeader title="Riwayat" />
 
-      <div className="px-4 pt-5 pb-6 space-y-4">
+      <div className="px-4 pt-6 pb-6 space-y-4">
       {deleteError && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs flex items-center justify-between">
           <span>{deleteError}</span>
@@ -183,40 +183,48 @@ export default function RiwayatPage() {
                   <div
                     key={exp.id}
                     onClick={() => setDetailTarget(exp)}
-                    className="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl shadow-sm active:bg-gray-50 transition-colors cursor-pointer"
+                    className="flex items-stretch gap-0 bg-white rounded-2xl shadow-sm active:bg-gray-50 transition-colors cursor-pointer overflow-hidden"
                   >
-                    <div className="flex-shrink-0">
-                      <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center"
-                        style={{
-                          backgroundColor: exp.flow === 'in'
-                            ? '#F59E0B20'
-                            : getCategoryColor(exp.category) + '20',
-                        }}
-                      >
-                        <CategoryIcon
-                          categoryId={exp.category}
-                          className="w-4 h-4"
+                    <div
+                      className="w-1.5 flex-shrink-0"
+                      style={{
+                        backgroundColor: exp.flow === 'in' ? '#F59E0B' : getCategoryColor(exp.category),
+                      }}
+                    />
+                    <div className="flex items-center gap-3 px-4 py-3 flex-1 min-w-0">
+                      <div className="flex-shrink-0">
+                        <div
+                          className="w-9 h-9 rounded-full flex items-center justify-center"
                           style={{
-                            color: exp.flow === 'in' ? '#F59E0B' : getCategoryColor(exp.category),
+                            backgroundColor: exp.flow === 'in'
+                              ? '#F59E0B20'
+                              : getCategoryColor(exp.category) + '20',
                           }}
-                        />
+                        >
+                          <CategoryIcon
+                            categoryId={exp.category}
+                            className="w-4 h-4"
+                            style={{
+                              color: exp.flow === 'in' ? '#F59E0B' : getCategoryColor(exp.category),
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {exp.description || getCategoryName(exp.category)}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {exp.description || getCategoryName(exp.category)}
+                          </p>
+                          <span className={`text-sm font-semibold tabular-nums flex-shrink-0 ml-3 ${
+                            exp.flow === 'in' ? 'text-amber-600' : 'text-gray-900'
+                          }`}>
+                            {exp.flow === 'in' ? '+' : '-'}{formatRupiah(exp.amount)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {getCategoryName(exp.category)} · {formatDate(exp.date)}
                         </p>
-                        <span className={`text-sm font-semibold tabular-nums flex-shrink-0 ml-3 ${
-                          exp.flow === 'in' ? 'text-amber-600' : 'text-gray-900'
-                        }`}>
-                          {exp.flow === 'in' ? '+' : '-'}{formatRupiah(exp.amount)}
-                        </span>
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {getCategoryName(exp.category)} · {formatDate(exp.date)}
-                      </p>
                     </div>
                   </div>
                 ))}

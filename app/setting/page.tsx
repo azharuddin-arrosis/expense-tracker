@@ -196,7 +196,7 @@ export default function SettingPage() {
     <>
       <PageHeader title="Pengaturan" />
 
-      <div className="px-4 pb-6 space-y-5">
+      <div className="px-4 pt-6 pb-6 space-y-5">
 
       {/* ── Akun ── */}
       <section className="space-y-3">

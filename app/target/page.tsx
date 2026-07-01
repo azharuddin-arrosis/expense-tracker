@@ -66,7 +66,7 @@ export default function TargetPage() {
     <>
       <PageHeader title="Target Bulanan" />
 
-      <div className="px-4 pt-5 pb-6 space-y-4">
+      <div className="px-4 pt-6 pb-6 space-y-4">
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Target className="w-5 h-5 text-emerald-600" />
