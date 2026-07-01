@@ -5,6 +5,7 @@ import { AuthGuard } from '@/components/AuthGuard';
 import { TargetForm } from '@/components/TargetForm';
 import { SyncEngine } from '@/components/SyncEngine';
 import { PwaRegister } from '@/components/PwaRegister';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export const metadata: Metadata = {
   title: 'Duit',
@@ -38,10 +39,12 @@ export default function RootLayout({
     <html lang="id" className="h-full">
       <body className="h-full bg-gray-50">
         <AppProvider>
-          <AuthGuard>{children}</AuthGuard>
-          <TargetForm />
-          <SyncEngine />
-          <PwaRegister />
+          <ErrorBoundary>
+            <AuthGuard>{children}</AuthGuard>
+            <TargetForm />
+            <SyncEngine />
+            <PwaRegister />
+          </ErrorBoundary>
         </AppProvider>
       </body>
     </html>
