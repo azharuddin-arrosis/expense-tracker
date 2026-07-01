@@ -855,14 +855,25 @@ export function deleteGoal(id: string): Expense | null {
   });
 }
 
-export function addContribution(goalId: string, amount: number, note?: string): Expense {
-  const goal = getGoals().find((g) => g.id === goalId);
+export function addContribution(goalId: string, amount: number, note?: string, source?: 'auto' | 'manual'): Expense {
+  const goals = getGoals();
+  const goal = goals.find((g) => g.id === goalId);
   if (!goal) throw new Error('Goal not found');
+  
+  // Update goal saved amount
   updateGoal(goalId, { saved: goal.saved + amount });
+  
+  // Create appropriate description based on source
+  const sourceText = source === 'auto' ? 'Auto-sisih' : (source === 'manual' ? 'Manual' : '');
+  const description = note || 
+    (source === 'auto' ? 
+      `Auto-sisih ${sourceText} tabungan: ${goal.name}` : 
+      `Tabungan: ${goal.name}`);
+  
   const tx = addExpense({
     amount,
     category: 'tabungan',
-    description: note || `Tabungan: ${goal.name}`,
+    description,
     date: new Date().toISOString().slice(0, 10),
     flow: 'out',
     account: 'bersama',

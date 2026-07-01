@@ -83,6 +83,54 @@ function mapRowToExpense(row: mysql.RowDataPacket): Expense {
   };
 }
 
+// ── Goals ──
+
+export async function getGoals(email: string): Promise<SavingGoal[]> {
+  try {
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+      'SELECT * FROM goals WHERE email = ?',
+      [email]
+    );
+    return rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      target: Number(r.target),
+      saved: Number(r.saved),
+      icon: r.icon || undefined,
+      color: r.color,
+      createdAt: formatDateTime(r.created_at),
+      updatedAt: formatDateTime(r.updated_at),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function replaceGoals(email: string, goals: SavingGoal[]): Promise<void> {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    await conn.execute('DELETE FROM goals WHERE email = ?', [email]);
+    if (goals.length > 0) {
+      const values = goals.map(g => [
+        g.id, email, g.name, g.target, g.saved,
+        g.icon || null, g.color,
+        toMySqlDatetime(g.createdAt), toMySqlDatetime(g.updatedAt),
+      ]);
+      await conn.query(
+        'INSERT INTO goals (id, email, name, target, saved, icon, color, created_at, updated_at) VALUES ?',
+        [values]
+      );
+    }
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback();
+    console.error('replaceGoals error:', e);
+  } finally {
+    conn.release();
+  }
+}
+
 // ── Budgets ──
 
 export async function getBudgets(email: string): Promise<Budget[]> {
@@ -255,46 +303,6 @@ export async function initGoalTables(): Promise<void> {
     tablesInitialized = true;
   } catch (e) {
     console.error('initGoalTables error:', e);
-  }
-}
-
-export async function getGoals(email: string): Promise<SavingGoal[]> {
-  try {
-    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
-      'SELECT * FROM goals WHERE email = ?',
-      [email]
-    );
-    return rows.map(r => ({
-      id: r.id,
-      name: r.name,
-      target: Number(r.target),
-      saved: Number(r.saved),
-      icon: r.icon || undefined,
-      color: r.color,
-      createdAt: formatDateTime(r.created_at),
-      updatedAt: formatDateTime(r.updated_at),
-    }));
-  } catch {
-    return [];
-  }
-}
-
-export async function replaceGoals(email: string, goals: SavingGoal[]): Promise<void> {
-  try {
-    await pool.execute('DELETE FROM goals WHERE email = ?', [email]);
-    if (goals.length > 0) {
-      const values = goals.map(g => [
-        g.id, email, g.name, g.target, g.saved,
-        g.icon || null, g.color,
-        toMySqlDatetime(g.createdAt), toMySqlDatetime(g.updatedAt),
-      ]);
-      await pool.query(
-        'INSERT INTO goals (id, email, name, target, saved, icon, color, created_at, updated_at) VALUES ?',
-        [values]
-      );
-    }
-  } catch (e) {
-    console.error('replaceGoals error:', e);
   }
 }
 

@@ -12,6 +12,7 @@ import {
   Loader2,
   Wallet as WalletIcon,
   Sparkles,
+  List,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
@@ -23,6 +24,7 @@ import {
   getAutoSisih,
   saveAutoSisih,
   syncAllToCloud,
+  getExpenses,
 } from '@/lib/storage';
 import { formatRupiah } from '@/lib/format';
 import { useSyncOnMount } from '@/lib/use-sync';
@@ -47,6 +49,32 @@ export default function TabunganPage() {
   const overallPct = totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0;
 
   const [showAddGoal, setShowAddGoal] = useState(false);
+  const [detailGoalId, setDetailGoalId] = useState<string | null>(null);
+  const [detailView, setDetailView] = useState<'overview' | 'contributions' | null>(null);
+
+  const selectedGoalDetail = goals.find(g => g.id === detailGoalId);
+  const allExpenses = getExpenses();
+  
+  const goalContributions = useMemo(() => {
+    if (!selectedGoalDetail) return [];
+    // Find contributions that match the goal name in description
+    // This includes both manual top-ups and auto-sisih contributions
+    const contributions = allExpenses.filter(t => 
+      t.description?.includes(selectedGoalDetail.name) && t.category === 'tabungan'
+    );
+    return contributions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [allExpenses, selectedGoalDetail]);
+  
+  // Format contribution source
+  const getContributionSource = (exp: any) => {
+    if (exp.description?.includes('Auto-sisih')) return 'Auto-sisih';
+    if (exp.description?.includes(selectedGoalDetail?.name || '')) return 'Top-up Manual';
+    return 'Lainnya';
+  };
+  const goalTransactions = useMemo(() => {
+    if (!detailGoalId) return [];
+    return allExpenses.filter(t => t.category === 'tabungan');
+  }, [detailGoalId, refreshKey]);
   const [showTopUp, setShowTopUp] = useState<string | null>(null);
   const [showAutoSisih, setShowAutoSisih] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -78,7 +106,7 @@ export default function TabunganPage() {
   const handleTopUp = () => {
     const num = parseInt(topUpAmountInput.replace(/[^0-9]/g, '')) || 0;
     if (!showTopUp || num <= 0) return;
-    addContribution(showTopUp, num, topUpNote || undefined);
+    addContribution(showTopUp, num, topUpNote || undefined, 'manual');
     if (email) syncAllToCloud(email).catch(() => {});
     setTopUpAmountInput('');
     setTopUpNote('');
