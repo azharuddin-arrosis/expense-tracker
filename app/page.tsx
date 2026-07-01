@@ -82,10 +82,9 @@ export default function DashboardPage() {
   }, [email, refreshKey]);
 
   const expenses = useMemo(() => {
-    if (!synced && email) return [];
     if (filterMode === 'month' || !dateRange) return getExpenseByPeriod(month);
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'out');
-  }, [month, filterMode, dateRange, refreshKey, synced, email]);
+  }, [month, filterMode, dateRange, refreshKey]);
 
   const incomes = useMemo(() => {
     if (!synced && email) return [];

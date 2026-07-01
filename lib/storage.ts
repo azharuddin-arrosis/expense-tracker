@@ -402,16 +402,44 @@ export async function syncAllToCloud(email: string): Promise<void> {
   const recurring: RecurringTransaction[] = recurringData ? JSON.parse(recurringData) : [];
   const settings = getPeriodSettings();
   await syncAll(email, { transactions, budgets, recurring, settings });
+  markSyncDone();
+}
+
+const LAST_SYNC_KEY = 'expense-tracker-last-sync';
+const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+function isSyncFresh(): boolean {
+  try {
+    const last = localStorage.getItem(LAST_SYNC_KEY);
+    if (!last) return false;
+    return Date.now() - parseInt(last, 10) < SYNC_INTERVAL_MS;
+  } catch {
+    return false;
+  }
+}
+
+function markSyncDone(): void {
+  try {
+    localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
+  } catch {
+    // storage full — ignore
+  }
 }
 
 /**
  * Sync ALL data from cloud (transactions, budgets, settings).
  * Falls back to localStorage if offline or error.
+ * Skips API call if last sync was < 5 minutes ago.
  */
 export async function getExpensesWithSync(
   email: string | null
 ): Promise<Expense[]> {
   if (!email) return getExpenses();
+
+  // Use cached local data if recently synced
+  if (isSyncFresh()) {
+    return getExpenses();
+  }
 
   try {
     const { loadAllFromCloud } = await import('./cloud');
@@ -433,6 +461,8 @@ export async function getExpensesWithSync(
       const key = 'expense-tracker-period-settings';
       localStorage.setItem(key, JSON.stringify(cloudData.settings));
     }
+
+    markSyncDone();
 
     return cloudData.transactions.length > 0
       ? cloudData.transactions

@@ -134,9 +134,18 @@ export async function pullFromCloud(email: string): Promise<boolean> {
       saveRecurringLocal(email, Array.from(recurringMap.values()));
     }
 
+    markSyncDone();
     return true;
   } catch {
     return false;
+  }
+}
+
+function markSyncDone(): void {
+  try {
+    localStorage.setItem('expense-tracker-last-sync', String(Date.now()));
+  } catch {
+    // storage full — ignore
   }
 }
 
@@ -147,8 +156,16 @@ export async function pushToCloud(email: string): Promise<boolean> {
     const data = localStorage.getItem(key);
     const budgets: Budget[] = data ? JSON.parse(data) : [];
     const recurring = getRecurringLocal(email);
+    let settings;
+    try {
+      const raw = localStorage.getItem('expense-tracker-period-settings');
+      if (raw) settings = JSON.parse(raw);
+    } catch {
+      // ignore
+    }
 
-    await syncAllToCloud(email, { transactions, budgets, recurring });
+    await syncAllToCloud(email, { transactions, budgets, recurring, settings });
+    markSyncDone();
     return true;
   } catch {
     return false;

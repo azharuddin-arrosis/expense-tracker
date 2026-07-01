@@ -14,7 +14,14 @@ export async function GET(request: NextRequest) {
       getRecurring(email),
       getSettings(email),
     ]);
-    return NextResponse.json({ transactions, budgets, recurring, settings });
+    return NextResponse.json(
+      { transactions, budgets, recurring, settings },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=300, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    );
   } catch (error) {
     console.error('DB GET sync error:', error);
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
