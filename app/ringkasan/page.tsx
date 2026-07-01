@@ -3,27 +3,21 @@
 import { useMemo, useState } from 'react';
 import {
   TrendingUp,
-  TrendingDown,
   Wallet,
   Target,
-  PiggyBank,
-  Plane,
   User,
   Users,
   Heart,
-  Clock,
   ArrowUpRight,
   ArrowDownRight,
-  CalendarDays,
   Loader2,
   Wallet as WalletIcon,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
-import { computeMonthlySummary, getBudget, getExpensesByDate, getExpenseByCategoryPeriod, deleteExpenseAndSync } from '@/lib/storage';
+import { computeMonthlySummary, getBudget, getExpenseByCategoryPeriod, deleteExpenseAndSync } from '@/lib/storage';
 import { formatRupiah, getMonthName, prevMonth as prevMonthStr } from '@/lib/format';
 import { useSyncOnMount } from '@/lib/use-sync';
-import { Expense, getCategoryName, getCategoryColor, EXPENSE_CATEGORIES } from '@/lib/types';
-import { CategoryIcon } from '@/components/CategoryIcon';
+import { Expense, getCategoryName, getCategoryColor } from '@/lib/types';
 import { DetailPopup } from '@/components/DetailPopup';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { PageHeader } from '@/components/PageHeader';
@@ -42,7 +36,6 @@ export default function RingkasanPage() {
   const [monthNum, setMonthNum] = useState(currentMonthNum);
   const month = `${year}-${String(monthNum).padStart(2, '0')}`;
 
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<Expense | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -56,10 +49,6 @@ export default function RingkasanPage() {
     },
     [month, email, refreshKey, synced]
   );
-
-  const dayTransactions = selectedDay
-    ? getExpensesByDate(selectedDay)
-    : [];
 
   const prevMonth = prevMonthStr(month);
   const prevSummary = useMemo(
@@ -99,26 +88,6 @@ export default function RingkasanPage() {
   }, [categoryData]);
   const totalExpense = summary.expense;
 
-  // Goal projection
-  const goalProjection = useMemo(() => {
-    if (!synced && email !== 'guest') return [];
-    const last3Months = [month, prevMonthStr(month), prevMonthStr(prevMonthStr(month))];
-    const summaries = last3Months.map((m) => computeMonthlySummary(m, email));
-    const avgSaving = summaries.reduce((s, sm) => s + Math.max(0, sm.income - sm.expense), 0) / summaries.length;
-
-    const result: { target: number; achieved: number; label: string; avgMonthly: number }[] = [];
-    if (summary.targets.saving.target > 0) {
-      result.push({ target: summary.targets.saving.target, achieved: summary.targets.saving.achieved, label: 'Tabungan', avgMonthly: avgSaving });
-    }
-    if (summary.targets.liburan.target > 0) {
-      result.push({ target: summary.targets.liburan.target, achieved: summary.targets.liburan.achieved, label: 'Liburan', avgMonthly: avgSaving });
-    }
-    for (const ct of summary.targets.custom) {
-      result.push({ target: ct.target, achieved: ct.achieved, label: ct.name, avgMonthly: avgSaving });
-    }
-    return result;
-  }, [month, email, summary, refreshKey, synced]);
-
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleteError(null);
@@ -154,7 +123,7 @@ export default function RingkasanPage() {
     <>
       <PageHeader title="Rekap" subtitle={`${getMonthName(month)} ${year}`} />
 
-      <div className="px-4 pt-5 pb-6 space-y-4">
+      <div className="px-4 pt-5 pb-8 space-y-5">
         {/* Month & Year Filter */}
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -184,8 +153,8 @@ export default function RingkasanPage() {
         </div>
 
         {/* Summary Card */}
-        <div className="bg-white rounded-2xl shadow-sm p-4">
-          <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-2xl shadow-sm p-5">
+          <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <ArrowUpRight className="w-3.5 h-3.5 text-amber-500" />
@@ -219,7 +188,7 @@ export default function RingkasanPage() {
         </div>
 
         {/* MoM Comparison */}
-        <div className="bg-white rounded-2xl shadow-sm p-4">
+        <div className="bg-white rounded-2xl shadow-sm p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${momChange > 0 ? 'bg-red-50' : 'bg-emerald-50'}`}>
@@ -243,7 +212,7 @@ export default function RingkasanPage() {
 
         {/* Budget vs Actual */}
         {budget && (
-          <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+          <div className="bg-white rounded-2xl shadow-sm p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <Target className="w-4 h-4 text-emerald-600" />
@@ -276,7 +245,7 @@ export default function RingkasanPage() {
 
         {/* Top Categories */}
         {topCategories.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+          <div className="bg-white rounded-2xl shadow-sm p-5 space-y-3">
             <h3 className="text-sm font-semibold text-gray-800">Kategori Teratas</h3>
             <div className="space-y-2.5">
               {topCategories.map((cat, idx) => {
@@ -305,7 +274,7 @@ export default function RingkasanPage() {
         )}
 
         {/* By Account */}
-        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm p-5 space-y-3">
           <h3 className="text-sm font-semibold text-gray-800">Per Rekening</h3>
           <div className="space-y-2">
             {[
@@ -335,131 +304,6 @@ export default function RingkasanPage() {
           </div>
         </div>
 
-        {/* Saving Targets */}
-        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <PiggyBank className="w-4 h-4 text-emerald-600" />
-            <h3 className="text-sm font-semibold text-gray-800">Target Tabungan</h3>
-          </div>
-          <div className="space-y-3">
-            {summary.targets.saving.target > 0 && (
-              <TargetProgress icon={PiggyBank} label="Tabungan" color="#10B981" target={summary.targets.saving.target} achieved={summary.targets.saving.achieved} />
-            )}
-            {summary.targets.liburan.target > 0 && (
-              <TargetProgress icon={Plane} label="Liburan" color="#06B6D4" target={summary.targets.liburan.target} achieved={summary.targets.liburan.achieved} />
-            )}
-            {summary.targets.custom.map((ct) => (
-              <TargetProgress key={ct.name} icon={Target} label={ct.name} color="#8B5CF6" target={ct.target} achieved={ct.achieved} />
-            ))}
-            {summary.targets.saving.target === 0 && summary.targets.liburan.target === 0 && summary.targets.custom.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-2">Belum ada target. Atur di menu Target.</p>
-            )}
-          </div>
-
-          {/* Goal Projections */}
-          {goalProjection.length > 0 && (
-            <div className="border-t border-gray-100 pt-3 space-y-2">
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-[11px] font-medium text-gray-500">Proyeksi</span>
-              </div>
-              {goalProjection.map((g) => {
-                const remaining = g.target - g.achieved;
-                if (remaining <= 0) {
-                  return <p key={g.label} className="text-xs text-emerald-600 font-medium">Target {g.label} tercapai!</p>;
-                }
-                if (g.avgMonthly <= 0) {
-                  return (
-                    <p key={g.label} className="text-xs text-amber-600">
-                      Belum ada surplus. Sisihkan <span className="font-semibold">{formatRupiah(Math.round(g.target / 12))}</span>/bulan untuk {g.label}.
-                    </p>
-                  );
-                }
-                const monthsNeeded = Math.ceil(remaining / g.avgMonthly);
-                const targetDate = new Date();
-                targetDate.setMonth(targetDate.getMonth() + monthsNeeded);
-                const targetDateStr = targetDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-                return (
-                  <div key={g.label} className="space-y-1">
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      Surplus <span className="font-semibold text-emerald-600 tabular-nums">{formatRupiah(Math.round(g.avgMonthly))}</span>/bln → {g.label} tercapai{' '}
-                      <span className="font-semibold text-gray-900 tabular-nums">{monthsNeeded} bln</span> lagi ({targetDateStr}).
-                    </p>
-                    <div className="relative w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min((g.achieved / g.target) * 100, 100)}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Daily Balance */}
-        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-800">Saldo Harian</h3>
-          {Object.keys(summary.dailyBalance).length > 0 ? (
-            <div className="space-y-0.5">
-              {Object.entries(summary.dailyBalance)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .slice(-14)
-                .map(([date, data]) => {
-                  const day = new Date(date + 'T00:00:00');
-                  const dayName = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'][day.getDay()];
-                  const dateStr = `${day.getDate()}/${day.getMonth() + 1}`;
-                  const isSelected = selectedDay === date;
-                  return (
-                    <div key={date}>
-                      <button
-                        onClick={() => setSelectedDay(selectedDay === date ? null : date)}
-                        className={`w-full flex items-center gap-2 text-xs py-1.5 px-2 -mx-2 rounded-lg transition-colors ${isSelected ? 'bg-emerald-50' : 'active:bg-gray-100'}`}
-                      >
-                        <span className="w-14 text-left text-gray-500 flex-shrink-0">{dayName} {dateStr}</span>
-                        <div className="flex-1 flex items-center gap-0.5 h-4">
-                          {data.income > 0 && (
-                            <div className="h-full rounded-sm bg-amber-400 min-w-[2px]" style={{ width: `${((data.income + data.expense) > 0 ? (data.income / (data.income + data.expense)) * 100 : 0)}%` }} />
-                          )}
-                          {data.expense > 0 && (
-                            <div className="h-full rounded-sm bg-red-400 min-w-[2px]" style={{ width: `${((data.income + data.expense) > 0 ? (data.expense / (data.income + data.expense)) * 100 : 0)}%` }} />
-                          )}
-                          {data.income === 0 && data.expense === 0 && <div className="h-full flex-1" />}
-                        </div>
-                        <span className={`w-20 text-right tabular-nums font-medium ${data.balance >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                          {formatRupiah(data.balance)}
-                        </span>
-                      </button>
-
-                      {isSelected && dayTransactions.length > 0 && (
-                        <div className="mt-1 space-y-0.5 ml-14 border-l-2 border-emerald-100 pl-3">
-                          {dayTransactions.map((tx) => (
-                            <button
-                              key={tx.id}
-                              onClick={(e) => { e.stopPropagation(); setSelectedTx(tx); }}
-                              className="w-full flex items-center gap-2 py-1.5 px-2 rounded-lg active:bg-gray-100 text-left"
-                            >
-                              <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: getCategoryColor(tx.category) + '20' }}>
-                                <CategoryIcon categoryId={tx.category} className="w-3 h-3" style={{ color: getCategoryColor(tx.category) }} />
-                              </div>
-                              <span className="flex-1 text-xs text-gray-700 truncate">{tx.description || getCategoryName(tx.category)}</span>
-                              <span className={`text-xs tabular-nums font-medium ${tx.flow === 'in' ? 'text-amber-600' : 'text-red-500'}`}>
-                                {tx.flow === 'in' ? '+' : '-'}{formatRupiah(tx.amount)}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {isSelected && dayTransactions.length === 0 && (
-                        <p className="text-[10px] text-gray-400 ml-14 mt-1">Tidak ada transaksi</p>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
-          ) : (
-            <p className="text-xs text-gray-400 text-center py-2">Belum ada data</p>
-          )}
-        </div>
       </div>
 
       {/* Delete Error Banner */}
@@ -492,32 +336,4 @@ export default function RingkasanPage() {
   );
 }
 
-function TargetProgress({
-  icon: Icon,
-  label,
-  color,
-  target,
-  achieved,
-}: {
-  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
-  label: string;
-  color: string;
-  target: number;
-  achieved: number;
-}) {
-  const pct = Math.min((achieved / target) * 100, 100);
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <Icon className="w-3.5 h-3.5" style={{ color }} />
-          <span className="text-xs font-medium text-gray-700">{label}</span>
-        </div>
-        <span className="text-xs text-gray-500 tabular-nums">{formatRupiah(achieved)} / {formatRupiah(target)}</span>
-      </div>
-      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
-      </div>
-    </div>
-  );
-}
+

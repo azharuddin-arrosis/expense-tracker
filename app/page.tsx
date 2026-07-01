@@ -3,46 +3,32 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  TrendingUp,
-  TrendingDown,
   Wallet,
-  AlertTriangle,
   List,
-  Lightbulb,
   FileText,
   PieChart,
-  Target,
   SlidersHorizontal,
-  Zap,
   User,
   ArrowUpRight,
   ArrowDownRight,
-  ChevronRight,
   Loader2,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
   getExpenses,
-  getExpensesByMonth,
-  getIncomesByMonth,
   getTransactionsByDateRange,
-  getExpenseByCategoryPeriod,
   getExpenseByPeriod,
   getIncomeByPeriod,
-  getBudget,
   getPeriodSettings,
   getExpensesWithSync,
   deleteExpenseAndSync,
 } from '@/lib/storage';
 import {
   formatRupiah,
-  formatDate,
   getMonthName,
-  getTodayString,
 } from '@/lib/format';
-import { CategoryIcon } from '@/components/CategoryIcon';
 import { DateFilter } from '@/components/DateFilter';
-import { EXPENSE_CATEGORIES, getCategoryColor, getCategoryName, Expense, getPeriodDateRange } from '@/lib/types';
+import { Expense, getPeriodDateRange } from '@/lib/types';
 import { EmptyState } from '@/components/EmptyState';
 import { DetailPopup } from '@/components/DetailPopup';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -92,16 +78,6 @@ export default function DashboardPage() {
     return getTransactionsByDateRange(dateRange.start, dateRange.end).filter((e) => e.flow === 'in');
   }, [month, filterMode, dateRange, refreshKey, synced, email]);
 
-  const categoryData = useMemo(() => {
-    if (!synced && email) return {};
-    return getExpenseByCategoryPeriod(month);
-  }, [month, refreshKey, synced, email]);
-
-  const budget = useMemo(() => {
-    if (!synced && email) return null;
-    return getBudget(month);
-  }, [month, refreshKey, synced, email]);
-
   const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
   const totalIncome = incomes.reduce((sum, e) => sum + e.amount, 0);
   const balance = useMemo(() => {
@@ -112,26 +88,6 @@ export default function DashboardPage() {
       .filter((e) => e.date <= end)
       .reduce((s, e) => s + (e.flow === 'in' ? e.amount : -e.amount), 0);
   }, [month, filterMode, totalIncome, totalExpense, refreshKey]);
-  const remaining = budget ? budget.target - totalExpense : null;
-  const usagePercent = budget && budget.target > 0 ? (totalExpense / budget.target) * 100 : 0;
-  const isWarning = usagePercent >= 80 && usagePercent < 100;
-  const isOverspent = usagePercent >= 100;
-
-  const recentExpenses = [...expenses]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
-
-  const topCategories = useMemo(() => {
-    return Object.entries(categoryData)
-      .map(([id, total]) => ({
-        id, total,
-        name: getCategoryName(id),
-        color: getCategoryColor(id),
-        percentage: totalExpense > 0 ? (total / totalExpense) * 100 : 0,
-      }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 4);
-  }, [categoryData, totalExpense]);
 
   const hasAny = expenses.length > 0 || incomes.length > 0;
 
@@ -223,14 +179,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-y-4 gap-x-2">
+      <div className="grid grid-cols-4 gap-3">
         {[
           { label: 'Riwayat', icon: List, path: '/riwayat', color: '#6366F1', bg: '#EEF2FF' },
-          { label: 'Wawasan', icon: Lightbulb, path: '/wawasan', color: '#8B5CF6', bg: '#F5F3FF' },
           { label: 'Rekap', icon: FileText, path: '/ringkasan', color: '#10B981', bg: '#ECFDF5' },
           { label: 'Statistik', icon: PieChart, path: '/statistik', color: '#F59E0B', bg: '#FFFBEB' },
-          { label: 'Target', icon: Target, path: '/target', color: '#EF4444', bg: '#FEF2F2' },
-          { label: 'Kategori', icon: SlidersHorizontal, path: '/kategori-budget', color: '#06B6D4', bg: '#ECFEFF' },
+          { label: 'Pengaturan', icon: SlidersHorizontal, path: '/setting', color: '#EF4444', bg: '#FEF2F2' },
         ].map((item) => {
           const Icon = item.icon;
           return (
@@ -259,134 +213,6 @@ export default function DashboardPage() {
         filterMode={filterMode}
         onFilterModeChange={setFilterMode}
       />
-
-      {budget ? (
-        <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {isOverspent ? (
-                <AlertTriangle className="w-4 h-4 text-red-500" />
-              ) : isWarning ? (
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-              ) : (
-                <Zap className="w-4 h-4 text-emerald-500" />
-              )}
-              <span className="text-sm font-semibold text-gray-800">Budget Bulanan</span>
-            </div>
-            <span className="text-xs font-medium text-gray-500 tabular-nums">
-              {formatRupiah(budget.target)}
-            </span>
-          </div>
-          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isOverspent ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'
-              }`}
-              style={{ width: `${Math.min(usagePercent, 100)}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            {isOverspent ? (
-              <span className="text-xs font-semibold text-red-600">
-                Kelebihan {formatRupiah(Math.abs(remaining!))}
-              </span>
-            ) : (
-              <span className="text-xs text-gray-500">
-                Sisa <span className="font-semibold text-gray-700">{formatRupiah(remaining!)}</span>
-              </span>
-            )}
-            <span className="text-xs tabular-nums text-gray-400">
-              {usagePercent.toFixed(1)}%
-            </span>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
-          <span className="text-sm text-gray-500">Belum ada target budget</span>
-          <a href="/target" className="text-xs font-semibold text-emerald-600">Atur Target</a>
-        </div>
-      )}
-
-      {hasAny && topCategories.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-800">Kategori Teratas</h3>
-            <button
-              onClick={() => router.push('/statistik')}
-              className="text-xs font-medium text-emerald-600 flex items-center gap-0.5"
-            >
-              Detail <ChevronRight className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="space-y-2.5">
-            {topCategories.map((cat, idx) => (
-              <div key={cat.id} className="flex items-center gap-3">
-                <span className="text-[11px] font-medium text-gray-400 w-4 tabular-nums text-center">
-                  {idx + 1}
-                </span>
-                <div
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: cat.color }}
-                />
-                <span className="text-xs text-gray-700 flex-1 truncate">{cat.name}</span>
-                <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{ backgroundColor: cat.color, width: `${cat.percentage}%` }}
-                  />
-                </div>
-                <span className="text-xs font-semibold text-gray-900 tabular-nums w-16 text-right">
-                  {formatRupiah(cat.total)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {recentExpenses.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3 px-0.5">
-            <h3 className="text-sm font-semibold text-gray-800">Pengeluaran Terbaru</h3>
-            <button
-              onClick={() => router.push('/riwayat')}
-              className="text-xs font-medium text-emerald-600 flex items-center gap-0.5"
-            >
-              Semua <ChevronRight className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="space-y-2">
-            {recentExpenses.map((exp) => (
-              <div
-                key={exp.id}
-                onClick={() => setDetailTarget(exp)}
-                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 shadow-sm active:bg-gray-50 transition-colors cursor-pointer"
-              >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: getCategoryColor(exp.category) + '15' }}
-                >
-                  <CategoryIcon
-                    categoryId={exp.category}
-                    className="w-4 h-4"
-                    style={{ color: getCategoryColor(exp.category) }}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {exp.description || getCategoryName(exp.category)}
-                  </p>
-                  <p className="text-xs text-gray-400">{formatDate(exp.date)}</p>
-                </div>
-                <span className="text-sm font-semibold text-gray-900 tabular-nums flex-shrink-0">
-                  {formatRupiah(exp.amount)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {!hasAny && (
         <EmptyState
           title="Belum ada transaksi"

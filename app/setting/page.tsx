@@ -25,6 +25,7 @@ import {
   getPeriodSettings,
   savePeriodSettings,
   getTransactionsByPeriod,
+  saveBudgetAndSync,
 } from '@/lib/storage';
 import { formatRupiah, getMonthName, getCurrentMonthString } from '@/lib/format';
 import { PeriodSettings, getPeriodDateRange, getPeriodLabel } from '@/lib/types';
@@ -49,6 +50,18 @@ export default function SettingPage() {
   const [periodStart, setPeriodStart] = useState(initPeriod.startDay);
   const [periodEnd, setPeriodEnd] = useState(initPeriod.endDay);
   const [periodSaved, setPeriodSaved] = useState(false);
+  const [targetAmount, setTargetAmount] = useState(0);
+
+  useEffect(() => {
+    if (budget) {
+      setTargetAmount(budget.target);
+    }
+  }, [budget]);
+
+  const handleSaveBudget = async () => {
+    saveBudgetAndSync({ month: currentMonth, target: targetAmount }, email);
+    refreshData();
+  };
 
   const currentPeriodKey = getCurrentMonthString();
   const periodRange = useMemo(
@@ -271,6 +284,47 @@ export default function SettingPage() {
             className="w-full h-11 rounded-xl bg-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 active:bg-emerald-600 transition-colors"
           >
             {periodSaved ? 'Tersimpan' : 'Simpan Periode'}
+          </button>
+        </div>
+      </section>
+
+      {/* ── Target Budget Bulanan ── */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 px-1">
+          <Target className="w-5 h-5 text-emerald-600" />
+          <h2 className="text-base font-semibold text-gray-800">Target Budget Bulanan</h2>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-4">
+          {budget ? (
+            <div className="bg-emerald-50 rounded-xl p-3 space-y-1">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">Target Saat Ini</p>
+              <p className="text-base font-bold text-emerald-700 tabular-nums">{formatRupiah(budget.target)}</p>
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-xl p-3 space-y-1">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide">{getMonthName(currentMonth)}</p>
+              <p className="text-sm font-semibold text-gray-800">Belum ada target</p>
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs text-gray-400 mb-1.5 block">Atur Target</label>
+            <input
+              type="number"
+              value={targetAmount}
+              onChange={(e) => setTargetAmount(Number(e.target.value))}
+              placeholder="Masukkan nominal target"
+              className="w-full h-11 px-4 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+            />
+          </div>
+
+          <button
+            onClick={handleSaveBudget}
+            disabled={targetAmount <= 0}
+            className="w-full h-11 rounded-xl bg-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:bg-emerald-600 transition-colors"
+          >
+            Simpan Target
           </button>
         </div>
       </section>
