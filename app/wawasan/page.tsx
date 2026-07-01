@@ -1,342 +1,236 @@
 'use client';
 
-import { useMemo } from 'react';
-import {
-  Lightbulb,
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-  Target,
-  Wallet,
-  PiggyBank,
-  Calendar,
-  ArrowUp,
-  ArrowDown,
-  Loader2,
-} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Wallet, TrendingUp, TrendingDown } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
-import {
-  getExpenseByPeriod,
-  getIncomeByPeriod,
-  getExpenseByCategoryPeriod,
-  getBudget,
-  computeMonthlySummary,
-} from '@/lib/storage';
-import { formatRupiah, getMonthName, getCurrentMonthString, prevMonth } from '@/lib/format';
+import { getExpenseByPeriod, getIncomeByPeriod } from '@/lib/storage';
+import { formatRupiah, getMonthName, getCurrentMonthString } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { useSyncOnMount } from '@/lib/use-sync';
-import {
-  EXPENSE_CATEGORIES,
-  getCategoryColor,
-  getCategoryName,
-  getCategoryColor as getColor,
-} from '@/lib/types';
+import { getCategoryName, getCategoryColor } from '@/lib/types';
 
-function getLast3Months(from: string): string[] {
+function getLast6Months(from: string): string[] {
   const months: string[] = [];
   let [y, m] = from.split('-').map(Number);
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 6; i++) {
     months.push(`${y}-${String(m).padStart(2, '0')}`);
     m--;
-    if (m === 0) { m = 12; y--; }
+    if (m === 0) {
+      m = 12;
+      y--;
+    }
   }
   return months;
 }
 
-interface InsightCardProps {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  children: React.ReactNode;
-  color?: string;
-}
-
-function InsightCard({ icon: Icon, title, children, color }: InsightCardProps) {
-  return (
-    <div className="bg-white rounded-2xl shadow-sm p-4 space-y-2">
-      <div className="flex items-center gap-2">
-        <Icon className={`w-4 h-4 ${color || 'text-emerald-600'}`} />
-        <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
-      </div>
-      <div className="text-sm text-gray-700 leading-relaxed">
-        {children}
-      </div>
-    </div>
-  );
+function formatShortDate(dateStr: string): string {
+  return `${dateStr.slice(8, 10)}/${dateStr.slice(5, 7)}`;
 }
 
 export default function WawasanPage() {
   const { refreshKey } = useAppContext();
-  const { synced, email } = useSyncOnMount([refreshKey]);
-  const month = getCurrentMonthString();
-  const prevMonthStr = prevMonth(month);
+  useSyncOnMount([refreshKey]);
 
-  const summary = useMemo(
-    () => {
-      if (!synced && email) return { month, income: 0, expense: 0, balance: 0, incomeByCategory: {}, expenseByCategory: {}, dailyBalance: {}, byAccount: { suami: { income: 0, expense: 0, balance: 0 }, istri: { income: 0, expense: 0, balance: 0 }, bersama: { income: 0, expense: 0, balance: 0 } }, targets: { saving: { target: 0, achieved: 0 }, liburan: { target: 0, achieved: 0 }, custom: [] } };
-      return computeMonthlySummary(month, email || 'guest');
-    },
-    [month, email, refreshKey, synced]
+  const allMonths = useMemo(() => getLast6Months(getCurrentMonthString()), []);
+  const [selectedMonth, setSelectedMonth] = useState(allMonths[0]);
+
+  const incomes = useMemo(
+    () => getIncomeByPeriod(selectedMonth),
+    [selectedMonth, refreshKey]
   );
 
-  const prevSummary = useMemo(
-    () => {
-      if (!synced && email) return { month, income: 0, expense: 0, balance: 0, incomeByCategory: {}, expenseByCategory: {}, dailyBalance: {}, byAccount: { suami: { income: 0, expense: 0, balance: 0 }, istri: { income: 0, expense: 0, balance: 0 }, bersama: { income: 0, expense: 0, balance: 0 } }, targets: { saving: { target: 0, achieved: 0 }, liburan: { target: 0, achieved: 0 }, custom: [] } };
-      return computeMonthlySummary(prevMonthStr, email || 'guest');
-    },
-    [prevMonthStr, email, refreshKey, synced]
+  const expenses = useMemo(
+    () => getExpenseByPeriod(selectedMonth),
+    [selectedMonth, refreshKey]
   );
 
-  const expenses = useMemo(() => {
-    if (!synced && email) return [];
-    return getExpenseByPeriod(month);
-  }, [month, refreshKey, synced, email]);
-  const incomes = useMemo(() => {
-    if (!synced && email) return [];
-    return getIncomeByPeriod(month);
-  }, [month, refreshKey, synced, email]);
-  const categoryData = useMemo(() => {
-    if (!synced && email) return {};
-    return getExpenseByCategoryPeriod(month);
-  }, [month, refreshKey, synced, email]);
-  const prevCatData = useMemo(() => {
-    if (!synced && email) return {};
-    return getExpenseByCategoryPeriod(prevMonthStr);
-  }, [prevMonthStr, refreshKey, synced, email]);
-  const budget = useMemo(() => {
-    if (!synced && email) return null;
-    return getBudget(month);
-  }, [month, refreshKey, synced, email]);
+  const totalDebit = useMemo(
+    () => incomes.reduce((s, e) => s + e.amount, 0),
+    [incomes]
+  );
 
-  const totalExpense = expenses.reduce((s, e) => s + e.amount, 0);
-  const totalIncome = incomes.reduce((s, e) => s + e.amount, 0);
+  const totalKredit = useMemo(
+    () => expenses.reduce((s, e) => s + e.amount, 0),
+    [expenses]
+  );
 
-  // Largest category
-  const largestCat = useMemo(() => {
-    let maxCat = '';
-    let maxVal = 0;
-    for (const [cat, val] of Object.entries(categoryData)) {
-      if (val > maxVal) { maxVal = val; maxCat = cat; }
+  const saldo = totalDebit - totalKredit;
+
+  const allTransactions = useMemo(() => {
+    const merged = [...incomes, ...expenses];
+    merged.sort((a, b) => a.date.localeCompare(b.date));
+    return merged;
+  }, [incomes, expenses]);
+
+  const hasData = allTransactions.length > 0;
+
+  // Group by date for date dividers
+  const groupedByDate = useMemo(() => {
+    const groups: Record<string, typeof allTransactions> = {};
+    for (const t of allTransactions) {
+      if (!groups[t.date]) groups[t.date] = [];
+      groups[t.date].push(t);
     }
-    return { id: maxCat, total: maxVal };
-  }, [categoryData]);
-
-  const largestPct = totalExpense > 0 ? ((largestCat.total / totalExpense) * 100) : 0;
-
-  // Category with biggest increase
-  const biggestIncrease = useMemo(() => {
-    let maxDelta = 0;
-    let maxCat = '';
-    for (const cat of EXPENSE_CATEGORIES) {
-      const curr = categoryData[cat.id] || 0;
-      const prev = prevCatData[cat.id] || 0;
-      const delta = curr - prev;
-      if (delta > maxDelta) { maxDelta = delta; maxCat = cat.id; }
-    }
-    return { id: maxCat, delta: maxDelta };
-  }, [categoryData, prevCatData]);
-
-  // Mom change
-  const prevTotalExpense = prevSummary.expense;
-  const momChange = prevTotalExpense > 0 ? ((totalExpense - prevTotalExpense) / prevTotalExpense) * 100 : 0;
-
-  // Budget
-  const budgetPct = budget && budget.target > 0 ? (totalExpense / budget.target) * 100 : 0;
-  const remaining = budget ? budget.target - totalExpense : 0;
-
-  // Daily average
-  const daysInMonth = new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate();
-  const dailyAvg = totalExpense / daysInMonth;
-
-  // Account breakdown
-  const { byAccount } = summary;
-  const accountTotal = byAccount.suami.expense + byAccount.istri.expense + byAccount.bersama.expense;
-  const istriPct = accountTotal > 0 ? (byAccount.istri.expense / accountTotal) * 100 : 0;
-  const suamiPct = accountTotal > 0 ? (byAccount.suami.expense / accountTotal) * 100 : 0;
-  const bersamaPct = accountTotal > 0 ? (byAccount.bersama.expense / accountTotal) * 100 : 0;
-
-  // Saving suggestion
-  const transactionCount = expenses.length;
-
-  const savingSuggestion = largestCat.id && largestCat.total > 0
-    ? Math.round(largestCat.total * 0.1)
-    : 0;
-
-  const hasData = expenses.length > 0 || incomes.length > 0;
-
-  if (!synced && email) {
-    return (
-      <div className="flex flex-col items-center justify-center h-dvh bg-white px-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm mb-4">
-          <Wallet className="w-6 h-6 text-white" />
-        </div>
-        <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-3" />
-        <p className="text-sm font-medium text-gray-700">Memuat data...</p>
-        <p className="text-xs text-gray-400 mt-1">Menyinkronkan dari cloud</p>
-      </div>
-    );
-  }
+    return groups;
+  }, [allTransactions]);
 
   return (
     <>
-      <PageHeader title="Wawasan" subtitle={`Analisis keuangan untuk ${getMonthName(month)}`} />
+      <PageHeader title="Wawasan" subtitle="Buku kas debit/kredit" />
 
       <div className="px-4 pt-5 pb-6 space-y-4">
-      {hasData ? (
-        <>
-          {/* 1. Largest Category */}
-          {largestCat.id && (
-            <InsightCard icon={TrendingUp} title="Kategori Terbesar" color="text-red-500">
-              <p>
-                <span
-                  className="inline-block w-2.5 h-2.5 rounded-full mr-1 align-middle"
-                  style={{ backgroundColor: getColor(largestCat.id) }}
-                />
-                <span className="font-semibold">{getCategoryName(largestCat.id)}</span>{' '}
-                adalah pengeluaran terbesar bulan ini{' '}
-                (<span className="font-semibold tabular-nums">{largestPct.toFixed(0)}%</span>)
-                dari total pengeluaran sebesar{' '}
-                <span className="font-semibold tabular-nums">{formatRupiah(totalExpense)}</span>.
-              </p>
-            </InsightCard>
-          )}
+        {/* ── Month Selector ── */}
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          className="w-full bg-white rounded-2xl shadow-sm px-4 py-3 text-sm font-medium text-gray-700 border-0 focus:ring-2 focus:ring-emerald-500 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_12px_center] bg-no-repeat"
+        >
+          {allMonths.map((m) => (
+            <option key={m} value={m}>
+              {getMonthName(m)}
+            </option>
+          ))}
+        </select>
 
-          {/* 2. MoM Comparison */}
-          <InsightCard
-            icon={momChange > 0 ? ArrowUp : ArrowDown}
-            title="Perbandingan Bulan Lalu"
-            color={momChange > 0 ? 'text-red-500' : 'text-emerald-600'}
-          >
-            <p>
-              Pengeluaran bulan ini{' '}
-              <span className={`font-semibold ${momChange > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                {momChange > 0 ? 'naik' : 'turun'} {Math.abs(momChange).toFixed(1)}%
-              </span>{' '}
-              dibanding bulan lalu ({formatRupiah(prevTotalExpense)}).
-            </p>
-          </InsightCard>
-
-          {/* 3. Biggest Increase */}
-          {biggestIncrease.id && biggestIncrease.delta > 0 && (
-            <InsightCard icon={AlertTriangle} title="Peringatan Kenaikan" color="text-red-500">
-              <p>
-                <span
-                  className="inline-block w-2.5 h-2.5 rounded-full mr-1 align-middle"
-                  style={{ backgroundColor: getColor(biggestIncrease.id) }}
-                />
-                <span className="font-semibold">{getCategoryName(biggestIncrease.id)}</span>{' '}
-                naik <span className="font-semibold text-red-600">{formatRupiah(biggestIncrease.delta)}</span>{' '}
-                dibanding bulan lalu. Ada yang perlu dicek?
-              </p>
-            </InsightCard>
-          )}
-
-          {/* 4. Budget Alert */}
-          {budget && (
-            <InsightCard
-              icon={Target}
-              title="Status Budget"
-              color={budgetPct >= 100 ? 'text-red-500' : budgetPct >= 80 ? 'text-amber-500' : 'text-emerald-600'}
-            >
-              <p>
-                Budget sudah terpakai{' '}
-                <span className={`font-semibold ${budgetPct >= 100 ? 'text-red-600' : budgetPct >= 80 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                  {budgetPct.toFixed(0)}%
-                </span>{' '}
-                ({formatRupiah(totalExpense)} dari {formatRupiah(budget.target)}).
-                {remaining > 0 ? (
-                  <> Sisa <span className="font-semibold tabular-nums">{formatRupiah(remaining)}</span> untuk sisa bulan ini.</>
-                ) : (
-                  <span className="text-red-600 font-semibold"> Overspent!</span>
-                )}
-              </p>
-            </InsightCard>
-          )}
-
-          {/* 5. Saving Suggestion */}
-          {savingSuggestion > 0 && (
-            <InsightCard icon={PiggyBank} title="Potensi Hemat" color="text-emerald-600">
-              <p>
-                Jika kurangi{' '}
-                <span className="font-semibold">{getCategoryName(largestCat.id)}</span>{' '}
-                sebesar 10%, kamu bisa hemat{' '}
-                <span className="font-semibold text-emerald-600">{formatRupiah(savingSuggestion)}/bulan</span>
-                {' '}(setara {formatRupiah(savingSuggestion * 12)}/tahun).
-              </p>
-            </InsightCard>
-          )}
-
-          {/* 6. Daily Average */}
-          <InsightCard icon={Calendar} title="Rata-rata Harian" color="text-blue-500">
-            <p>
-              Rata-rata pengeluaran harian:{' '}
-              <span className="font-semibold tabular-nums">{formatRupiah(Math.round(dailyAvg))}</span>
-              {' '}dari {transactionCount} transaksi.
-            </p>
-          </InsightCard>
-
-          {/* 7. Account Breakdown */}
-          <InsightCard icon={Wallet} title="Per Rekening" color="text-violet-500">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>Suami</span>
-                <span className="font-semibold tabular-nums">{suamiPct.toFixed(0)}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-white rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-blue-500" style={{ width: `${suamiPct}%` }} />
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span>Istri</span>
-                <span className="font-semibold tabular-nums">{istriPct.toFixed(0)}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-white rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-pink-500" style={{ width: `${istriPct}%` }} />
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span>Bersama</span>
-                <span className="font-semibold tabular-nums">{bersamaPct.toFixed(0)}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-white rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${bersamaPct}%` }} />
-              </div>
+        {/* ── Summary Cards ── */}
+        <div className="grid grid-cols-3 gap-2">
+          {/* Debit */}
+          <div className="bg-white rounded-2xl shadow-sm p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                Debit
+              </span>
             </div>
-          </InsightCard>
+            <p className="text-sm font-semibold tabular-nums text-emerald-600">
+              {formatRupiah(totalDebit)}
+            </p>
+          </div>
 
-          {/* 8. Top 3 Expenses Summary */}
-          {expenses.length > 0 && (
-            <InsightCard icon={TrendingDown} title="Transaksi Terbesar" color="text-red-500">
-              <div className="space-y-1.5">
-                {[...expenses]
-                  .sort((a, b) => b.amount - a.amount)
-                  .slice(0, 3)
-                  .map((exp) => (
-                    <div key={exp.id} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: getColor(exp.category) }}
-                        />
-                        <span className="text-gray-600 truncate max-w-[160px]">
-                          {exp.description || getCategoryName(exp.category)}
-                        </span>
+          {/* Kredit */}
+          <div className="bg-white rounded-2xl shadow-sm p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <TrendingDown className="w-3.5 h-3.5 text-red-500" />
+              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                Kredit
+              </span>
+            </div>
+            <p className="text-sm font-semibold tabular-nums text-red-500">
+              {formatRupiah(totalKredit)}
+            </p>
+          </div>
+
+          {/* Saldo */}
+          <div className="bg-white rounded-2xl shadow-sm p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Wallet className="w-3.5 h-3.5 text-gray-700" />
+              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                Saldo
+              </span>
+            </div>
+            <p
+              className={`text-sm font-semibold tabular-nums ${
+                saldo >= 0 ? 'text-emerald-600' : 'text-red-500'
+              }`}
+            >
+              {formatRupiah(saldo)}
+            </p>
+          </div>
+        </div>
+
+        {/* ── Ledger Table ── */}
+        <div className="bg-white rounded-2xl shadow-sm p-4">
+          {hasData ? (
+            <>
+              {/* Table header (hidden on mobile — semantic only) */}
+              <div className="hidden items-center text-xs font-medium text-gray-400 mb-2 pb-2 border-b border-gray-100">
+                <div className="flex-1">Keterangan</div>
+                <div className="w-[92px] text-right">Debit</div>
+                <div className="w-[92px] text-right">Kredit</div>
+              </div>
+
+              {/* Grouped rows by date */}
+              {Object.entries(groupedByDate).map(([date, txs]) => (
+                <div key={date}>
+                  {/* Date divider */}
+                  <div className="flex items-center gap-2 py-1.5">
+                    <span className="text-xs font-medium text-gray-400">
+                      {formatShortDate(date)}
+                    </span>
+                    <div className="flex-1 border-b border-gray-100" />
+                  </div>
+
+                  {/* Transactions for this date */}
+                  {txs.map((t, idx) => (
+                    <div key={t.id}>
+                      <div className="flex items-start py-2.5">
+                        <div className="flex-1 min-w-0 pr-3">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {t.description || getCategoryName(t.category)}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {getCategoryName(t.category)}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                          {/* Debit column (income) */}
+                          <div className="w-[92px] text-right">
+                            {t.flow === 'in' ? (
+                              <span className="text-sm font-semibold tabular-nums text-emerald-600">
+                                {formatRupiah(t.amount)}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-200">&mdash;</span>
+                            )}
+                          </div>
+                          {/* Kredit column (expense) */}
+                          <div className="w-[92px] text-right">
+                            {t.flow === 'out' ? (
+                              <span className="text-sm font-semibold tabular-nums text-red-500">
+                                {formatRupiah(t.amount)}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-200">&mdash;</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <span className="font-medium tabular-nums text-gray-900">
-                        {formatRupiah(exp.amount)}
-                      </span>
+                      {idx < txs.length - 1 && (
+                        <div className="border-b border-gray-50" />
+                      )}
                     </div>
                   ))}
+                </div>
+              ))}
+
+              {/* Footer — totals */}
+              <div className="border-t border-gray-200 mt-2 pt-3 flex items-start">
+                <div className="flex-1">
+                  <span className="text-sm font-bold text-gray-900">TOTAL</span>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <div className="w-[92px] text-right">
+                    <span className="text-sm font-bold tabular-nums text-emerald-600">
+                      {formatRupiah(totalDebit)}
+                    </span>
+                  </div>
+                  <div className="w-[92px] text-right">
+                    <span className="text-sm font-bold tabular-nums text-red-500">
+                      {formatRupiah(totalKredit)}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </InsightCard>
+            </>
+          ) : (
+            /* ── Empty state ── */
+            <div className="py-12 text-center">
+              <Wallet className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">Belum ada transaksi</p>
+            </div>
           )}
-        </>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
-          <Lightbulb className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">
-            Belum ada data untuk {getMonthName(month)}. Wawasan akan muncul setelah kamu mencatat transaksi.
-          </p>
         </div>
-      )}
-    </div>
+      </div>
     </>
   );
 }
