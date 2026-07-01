@@ -280,14 +280,6 @@ export default function SettingPage() {
             onClick={() => setSheetTarget(true)}
           />
           <SettingRow
-            icon={SlidersHorizontal}
-            label="Budget per Kategori"
-            desc="Batas pengeluaran per kategori"
-            color="#06B6D4"
-            bg="#ECFEFF"
-            onClick={() => window.location.href = '/kategori-budget'}
-          />
-          <SettingRow
             icon={Download}
             label="Ekspor Data"
             desc="Download atau salin data"
