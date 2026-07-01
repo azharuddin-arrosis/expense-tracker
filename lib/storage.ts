@@ -400,15 +400,16 @@ export async function syncAllToCloud(email: string): Promise<void> {
   const recurringKey = getEmailKey(RECURRING_PREFIX);
   const recurringData = localStorage.getItem(recurringKey);
   const recurring: RecurringTransaction[] = recurringData ? JSON.parse(recurringData) : [];
+  const settings = getPeriodSettings();
   try {
-    await syncAll(email, { transactions, budgets, recurring });
+    await syncAll(email, { transactions, budgets, recurring, settings });
   } catch {
     console.warn('Full sync failed (offline?)');
   }
 }
 
 /**
- * Try to load transactions from cloud first.
+ * Sync ALL data from cloud (transactions, budgets, settings).
  * Falls back to localStorage if offline or error.
  */
 export async function getExpensesWithSync(
@@ -417,12 +418,29 @@ export async function getExpensesWithSync(
   if (!email) return getExpenses();
 
   try {
-    const { loadTransactionsFromCloud } = await import('./cloud');
-    const cloudData = await loadTransactionsFromCloud(email);
-    if (cloudData.length > 0) {
-      saveExpenses(cloudData);
-      return cloudData;
+    const { loadAllFromCloud } = await import('./cloud');
+    const cloudData = await loadAllFromCloud(email);
+
+    // Transactions
+    if (cloudData.transactions.length > 0) {
+      saveExpenses(cloudData.transactions);
     }
+
+    // Budgets
+    if (cloudData.budgets.length > 0) {
+      const key = getEmailKey(BUDGET_PREFIX);
+      localStorage.setItem(key, JSON.stringify(cloudData.budgets));
+    }
+
+    // Settings
+    if (cloudData.settings) {
+      const key = 'expense-tracker-period-settings';
+      localStorage.setItem(key, JSON.stringify(cloudData.settings));
+    }
+
+    return cloudData.transactions.length > 0
+      ? cloudData.transactions
+      : getExpenses();
   } catch {
     // Offline — fall through to localStorage
   }

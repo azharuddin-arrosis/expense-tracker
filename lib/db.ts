@@ -168,6 +168,31 @@ function mapRowToRecurring(row: mysql.RowDataPacket): RecurringTransaction {
   };
 }
 
+// ── Settings ──
+
+import { PeriodSettings } from './types';
+
+export async function getSettings(email: string): Promise<PeriodSettings | null> {
+  try {
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+      'SELECT settings_json FROM settings WHERE email = ?',
+      [email]
+    );
+    if (rows.length === 0) return null;
+    return JSON.parse(rows[0].settings_json);
+  } catch {
+    return null;
+  }
+}
+
+export async function replaceSettings(email: string, settings: PeriodSettings): Promise<void> {
+  const json = JSON.stringify(settings);
+  await pool.execute(
+    'REPLACE INTO settings (email, settings_json) VALUES (?, ?)',
+    [email, json]
+  );
+}
+
 // ── Helpers ──
 
 function formatDate(d: Date | string): string {

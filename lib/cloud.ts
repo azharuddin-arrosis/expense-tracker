@@ -1,4 +1,4 @@
-import { Expense, Budget, RecurringTransaction } from './types';
+import { Expense, Budget, RecurringTransaction, PeriodSettings } from './types';
 
 const API_BASE = '/api';
 
@@ -6,6 +6,7 @@ export interface CloudData {
   transactions: Expense[];
   budgets: Budget[];
   recurring?: RecurringTransaction[];
+  settings?: PeriodSettings | null;
 }
 
 /**
@@ -127,7 +128,7 @@ export async function syncAllToCloud(
 }
 
 /**
- * Load all data (transactions + budgets + recurring) from the cloud in one request.
+ * Load all data (transactions + budgets + recurring + settings) from the cloud in one request.
  */
 export async function loadAllFromCloud(email: string): Promise<CloudData> {
   const res = await fetch(
@@ -141,6 +142,7 @@ export async function loadAllFromCloud(email: string): Promise<CloudData> {
     transactions: data.transactions ?? [],
     budgets: data.budgets ?? [],
     recurring: data.recurring ?? [],
+    settings: data.settings ?? null,
   };
 }
 
