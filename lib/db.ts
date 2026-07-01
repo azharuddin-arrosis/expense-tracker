@@ -16,7 +16,6 @@ export const pool = mysql.createPool({
   connectionLimit: 5,
   queueLimit: 0,
   connectTimeout: 5000,
-  acquireTimeout: 5000,
 });
 
 // ── Transactions ──
