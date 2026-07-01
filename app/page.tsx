@@ -8,6 +8,7 @@ import {
   FileText,
   PieChart,
   SlidersHorizontal,
+  Lightbulb,
   Target,
   User,
   ArrowUpRight,
@@ -202,6 +203,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-3 gap-y-4 gap-x-2">
         {[
           { label: 'Riwayat', icon: List, path: '/riwayat', color: '#6366F1', bg: '#EEF2FF' },
+          { label: 'Buku Kas', icon: Lightbulb, path: '/wawasan', color: '#8B5CF6', bg: '#F5F3FF' },
           { label: 'Rekap', icon: FileText, path: '/ringkasan', color: '#10B981', bg: '#ECFDF5' },
           { label: 'Statistik', icon: PieChart, path: '/statistik', color: '#F59E0B', bg: '#FFFBEB' },
           { label: 'Pengaturan', icon: SlidersHorizontal, path: '/setting', color: '#EF4444', bg: '#FEF2F2' },
