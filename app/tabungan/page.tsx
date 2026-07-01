@@ -194,7 +194,7 @@ export default function TabunganPage() {
               const pct = goal.target > 0 ? Math.min((goal.saved / goal.target) * 100, 100) : 0;
               const remaining = Math.max(goal.target - goal.saved, 0);
               return (
-                <div key={goal.id} className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+                <div key={goal.id} className="bg-white rounded-2xl shadow-sm p-4 space-y-3 cursor-pointer active:bg-gray-50 transition-colors" onClick={() => { setDetailGoalId(goal.id); setDetailView('contributions'); }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: goal.color + '18' }}>
@@ -426,6 +426,93 @@ export default function TabunganPage() {
             Simpan
           </button>
         </div>
+      </BottomSheet>
+
+      </div>
+      </BottomSheet>
+
+      {/* Bottom Sheet: Goal Detail */}
+      <BottomSheet open={detailGoalId !== null && detailView === 'contributions'} onClose={() => { setDetailGoalId(null); setDetailView(null); }} title="Detail Tabungan">
+        {selectedGoalDetail && (
+          <div className="space-y-4">
+            {/* Goal Summary */}
+            <div className="bg-cyan-50 rounded-xl p-4 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: selectedGoalDetail.color + '18' }}>
+                <PiggyBank className="w-5 h-5" style={{ color: selectedGoalDetail.color }} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-800">{selectedGoalDetail.name}</p>
+                <p className="text-xs text-gray-500">Target {formatRupiah(selectedGoalDetail.target)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold text-cyan-700 tabular-nums">{formatRupiah(selectedGoalDetail.saved)}</p>
+                <p className="text-xs text-gray-400">{selectedGoalDetail.target > 0 ? Math.min((selectedGoalDetail.saved / selectedGoalDetail.target) * 100, 100).toFixed(0) : 0}%</p>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div>
+              <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${selectedGoalDetail.target > 0 ? Math.min((selectedGoalDetail.saved / selectedGoalDetail.target) * 100, 100) : 0}%`, backgroundColor: selectedGoalDetail.color }}
+                />
+              </div>
+              <p className="text-xs text-gray-400 text-right mt-1">
+                Sisa {formatRupiah(Math.max(selectedGoalDetail.target - selectedGoalDetail.saved, 0))}
+              </p>
+            </div>
+
+            {/* Contribution History */}
+            {goalContributions.length > 0 ? (
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Riwayat Kontribusi</h4>
+                {goalContributions.map((t) => {
+                  const isAuto = t.description?.includes('Auto-sisih');
+                  return (
+                    <div key={t.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isAuto ? 'bg-violet-100' : 'bg-emerald-100'}`}>
+                          {isAuto ? <TrendingUp className="w-4 h-4 text-violet-600" /> : <Plus className="w-4 h-4 text-emerald-600" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{isAuto ? 'Auto-sisih' : 'Top-up Manual'}</p>
+                          <p className="text-[10px] text-gray-400">{t.description || '-'}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-emerald-700 tabular-nums">{formatRupiah(t.amount)}</p>
+                        <p className="text-[10px] text-gray-400">{t.date}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-400">
+                <PiggyBank className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Belum ada kontribusi</p>
+                <p className="text-xs">Tekan + di goal untuk mulai nabung</p>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-2 border-t border-gray-100">
+              <button
+                onClick={() => { setShowTopUp(selectedGoalDetail.id); setTopUpAmountInput(''); setTopUpNote(''); setDetailGoalId(null); setDetailView(null); }}
+                className="flex-1 h-11 rounded-xl bg-cyan-500 text-white font-semibold text-sm active:bg-cyan-600 transition-colors"
+              >
+                Top Up
+              </button>
+              <button
+                onClick={() => setDeleteId(selectedGoalDetail.id)}
+                className="flex-1 h-11 rounded-xl bg-red-50 text-red-600 font-semibold text-sm border border-red-200 active:bg-red-100 transition-colors"
+              >
+                Hapus Goal
+              </button>
+            </div>
+          </div>
+        )}
       </BottomSheet>
 
       {/* Delete Confirm */}
