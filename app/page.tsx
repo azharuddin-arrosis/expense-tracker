@@ -8,9 +8,12 @@ import {
   FileText,
   PieChart,
   SlidersHorizontal,
+  Lightbulb,
+  Target,
   User,
   ArrowUpRight,
   ArrowDownRight,
+  ChevronRight,
   Loader2,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
@@ -19,16 +22,19 @@ import {
   getTransactionsByDateRange,
   getExpenseByPeriod,
   getIncomeByPeriod,
+  getExpenseByCategoryPeriod,
   getPeriodSettings,
   getExpensesWithSync,
   deleteExpenseAndSync,
 } from '@/lib/storage';
 import {
   formatRupiah,
+  formatDate,
   getMonthName,
 } from '@/lib/format';
 import { DateFilter } from '@/components/DateFilter';
-import { Expense, getPeriodDateRange } from '@/lib/types';
+import { CategoryIcon } from '@/components/CategoryIcon';
+import { Expense, getPeriodDateRange, getCategoryName, getCategoryColor } from '@/lib/types';
 import { EmptyState } from '@/components/EmptyState';
 import { DetailPopup } from '@/components/DetailPopup';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -90,6 +96,21 @@ export default function DashboardPage() {
   }, [month, filterMode, totalIncome, totalExpense, refreshKey]);
 
   const hasAny = expenses.length > 0 || incomes.length > 0;
+
+  const recentExpenses = useMemo(() =>
+    [...expenses]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 2),
+    [expenses]
+  );
+
+  const topCategories = useMemo(() => {
+    const catData = getExpenseByCategoryPeriod(month);
+    return Object.entries(catData)
+      .map(([id, total]) => ({ id, total, name: getCategoryName(id), color: getCategoryColor(id) }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 3);
+  }, [month, refreshKey]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -179,12 +200,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-y-4 gap-x-2">
         {[
           { label: 'Riwayat', icon: List, path: '/riwayat', color: '#6366F1', bg: '#EEF2FF' },
+          { label: 'Wawasan', icon: Lightbulb, path: '/wawasan', color: '#8B5CF6', bg: '#F5F3FF' },
           { label: 'Rekap', icon: FileText, path: '/ringkasan', color: '#10B981', bg: '#ECFDF5' },
           { label: 'Statistik', icon: PieChart, path: '/statistik', color: '#F59E0B', bg: '#FFFBEB' },
           { label: 'Pengaturan', icon: SlidersHorizontal, path: '/setting', color: '#EF4444', bg: '#FEF2F2' },
+          { label: 'Kategori', icon: Target, path: '/kategori-budget', color: '#06B6D4', bg: '#ECFEFF' },
         ].map((item) => {
           const Icon = item.icon;
           return (
@@ -213,6 +236,65 @@ export default function DashboardPage() {
         filterMode={filterMode}
         onFilterModeChange={setFilterMode}
       />
+
+      {hasAny && topCategories.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-800">Kategori Teratas</h3>
+            <button onClick={() => router.push('/statistik')} className="text-xs font-medium text-emerald-600 flex items-center gap-0.5">
+              Detail <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {topCategories.map((cat) => {
+              const pct = totalExpense > 0 ? (cat.total / totalExpense) * 100 : 0;
+              return (
+                <div key={cat.id} className="flex items-center gap-2.5">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                  <span className="text-xs text-gray-600 flex-1 truncate">{cat.name}</span>
+                  <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ backgroundColor: cat.color, width: `${pct}%` }} />
+                  </div>
+                  <span className="text-xs font-semibold text-gray-900 tabular-nums w-14 text-right">{formatRupiah(cat.total)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {recentExpenses.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-2 px-0.5">
+            <h3 className="text-sm font-semibold text-gray-800">Pengeluaran Terakhir</h3>
+            <button onClick={() => router.push('/riwayat')} className="text-xs font-medium text-emerald-600 flex items-center gap-0.5">
+              Semua <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {recentExpenses.map((exp) => (
+              <div
+                key={exp.id}
+                onClick={() => setDetailTarget(exp)}
+                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 shadow-sm active:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: getCategoryColor(exp.category) + '15' }}
+                >
+                  <CategoryIcon categoryId={exp.category} className="w-4 h-4" style={{ color: getCategoryColor(exp.category) }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{exp.description || getCategoryName(exp.category)}</p>
+                  <p className="text-xs text-gray-400">{formatDate(exp.date)}</p>
+                </div>
+                <span className="text-sm font-semibold text-gray-900 tabular-nums flex-shrink-0">{formatRupiah(exp.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!hasAny && (
         <EmptyState
           title="Belum ada transaksi"
