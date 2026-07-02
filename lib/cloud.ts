@@ -1,4 +1,4 @@
-import { Expense, Budget, RecurringTransaction, PeriodSettings, SavingGoal, AutoSisihSettings } from './types';
+import { Expense, Budget, RecurringTransaction, PeriodSettings, SavingGoal, AutoSisihSettings, Investment, Debt } from './types';
 
 const API_BASE = '/api';
 
@@ -9,6 +9,8 @@ export interface CloudData {
   settings?: PeriodSettings | null;
   goals?: SavingGoal[];
   autoSisih?: AutoSisihSettings | null;
+  investments?: Investment[];
+  debts?: Debt[];
 }
 
 /**
@@ -122,7 +124,7 @@ export async function syncAllToCloud(
   const res = await fetch(`${API_BASE}/sync?email=${encodeURIComponent(email)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, ...data }),
+    body: JSON.stringify({ email, ...data, investments: data.investments ?? [], debts: data.debts ?? [] }),
   });
   if (!res.ok) {
     throw new Error(`Full sync failed: ${res.status} ${res.statusText}`);
@@ -147,6 +149,8 @@ export async function loadAllFromCloud(email: string): Promise<CloudData> {
     settings: data.settings ?? null,
     goals: data.goals ?? [],
     autoSisih: data.autoSisih ?? null,
+    investments: data.investments ?? [],
+    debts: data.debts ?? [],
   };
 }
 

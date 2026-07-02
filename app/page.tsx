@@ -16,6 +16,9 @@ import {
   ChevronRight,
   Loader2,
   Calendar,
+  TrendingUp,
+  DollarSign,
+  BarChart3,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
@@ -198,15 +201,18 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Compact Nav Grid */}
+        {/* Compact Nav Grid — 3×3 */}
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: 'Riwayat', icon: List, path: '/riwayat', color: '#6366F1', bg: '#EEF2FF' },
             { label: 'Buku Kas', icon: Lightbulb, path: '/wawasan', color: '#8B5CF6', bg: '#F5F3FF' },
             { label: 'Rekap', icon: FileText, path: '/ringkasan', color: '#10B981', bg: '#ECFDF5' },
             { label: 'Statistik', icon: PieChart, path: '/statistik', color: '#F59E0B', bg: '#FFFBEB' },
-            { label: 'Pengaturan', icon: SlidersHorizontal, path: '/setting', color: '#EF4444', bg: '#FEF2F2' },
             { label: 'Tabungan', icon: Target, path: '/tabungan', color: '#06B6D4', bg: '#ECFEFF' },
+            { label: 'Investasi', icon: TrendingUp, path: '/investasi', color: '#10B981', bg: '#ECFDF5' },
+            { label: 'Hutang', icon: DollarSign, path: '/hutang', color: '#EF4444', bg: '#FEF2F2' },
+            { label: 'Laporan', icon: BarChart3, path: '/laporan', color: '#6366F1', bg: '#EEF2FF' },
+            { label: 'Pengaturan', icon: SlidersHorizontal, path: '/setting', color: '#EF4444', bg: '#FEF2F2' },
           ].map((item) => {
             const Icon = item.icon;
             return (

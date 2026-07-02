@@ -196,6 +196,35 @@ export const DEFAULT_AUTO_SISIH: AutoSisihSettings = {
   goalId: null,
 };
 
+// ===== Investment Tracker =====
+
+export interface Investment {
+  id: string;
+  name: string;
+  type: 'saham' | 'reksadana' | 'emas' | 'kripto' | 'deposito' | 'other';
+  buyPrice: number;
+  quantity: number;
+  currentPrice: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ===== Debt Tracker =====
+
+export interface Debt {
+  id: string;
+  type: 'hutang' | 'piutang';
+  name: string;
+  amount: number;
+  paidAmount: number;
+  dueDate: string;
+  notes?: string;
+  status: 'unpaid' | 'partial' | 'paid';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface RecurringTransaction {
   id: string;
   userEmail: string;

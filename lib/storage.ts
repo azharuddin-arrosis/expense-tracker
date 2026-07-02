@@ -1,4 +1,4 @@
-import { Expense, Budget, RecurringTransaction, SavingTarget, DEFAULT_SAVING_TARGETS, MonthlySummary, PeriodSettings, getDefaultPeriodSettings, getPeriodDateRange, SavingGoal, AutoSisihSettings, DEFAULT_AUTO_SISIH } from './types';
+import { Expense, Budget, RecurringTransaction, SavingTarget, DEFAULT_SAVING_TARGETS, MonthlySummary, PeriodSettings, getDefaultPeriodSettings, getPeriodDateRange, SavingGoal, AutoSisihSettings, DEFAULT_AUTO_SISIH, Investment, Debt } from './types';
 import { getStoredEmail } from './cloud';
 
 const EXPENSES_PREFIX = 'expense-tracker-expenses-v2:';
@@ -403,7 +403,9 @@ export async function syncAllToCloud(email: string): Promise<void> {
   const settings = getPeriodSettings();
   const goals = getGoals();
   const autoSisih = getAutoSisih();
-  await syncAll(email, { transactions, budgets, recurring, settings, goals, autoSisih });
+  const investments = getInvestments();
+  const debts = getDebts();
+  await syncAll(email, { transactions, budgets, recurring, settings, goals, autoSisih, investments, debts });
   markSyncDone();
 }
 
@@ -467,6 +469,16 @@ export async function getExpensesWithSync(
     // Auto-sisih
     if (cloudData.autoSisih) {
       localStorage.setItem(AUTO_SISIH_KEY, JSON.stringify(cloudData.autoSisih));
+    }
+
+    // Investments
+    if (cloudData.investments && cloudData.investments.length > 0) {
+      localStorage.setItem(getInvestmentsKey(), JSON.stringify(cloudData.investments));
+    }
+
+    // Debts
+    if (cloudData.debts && cloudData.debts.length > 0) {
+      localStorage.setItem(getDebtsKey(), JSON.stringify(cloudData.debts));
     }
 
     markSyncDone();
@@ -894,4 +906,110 @@ export function getAutoSisih(): AutoSisihSettings {
 export function saveAutoSisih(settings: AutoSisihSettings): void {
   if (!isBrowser()) return;
   localStorage.setItem(AUTO_SISIH_KEY, JSON.stringify(settings));
+}
+
+// ═══════════════════════════════════════════════════
+// Investasi — Investment Tracker
+// ═══════════════════════════════════════════════════
+
+const INVESTMENTS_PREFIX = 'expense-tracker-investments:';
+
+function getInvestmentsKey(): string {
+  const email = getStoredEmail();
+  return INVESTMENTS_PREFIX + (email || 'guest');
+}
+
+export function getInvestments(): Investment[] {
+  if (!isBrowser()) return [];
+  try {
+    const data = localStorage.getItem(getInvestmentsKey());
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveInvestments(investments: Investment[]): void {
+  if (!isBrowser()) return;
+  localStorage.setItem(getInvestmentsKey(), JSON.stringify(investments));
+}
+
+export function addInvestment(data: Omit<Investment, 'id' | 'createdAt' | 'updatedAt'>): Investment {
+  const investments = getInvestments();
+  const now = new Date().toISOString();
+  const investment: Investment = {
+    ...data,
+    id: 'inv_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9),
+    createdAt: now,
+    updatedAt: now,
+  };
+  investments.push(investment);
+  saveInvestments(investments);
+  return investment;
+}
+
+export function updateInvestment(id: string, updates: Partial<Omit<Investment, 'id' | 'createdAt'>>): void {
+  const investments = getInvestments();
+  const idx = investments.findIndex((i) => i.id === id);
+  if (idx === -1) return;
+  investments[idx] = { ...investments[idx], ...updates, updatedAt: new Date().toISOString() };
+  saveInvestments(investments);
+}
+
+export function deleteInvestment(id: string): void {
+  const investments = getInvestments();
+  saveInvestments(investments.filter((i) => i.id !== id));
+}
+
+// ═══════════════════════════════════════════════════
+// Hutang/Piutang — Debt Tracker
+// ═══════════════════════════════════════════════════
+
+const DEBTS_PREFIX = 'expense-tracker-debts:';
+
+function getDebtsKey(): string {
+  const email = getStoredEmail();
+  return DEBTS_PREFIX + (email || 'guest');
+}
+
+export function getDebts(): Debt[] {
+  if (!isBrowser()) return [];
+  try {
+    const data = localStorage.getItem(getDebtsKey());
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDebts(debts: Debt[]): void {
+  if (!isBrowser()) return;
+  localStorage.setItem(getDebtsKey(), JSON.stringify(debts));
+}
+
+export function addDebt(data: Omit<Debt, 'id' | 'createdAt' | 'updatedAt'>): Debt {
+  const debts = getDebts();
+  const now = new Date().toISOString();
+  const debt: Debt = {
+    ...data,
+    id: 'debt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9),
+    createdAt: now,
+    updatedAt: now,
+  };
+  debts.push(debt);
+  saveDebts(debts);
+  return debt;
+}
+
+export function updateDebt(id: string, updates: Partial<Omit<Debt, 'id' | 'createdAt'>>): void {
+  const debts = getDebts();
+  const idx = debts.findIndex((d) => d.id === id);
+  if (idx === -1) return;
+  debts[idx] = { ...debts[idx], ...updates, updatedAt: new Date().toISOString() };
+  saveDebts(debts);
+}
+
+export function deleteDebt(id: string): void {
+  const debts = getDebts();
+  saveDebts(debts.filter((d) => d.id !== id));
 }

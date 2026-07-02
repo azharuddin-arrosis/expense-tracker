@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import { Expense, Budget, RecurringTransaction, SavingGoal, AutoSisihSettings } from './types';
+import { Expense, Budget, RecurringTransaction, SavingGoal, AutoSisihSettings, Investment, Debt } from './types';
 
 function getEnv(name: string): string | undefined {
   const prefixed = `expensetracker_${name}`;
@@ -300,6 +300,18 @@ export async function initGoalTables(): Promise<void> {
         settings_json TEXT NOT NULL
       )
     `);
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS investments (
+        email VARCHAR(255) PRIMARY KEY,
+        data_json LONGTEXT NOT NULL
+      )
+    `);
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS debts (
+        email VARCHAR(255) PRIMARY KEY,
+        data_json LONGTEXT NOT NULL
+      )
+    `);
     tablesInitialized = true;
   } catch (e) {
     console.error('initGoalTables error:', e);
@@ -330,6 +342,60 @@ export async function replaceAutoSisih(email: string, settings: AutoSisihSetting
     );
   } catch (e) {
     console.error('replaceAutoSisih error:', e);
+  }
+}
+
+// ── Investments ──
+
+export async function getInvestments(email: string): Promise<Investment[]> {
+  try {
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+      'SELECT data_json FROM investments WHERE email = ?',
+      [email]
+    );
+    if (rows.length === 0) return [];
+    return JSON.parse(rows[0].data_json);
+  } catch {
+    return [];
+  }
+}
+
+export async function replaceInvestments(email: string, investments: Investment[]): Promise<void> {
+  try {
+    const json = JSON.stringify(investments);
+    await pool.execute(
+      'REPLACE INTO investments (email, data_json) VALUES (?, ?)',
+      [email, json]
+    );
+  } catch (e) {
+    console.error('replaceInvestments error:', e);
+  }
+}
+
+// ── Debts ──
+
+export async function getDebts(email: string): Promise<Debt[]> {
+  try {
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+      'SELECT data_json FROM debts WHERE email = ?',
+      [email]
+    );
+    if (rows.length === 0) return [];
+    return JSON.parse(rows[0].data_json);
+  } catch {
+    return [];
+  }
+}
+
+export async function replaceDebts(email: string, debts: Debt[]): Promise<void> {
+  try {
+    const json = JSON.stringify(debts);
+    await pool.execute(
+      'REPLACE INTO debts (email, data_json) VALUES (?, ?)',
+      [email, json]
+    );
+  } catch (e) {
+    console.error('replaceDebts error:', e);
   }
 }
 

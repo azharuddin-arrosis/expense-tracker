@@ -6,6 +6,8 @@ import {
   getSettings, replaceSettings,
   getGoals, replaceGoals,
   getAutoSisih, replaceAutoSisih,
+  getInvestments, replaceInvestments,
+  getDebts, replaceDebts,
 } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
@@ -17,16 +19,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [transactions, budgets, recurring, settings, goals, autoSisih] = await Promise.all([
+    const [transactions, budgets, recurring, settings, goals, autoSisih, investments, debts] = await Promise.all([
       getTransactions(email),
       getBudgets(email),
       getRecurring(email),
       getSettings(email),
       getGoals(email),
       getAutoSisih(email),
+      getInvestments(email),
+      getDebts(email),
     ]);
     return NextResponse.json(
-      { transactions, budgets, recurring, settings, goals, autoSisih },
+      { transactions, budgets, recurring, settings, goals, autoSisih, investments, debts },
       {
         headers: {
           'Cache-Control': 'private, max-age=300, s-maxage=300, stale-while-revalidate=600',
@@ -44,7 +48,7 @@ export async function POST(request: NextRequest) {
     const { initGoalTables } = await import('@/lib/db');
     await initGoalTables();
     const body = await request.json();
-    const { email, transactions, budgets, recurring, settings, goals, autoSisih } = body;
+    const { email, transactions, budgets, recurring, settings, goals, autoSisih, investments, debts } = body;
 
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
@@ -57,6 +61,8 @@ export async function POST(request: NextRequest) {
     if (settings) ops.push(replaceSettings(email, settings));
     if (Array.isArray(goals)) ops.push(replaceGoals(email, goals));
     if (autoSisih) ops.push(replaceAutoSisih(email, autoSisih));
+    if (Array.isArray(investments)) ops.push(replaceInvestments(email, investments));
+    if (Array.isArray(debts)) ops.push(replaceDebts(email, debts));
 
     await Promise.all(ops);
     return NextResponse.json({ success: true });

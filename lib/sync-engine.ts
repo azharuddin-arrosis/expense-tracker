@@ -1,11 +1,13 @@
 'use client';
 
 import { loadAllFromCloud, syncAllToCloud, type CloudData, getStoredEmail } from './cloud';
-import { Expense, Budget, RecurringTransaction } from './types';
+import { Expense, Budget, RecurringTransaction, Investment, Debt } from './types';
 
 const EXPENSES_PREFIX = 'expense-tracker-expenses-v2:';
 const BUDGET_PREFIX = 'expense-tracker-budgets-v2:';
 const RECURRING_PREFIX = 'expense-tracker-recurring-v2:';
+const INVESTMENTS_PREFIX = 'expense-tracker-investments:';
+const DEBTS_PREFIX = 'expense-tracker-debts:';
 
 const POLL_INTERVAL = 60000;
 
@@ -64,6 +66,36 @@ function getRecurringLocal(email: string): RecurringTransaction[] {
 function saveRecurringLocal(email: string, recurring: RecurringTransaction[]): void {
   const key = getEmailKey(RECURRING_PREFIX, email);
   localStorage.setItem(key, JSON.stringify(recurring));
+}
+
+function getInvestmentsLocal(email: string): Investment[] {
+  try {
+    const key = getEmailKey(INVESTMENTS_PREFIX, email);
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveInvestmentsLocal(email: string, investments: Investment[]): void {
+  const key = getEmailKey(INVESTMENTS_PREFIX, email);
+  localStorage.setItem(key, JSON.stringify(investments));
+}
+
+function getDebtsLocal(email: string): Debt[] {
+  try {
+    const key = getEmailKey(DEBTS_PREFIX, email);
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDebtsLocal(email: string, debts: Debt[]): void {
+  const key = getEmailKey(DEBTS_PREFIX, email);
+  localStorage.setItem(key, JSON.stringify(debts));
 }
 
 function mergeTransactions(cloud: Expense[], local: Expense[]): Expense[] {
@@ -134,6 +166,18 @@ export async function pullFromCloud(email: string): Promise<boolean> {
       saveRecurringLocal(email, Array.from(recurringMap.values()));
     }
 
+    // Investments
+    const cloudInvestments = cloudData.investments || [];
+    if (cloudInvestments.length > 0) {
+      saveInvestmentsLocal(email, cloudInvestments);
+    }
+
+    // Debts
+    const cloudDebts = cloudData.debts || [];
+    if (cloudDebts.length > 0) {
+      saveDebtsLocal(email, cloudDebts);
+    }
+
     markSyncDone();
     return true;
   } catch {
@@ -156,6 +200,8 @@ export async function pushToCloud(email: string): Promise<boolean> {
     const data = localStorage.getItem(key);
     const budgets: Budget[] = data ? JSON.parse(data) : [];
     const recurring = getRecurringLocal(email);
+    const investments = getInvestmentsLocal(email);
+    const debts = getDebtsLocal(email);
     let settings;
     try {
       const raw = localStorage.getItem('expense-tracker-period-settings');
@@ -164,7 +210,7 @@ export async function pushToCloud(email: string): Promise<boolean> {
       // ignore
     }
 
-    await syncAllToCloud(email, { transactions, budgets, recurring, settings });
+    await syncAllToCloud(email, { transactions, budgets, recurring, settings, investments, debts });
     markSyncDone();
     return true;
   } catch {
