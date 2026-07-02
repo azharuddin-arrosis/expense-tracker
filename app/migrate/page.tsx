@@ -175,7 +175,7 @@ export default function MigratePage() {
           <button
             onClick={run}
             disabled={!email}
-            className="w-full h-12 rounded-xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all shadow-lg shadow-emerald-200"
+            className="w-full h-8 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all shadow-lg shadow-emerald-200"
           >
             Mulai Migrasi
           </button>

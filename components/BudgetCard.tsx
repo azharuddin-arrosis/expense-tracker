@@ -123,17 +123,17 @@ export function BudgetCard({ className = '' }: BudgetCardProps) {
         <div className="flex gap-2">
           <button
             onClick={handleCancel}
-            className="flex-1 h-9 rounded-lg border border-gray-200 text-gray-600 font-medium text-sm active:bg-gray-100"
+            className="flex-1 h-8 rounded-lg border border-gray-200 text-gray-600 font-medium text-xs active:bg-gray-100"
           >
             Batal
           </button>
           <button
             onClick={handleSave}
-            className={`flex-1 h-9 rounded-lg font-medium text-sm text-white flex items-center justify-center gap-1 ${
+            className={`flex-1 h-8 rounded-lg font-medium text-xs text-white flex items-center justify-center gap-1 ${
               saved ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500 active:bg-emerald-600'
             }`}
           >
-            {saved ? <><Check className="w-4 h-4" /> Simpan</> : 'Simpan'}
+            {saved ? <><Check className="w-3.5 h-3.5" /> Simpan</> : 'Simpan'}
           </button>
         </div>
       </div>

@@ -61,14 +61,14 @@ export function ConfirmDialog({
         <div className="flex gap-3 mt-6">
           <button
             onClick={onCancel}
-            className="flex-1 h-11 rounded-xl border border-gray-200 text-gray-700 font-medium text-sm active:bg-gray-50 transition-colors"
+            className="flex-1 h-8 rounded-xl border border-gray-200 text-gray-700 font-medium text-xs active:bg-gray-50 transition-colors"
           >
             {cancelLabel}
           </button>
           <button
             ref={confirmRef}
             onClick={onConfirm}
-            className={`flex-1 h-11 rounded-xl font-medium text-sm text-white transition-colors ${
+            className={`flex-1 h-8 rounded-xl font-medium text-xs text-white transition-colors ${
               variant === 'danger'
                 ? 'bg-red-500 active:bg-red-600'
                 : 'bg-emerald-500 active:bg-emerald-600'

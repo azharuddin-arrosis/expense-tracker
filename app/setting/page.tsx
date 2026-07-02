@@ -305,7 +305,7 @@ export default function SettingPage() {
           </div>
           <button
             onClick={handleClearAll}
-            className="w-full h-9 rounded-lg border-2 border-red-200 text-red-600 font-semibold text-[10px] flex items-center justify-center gap-1.5 active:bg-red-100 transition-colors"
+            className="w-full h-8 rounded-lg border-2 border-red-200 text-red-600 font-semibold text-[10px] flex items-center justify-center gap-1.5 active:bg-red-100 transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Hapus Semua Data Lokal
@@ -362,7 +362,7 @@ export default function SettingPage() {
           </div>
           <button
             onClick={handleSavePeriod}
-            className="w-full h-9 rounded-lg bg-emerald-500 text-white font-semibold text-xs active:bg-emerald-600 transition-colors"
+            className="w-full h-8 rounded-lg bg-emerald-500 text-white font-semibold text-[10px] active:bg-emerald-600 transition-colors"
           >
             {periodSaved ? 'Tersimpan' : 'Simpan'}
           </button>
@@ -395,7 +395,7 @@ export default function SettingPage() {
           <button
             onClick={handleSaveBudget}
             disabled={targetAmount <= 0}
-            className="w-full h-9 rounded-lg bg-emerald-500 text-white font-semibold text-xs disabled:opacity-50 active:bg-emerald-600 transition-colors"
+            className="w-full h-8 rounded-lg bg-emerald-500 text-white font-semibold text-[10px] disabled:opacity-50 active:bg-emerald-600 transition-colors"
           >
             Simpan Target
           </button>

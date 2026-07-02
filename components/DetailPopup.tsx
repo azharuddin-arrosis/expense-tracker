@@ -138,21 +138,21 @@ export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps
         <div className="px-4 pb-4 space-y-2">
           <button
             onClick={handleEdit}
-            className="w-full h-9 rounded-lg bg-emerald-500 text-white font-semibold text-xs active:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+            className="w-full h-8 rounded-lg bg-emerald-500 text-white font-semibold text-[10px] active:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-3.5 h-3.5" />
             Edit Transaksi
           </button>
           <button
             onClick={handleDelete}
-            className="w-full h-9 rounded-lg bg-red-50 text-red-600 font-semibold text-xs active:bg-red-100 transition-colors flex items-center justify-center gap-2"
+            className="w-full h-8 rounded-lg bg-red-50 text-red-600 font-semibold text-[10px] active:bg-red-100 transition-colors flex items-center justify-center gap-2"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
             Hapus Transaksi
           </button>
           <button
             onClick={onClose}
-            className="w-full h-9 rounded-lg bg-gray-100 text-gray-700 font-semibold text-xs active:bg-gray-200 transition-colors"
+            className="w-full h-8 rounded-lg bg-gray-100 text-gray-700 font-semibold text-[10px] active:bg-gray-200 transition-colors"
           >
             Tutup
           </button>

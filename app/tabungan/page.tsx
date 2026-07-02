@@ -200,9 +200,9 @@ export default function TabunganPage() {
         {/* Add Goal Button */}
         <button
           onClick={() => { setGoalName(''); setGoalTargetInput(''); setGoalColor('#06B6D4'); setShowAddGoal(true); }}
-          className="w-full h-10 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 font-medium text-xs flex items-center justify-center gap-1.5 active:bg-gray-50 transition-colors"
+          className="w-full h-8 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 font-medium text-[10px] flex items-center justify-center gap-1.5 active:bg-gray-50 transition-colors"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           Goal Baru
         </button>
 
@@ -254,7 +254,7 @@ export default function TabunganPage() {
           <button
             onClick={handleAddGoal}
             disabled={!goalName || !goalTargetInput || parseInt(goalTargetInput.replace(/[^0-9]/g, '')) <= 0}
-            className="w-full h-10 rounded-lg bg-cyan-500 text-white font-semibold text-xs disabled:opacity-50 active:bg-cyan-600 transition-colors"
+            className="w-full h-8 rounded-lg bg-cyan-500 text-white font-semibold text-[10px] disabled:opacity-50 active:bg-cyan-600 transition-colors"
           >
             Buat Goal
           </button>
@@ -312,7 +312,7 @@ export default function TabunganPage() {
 
           <button
             onClick={handleSaveAutoSisih}
-            className="w-full h-10 rounded-lg bg-cyan-500 text-white font-semibold text-xs active:bg-cyan-600 transition-colors"
+            className="w-full h-8 rounded-lg bg-cyan-500 text-white font-semibold text-[10px] active:bg-cyan-600 transition-colors"
           >
             Simpan
           </button>

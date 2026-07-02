@@ -87,10 +87,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full h-12 rounded-xl bg-white text-emerald-700 font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg shadow-black/10"
+              className="w-full h-8 rounded-xl bg-white text-emerald-700 font-bold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg shadow-black/10"
             >
               Mulai
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
 

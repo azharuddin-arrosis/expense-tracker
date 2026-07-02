@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Search, Loader2, Wallet, Calendar } from 'lucide-react';
+import { useMemo, useState, useRef, useEffect } from 'react';
+import { Search, Loader2, Wallet, Calendar, ChevronDown } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import { getTransactionsByPeriod, getTransactionsByDateRange, deleteExpenseAndSync } from '@/lib/storage';
 import { formatRupiah, formatDate, getMonthName, getCurrentMonthString } from '@/lib/format';
@@ -25,6 +25,8 @@ export default function RiwayatPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [detailTarget, setDetailTarget] = useState<Expense | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [displayLimit, setDisplayLimit] = useState(10);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const allExpenses = useMemo(() => {
     if (!synced && email) return [];
@@ -77,6 +79,25 @@ export default function RiwayatPage() {
       (a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime()
     );
   }, [filtered]);
+
+  const displayed = useMemo(() => grouped.slice(0, displayLimit), [grouped, displayLimit]);
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    if (displayLimit >= grouped.length) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setDisplayLimit((prev) => Math.min(prev + 10, grouped.length));
+        }
+      },
+      { rootMargin: '300px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [displayLimit, grouped.length]);
 
   if (!synced && email) {
     return (
@@ -174,14 +195,14 @@ export default function RiwayatPage() {
       {/* Expense list grouped by date - compact table style */}
       {grouped.length > 0 ? (
         <div className="space-y-3">
-          {grouped.map(([date, items]) => (
+          {displayed.map(([date, items]) => (
             <div key={date}>
               <h3 className="text-[10px] font-semibold text-gray-500 mb-1 uppercase tracking-wider">
                 {formatDate(date)}
               </h3>
               <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 {/* Table Header */}
-                <div className="grid grid-cols-[1fr_80px] gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                <div className="grid grid-cols-2 gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   <div className="px-2.5 py-1.5 border-r border-gray-200">Keterangan</div>
                   <div className="px-2.5 py-1.5 text-right">Nominal</div>
                 </div>
@@ -190,7 +211,7 @@ export default function RiwayatPage() {
                   <div
                     key={exp.id}
                     onClick={() => setDetailTarget(exp)}
-                    className={`grid grid-cols-[1fr_80px] gap-0 text-[11px] border-b border-gray-100 cursor-pointer ${
+                    className={`grid grid-cols-2 gap-0 text-[11px] border-b border-gray-100 cursor-pointer ${
                       i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                     }`}
                   >
@@ -220,6 +241,21 @@ export default function RiwayatPage() {
               </div>
             </div>
           ))}
+          {/* Load More Sentinel */}
+          {displayed.length < grouped.length && (
+            <>
+              {/* Invisible sentinel for IntersectionObserver */}
+              <div ref={sentinelRef} className="h-4" />
+              {/* Fallback button */}
+              <button
+                onClick={() => setDisplayLimit((prev) => Math.min(prev + 10, grouped.length))}
+                className="w-full h-8 rounded-lg border border-gray-200 text-gray-500 font-medium text-[10px] flex items-center justify-center gap-1.5 active:bg-gray-50 transition-colors"
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+                Tampilkan {Math.min(10, grouped.length - displayed.length)} lagi ({grouped.length - displayed.length} tersisa)
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <EmptyState

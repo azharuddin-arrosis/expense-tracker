@@ -143,14 +143,14 @@ export function TargetForm() {
         {/* Save */}
         <button
           onClick={handleSave}
-          className={`w-full h-12 rounded-xl font-semibold text-base flex items-center justify-center gap-2 transition-colors ${
+          className={`w-full h-8 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-colors ${
             saved
               ? 'bg-emerald-100 text-emerald-700'
               : 'bg-emerald-500 text-white active:bg-emerald-600'
           }`}
         >
           {saved ? (
-            <><Check className="w-5 h-5" /> Tersimpan!</>
+            <><Check className="w-4 h-4" /> Tersimpan!</>
           ) : (
             'Simpan Target'
           )}

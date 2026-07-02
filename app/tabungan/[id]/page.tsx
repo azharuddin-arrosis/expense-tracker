@@ -293,7 +293,7 @@ export default function TabunganDetailPage() {
           <button
             onClick={handleTopUp}
             disabled={!topUpAmountInput || parseInt(topUpAmountInput.replace(/[^0-9]/g, '')) <= 0}
-            className="w-full h-11 rounded-xl bg-cyan-500 text-white font-semibold text-sm disabled:opacity-50 active:bg-cyan-600 transition-colors"
+            className="w-full h-8 rounded-xl bg-cyan-500 text-white font-semibold text-xs disabled:opacity-50 active:bg-cyan-600 transition-colors"
           >
             Simpan ke Tabungan
           </button>
@@ -351,7 +351,7 @@ export default function TabunganDetailPage() {
 
           <button
             onClick={handleSaveAutoSisih}
-            className="w-full h-11 rounded-xl bg-cyan-500 text-white font-semibold text-sm active:bg-cyan-600 transition-colors"
+            className="w-full h-8 rounded-xl bg-cyan-500 text-white font-semibold text-xs active:bg-cyan-600 transition-colors"
           >
             Simpan
           </button>

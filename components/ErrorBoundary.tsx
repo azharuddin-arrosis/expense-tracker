@@ -46,16 +46,16 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="w-full space-y-2">
             <button
               onClick={this.handleReload}
-              className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 active:bg-emerald-600 transition-colors"
+              className="w-full h-8 rounded-xl bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 active:bg-emerald-600 transition-colors"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5" />
               Reload
             </button>
             <button
               onClick={this.handleClearAndLogout}
-              className="w-full h-12 rounded-xl border-2 border-red-200 text-red-600 font-semibold text-sm flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
+              className="w-full h-8 rounded-xl border-2 border-red-200 text-red-600 font-semibold text-xs flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
               Clear Data & Logout
             </button>
           </div>

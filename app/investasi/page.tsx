@@ -307,9 +307,9 @@ export default function InvestasiPage() {
         {/* Add Investment Button */}
         <button
           onClick={() => { resetForm(); setShowAdd(true); }}
-          className="w-full h-10 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 font-medium text-xs flex items-center justify-center gap-1.5 active:bg-gray-50 transition-colors"
+          className="w-full h-8 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 font-medium text-[10px] flex items-center justify-center gap-1.5 active:bg-gray-50 transition-colors"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           Tambah Investasi
         </button>
 
@@ -401,7 +401,7 @@ export default function InvestasiPage() {
           <button
             onClick={handleSave}
             disabled={!formName || !formBuyPrice || !formQty || !formCurrentPrice}
-            className="w-full h-10 rounded-lg bg-emerald-500 text-white font-semibold text-xs disabled:opacity-50 active:bg-emerald-600 transition-colors"
+            className="w-full h-8 rounded-lg bg-emerald-500 text-white font-semibold text-[10px] disabled:opacity-50 active:bg-emerald-600 transition-colors"
           >
             {editId ? 'Simpan Perubahan' : 'Tambah Investasi'}
           </button>

@@ -99,7 +99,7 @@ export default function TargetPage() {
           <button
             onClick={handleSaveBudget}
             disabled={!targetInput}
-            className={`w-full h-9 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
+            className={`w-full h-8 rounded-lg font-semibold text-[10px] flex items-center justify-center gap-1.5 transition-all ${
               saved
                 ? 'bg-emerald-100 text-emerald-700'
                 : 'bg-emerald-500 text-white active:bg-emerald-600 disabled:opacity-50'

@@ -50,7 +50,6 @@ export default function DebtDetailPage() {
   // Bottom sheet states
   const [showPay, setShowPay] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
 
   // Pay form
   const [payAmount, setPayAmount] = useState('');
@@ -309,25 +308,18 @@ export default function DebtDetailPage() {
           {debt.status !== 'paid' && (
             <button
               onClick={openPayForm}
-              className="flex-1 h-10 rounded-lg bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 active:bg-emerald-600 transition-colors"
+              className="flex-1 h-8 rounded-lg bg-emerald-500 text-white font-semibold text-[10px] flex items-center justify-center gap-1.5 active:bg-emerald-600 transition-colors"
             >
-              <CheckCircle2 className="w-4 h-4" />
+              <CheckCircle2 className="w-3.5 h-3.5" />
               Bayar
             </button>
-          )}
+          )
           <button
             onClick={openEditForm}
-            className="flex-1 h-10 rounded-lg bg-orange-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 active:bg-orange-600 transition-colors"
+            className="flex-1 h-8 rounded-lg bg-orange-500 text-white font-semibold text-[10px] flex items-center justify-center gap-1.5 active:bg-orange-600 transition-colors"
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-3.5 h-3.5" />
             Edit
-          </button>
-          <button
-            onClick={() => setShowDelete(true)}
-            className="flex-1 h-10 rounded-lg bg-red-50 text-red-600 font-semibold text-xs flex items-center justify-center gap-1.5 active:bg-red-100 transition-colors border border-red-200"
-          >
-            <Trash2 className="w-4 h-4" />
-            Hapus
           </button>
         </div>
       </div>
