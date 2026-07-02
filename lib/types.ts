@@ -212,6 +212,12 @@ export interface Investment {
 
 // ===== Debt Tracker =====
 
+export interface PaymentRecord {
+  amount: number;
+  date: string;
+  notes?: string;
+}
+
 export interface Debt {
   id: string;
   type: 'hutang' | 'piutang';
@@ -221,6 +227,7 @@ export interface Debt {
   dueDate: string;
   notes?: string;
   status: 'unpaid' | 'partial' | 'paid';
+  paymentHistory?: PaymentRecord[];
   createdAt: string;
   updatedAt: string;
 }

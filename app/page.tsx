@@ -311,7 +311,7 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="grid grid-cols-[1fr_80px] gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+              <div className="grid grid-cols-2 gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                 <div className="px-2.5 py-1.5 border-r border-gray-200">Keterangan</div>
                 <div className="px-2.5 py-1.5 text-right">Nominal</div>
               </div>
@@ -319,9 +319,9 @@ export default function DashboardPage() {
                 <div
                   key={exp.id}
                   onClick={() => setDetailTarget(exp)}
-                  className={`grid grid-cols-[1fr_80px] gap-0 text-[11px] border-b border-gray-100 cursor-pointer ${
+                  className={`grid grid-cols-2 gap-0 text-[11px] border-b border-gray-100 cursor-pointer ${
                     i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                  } ${i === 0 ? '' : ''}`}
+                  }`}
                 >
                   <div className="px-2.5 py-2 border-r border-gray-100 min-w-0">
                     <p className="text-gray-900 truncate font-medium">{exp.description || getCategoryName(exp.category)}</p>

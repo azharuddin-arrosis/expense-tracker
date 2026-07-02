@@ -11,10 +11,11 @@ import {
   Trash2,
   ArrowUpRight,
   ArrowDownRight,
+  History,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
-import { getDebts, updateDebt, deleteDebt, syncAllToCloud } from '@/lib/storage';
-import { formatRupiah, formatDateFull, getTodayString } from '@/lib/format';
+import { getDebts, updateDebt, deleteDebt, addExpenseAndSync, syncAllToCloud } from '@/lib/storage';
+import { formatRupiah, formatDate, formatDateFull, getTodayString } from '@/lib/format';
 import { useSyncOnMount } from '@/lib/use-sync';
 import { getStoredEmail } from '@/lib/cloud';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -53,7 +54,7 @@ export default function DebtDetailPage() {
 
   // Pay form
   const [payAmount, setPayAmount] = useState('');
-  const [, setPayDate] = useState(getTodayString());
+  const [payDate, setPayDate] = useState(getTodayString());
 
   // Edit form
   const [editType, setEditType] = useState<Debt['type']>('hutang');
@@ -77,8 +78,24 @@ export default function DebtDetailPage() {
 
     const newPaid = debt.paidAmount + payValue;
     const newStatus: Debt['status'] = newPaid >= debt.amount ? 'paid' : 'partial';
+    const history = debt.paymentHistory || [];
+    history.push({ amount: payValue, date: payDate });
 
-    updateDebt(id, { paidAmount: newPaid, status: newStatus });
+    updateDebt(id, { paidAmount: newPaid, status: newStatus, paymentHistory: history });
+
+    // Create expense (hutang) or income (piutang) entry
+    const isHutang = debt.type === 'hutang';
+    addExpenseAndSync(
+      {
+        amount: payValue,
+        category: isHutang ? 'cicilan' : 'lainnya_in',
+        description: `Bayar ${debt.type}: ${debt.name}`,
+        date: payDate,
+        flow: isHutang ? 'out' : 'in',
+      },
+      email,
+    );
+
     if (email) syncAllToCloud(email).catch(() => {});
     setShowPay(false);
     setPayAmount('');
@@ -263,6 +280,30 @@ export default function DebtDetailPage() {
           </div>
         </div>
 
+        {/* Payment History */}
+        {(debt.paymentHistory?.length ?? 0) > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+            <div className="flex items-center gap-1.5 px-3 py-2 border-b border-gray-100">
+              <History className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                Riwayat Pembayaran
+              </span>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {debt.paymentHistory!.map((p, i) => (
+                <div key={i} className="flex items-center justify-between px-3 py-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-400 tabular-nums">{formatDate(p.date)}</span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-emerald-600 tabular-nums">
+                    {formatRupiah(p.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-2">
           {debt.status !== 'paid' && (
@@ -351,7 +392,7 @@ export default function DebtDetailPage() {
             <label className="block text-[10px] font-medium text-gray-700 mb-0.5">
               Tanggal Pembayaran
             </label>
-            <DatePicker value={getTodayString()} onChange={() => {}} flow="out" />
+            <DatePicker value={payDate} onChange={setPayDate} flow="out" />
           </div>
 
           {/* Submit */}
