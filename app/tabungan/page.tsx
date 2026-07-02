@@ -6,25 +6,18 @@ import {
   Target,
   Plus,
   Trash2,
-  TrendingUp,
   ChevronRight,
   Settings2,
-  Loader2,
-  Wallet as WalletIcon,
-  Sparkles,
-  List,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/lib/context';
 import {
   getGoals,
   addGoal,
-  updateGoal,
   deleteGoal,
-  addContribution,
   getAutoSisih,
   saveAutoSisih,
   syncAllToCloud,
-  getExpenses,
 } from '@/lib/storage';
 import { formatRupiah } from '@/lib/format';
 import { useSyncOnMount } from '@/lib/use-sync';
@@ -37,6 +30,7 @@ const GOAL_ICONS = ['PiggyBank', 'Target', 'TrendingUp', 'Sparkles', 'WalletIcon
 const GOAL_COLORS = ['#06B6D4', '#8B5CF6', '#F59E0B', '#EC4899', '#10B981'];
 
 export default function TabunganPage() {
+  const router = useRouter();
   const { refreshKey, refreshData } = useAppContext();
   useSyncOnMount([refreshKey]);
   const email = getStoredEmail();
@@ -49,33 +43,6 @@ export default function TabunganPage() {
   const overallPct = totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0;
 
   const [showAddGoal, setShowAddGoal] = useState(false);
-  const [detailGoalId, setDetailGoalId] = useState<string | null>(null);
-  const [detailView, setDetailView] = useState<'overview' | 'contributions' | null>(null);
-
-  const selectedGoalDetail = goals.find(g => g.id === detailGoalId);
-  const allExpenses = getExpenses();
-  
-  const goalContributions = useMemo(() => {
-    if (!selectedGoalDetail) return [];
-    // Find contributions that match the goal name in description
-    // This includes both manual top-ups and auto-sisih contributions
-    const contributions = allExpenses.filter(t => 
-      t.description?.includes(selectedGoalDetail.name) && t.category === 'tabungan'
-    );
-    return contributions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [allExpenses, selectedGoalDetail]);
-  
-  // Format contribution source
-  const getContributionSource = (exp: any) => {
-    if (exp.description?.includes('Auto-sisih')) return 'Auto-sisih';
-    if (exp.description?.includes(selectedGoalDetail?.name || '')) return 'Top-up Manual';
-    return 'Lainnya';
-  };
-  const goalTransactions = useMemo(() => {
-    if (!detailGoalId) return [];
-    return allExpenses.filter(t => t.category === 'tabungan');
-  }, [detailGoalId, refreshKey]);
-  const [showTopUp, setShowTopUp] = useState<string | null>(null);
   const [showAutoSisih, setShowAutoSisih] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -83,10 +50,6 @@ export default function TabunganPage() {
   const [goalName, setGoalName] = useState('');
   const [goalTargetInput, setGoalTargetInput] = useState('');
   const [goalColor, setGoalColor] = useState('#06B6D4');
-
-  // Top up form
-  const [topUpAmountInput, setTopUpAmountInput] = useState('');
-  const [topUpNote, setTopUpNote] = useState('');
 
   // Auto-sisih form
   const [asEnabled, setAsEnabled] = useState(autoSisih.enabled);
@@ -100,17 +63,6 @@ export default function TabunganPage() {
     setGoalName('');
     setGoalTargetInput('');
     setShowAddGoal(false);
-    refreshData();
-  };
-
-  const handleTopUp = () => {
-    const num = parseInt(topUpAmountInput.replace(/[^0-9]/g, '')) || 0;
-    if (!showTopUp || num <= 0) return;
-    addContribution(showTopUp, num, topUpNote || undefined, 'manual');
-    if (email) syncAllToCloud(email).catch(() => {});
-    setTopUpAmountInput('');
-    setTopUpNote('');
-    setShowTopUp(null);
     refreshData();
   };
 
@@ -186,7 +138,6 @@ export default function TabunganPage() {
           {goals.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-sm p-6 text-center">
               <PiggyBank className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-500">Belum ada goal tabungan</p>
               <p className="text-xs text-gray-400 mt-1">Buat goal pertama untuk mulai nabung</p>
             </div>
           ) : (
@@ -194,7 +145,7 @@ export default function TabunganPage() {
               const pct = goal.target > 0 ? Math.min((goal.saved / goal.target) * 100, 100) : 0;
               const remaining = Math.max(goal.target - goal.saved, 0);
               return (
-                <div key={goal.id} className="bg-white rounded-2xl shadow-sm p-4 space-y-3 cursor-pointer active:bg-gray-50 transition-colors" onClick={() => { setDetailGoalId(goal.id); setDetailView('contributions'); }}>
+                <div key={goal.id} className="bg-white rounded-2xl shadow-sm p-4 space-y-3 cursor-pointer active:bg-gray-50 transition-colors" onClick={() => router.push(`/tabungan/${goal.id}`)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: goal.color + '18' }}>
@@ -206,12 +157,6 @@ export default function TabunganPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => { setShowTopUp(goal.id); setTopUpAmountInput(''); setTopUpNote(''); }}
-                        className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center active:bg-emerald-100 transition-colors"
-                      >
-                        <Plus className="w-4 h-4 text-emerald-600" />
-                      </button>
                       <button
                         onClick={() => setDeleteId(goal.id)}
                         className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center active:bg-red-100 transition-colors"
@@ -313,63 +258,6 @@ export default function TabunganPage() {
         </div>
       </BottomSheet>
 
-      {/* Bottom Sheet: Top Up */}
-      <BottomSheet open={showTopUp !== null} onClose={() => setShowTopUp(null)} title="Isi Tabungan">
-        <div className="space-y-4">
-          {showTopUp && (() => {
-            const g = goals.find((x) => x.id === showTopUp);
-            return g ? (
-              <div className="bg-cyan-50 rounded-xl p-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: g.color + '18' }}>
-                  <PiggyBank className="w-4 h-4" style={{ color: g.color }} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">{g.name}</p>
-                  <p className="text-xs text-gray-500">{formatRupiah(g.saved)} / {formatRupiah(g.target)}</p>
-                </div>
-              </div>
-            ) : null;
-          })()}
-          <div>
-            <label className="text-xs text-gray-400 mb-1.5 block">Nominal</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">Rp</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={topUpAmountInput}
-                onChange={(e) => {
-                  const raw = e.target.value.replace(/[^0-9]/g, '');
-                  if (raw === '') { setTopUpAmountInput(''); return; }
-                  setTopUpAmountInput(new Intl.NumberFormat('id-ID').format(parseInt(raw)));
-                }}
-                placeholder="0"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="text-xs text-gray-400 mb-1.5 block">Catatan (opsional)</label>
-            <input
-              value={topUpNote}
-              onChange={(e) => setTopUpNote(e.target.value)}
-              placeholder="Misal: Nabung dari gaji Juni"
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
-            />
-          </div>
-          <p className="text-xs text-gray-400">
-            Setoran akan tercatat di <strong>Buku Kas</strong> sebagai Debit.
-          </p>
-          <button
-            onClick={handleTopUp}
-            disabled={!topUpAmountInput || parseInt(topUpAmountInput.replace(/[^0-9]/g, '')) <= 0}
-            className="w-full h-11 rounded-xl bg-cyan-500 text-white font-semibold text-sm disabled:opacity-50 active:bg-cyan-600 transition-colors"
-          >
-            Simpan ke Tabungan
-          </button>
-        </div>
-      </BottomSheet>
-
       {/* Bottom Sheet: Auto-Sisih */}
       <BottomSheet open={showAutoSisih} onClose={() => setShowAutoSisih(false)} title="Auto-Sisih">
         <div className="space-y-4">
@@ -426,90 +314,6 @@ export default function TabunganPage() {
             Simpan
           </button>
         </div>
-      </BottomSheet>
-
-      {/* Bottom Sheet: Goal Detail */}
-      <BottomSheet open={detailGoalId !== null && detailView === 'contributions'} onClose={() => { setDetailGoalId(null); setDetailView(null); }} title="Detail Tabungan">
-        {selectedGoalDetail && (
-          <div className="space-y-4">
-            {/* Goal Summary */}
-            <div className="bg-cyan-50 rounded-xl p-4 flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: selectedGoalDetail.color + '18' }}>
-                <PiggyBank className="w-5 h-5" style={{ color: selectedGoalDetail.color }} />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-800">{selectedGoalDetail.name}</p>
-                <p className="text-xs text-gray-500">Target {formatRupiah(selectedGoalDetail.target)}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-cyan-700 tabular-nums">{formatRupiah(selectedGoalDetail.saved)}</p>
-                <p className="text-xs text-gray-400">{selectedGoalDetail.target > 0 ? Math.min((selectedGoalDetail.saved / selectedGoalDetail.target) * 100, 100).toFixed(0) : 0}%</p>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div>
-              <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${selectedGoalDetail.target > 0 ? Math.min((selectedGoalDetail.saved / selectedGoalDetail.target) * 100, 100) : 0}%`, backgroundColor: selectedGoalDetail.color }}
-                />
-              </div>
-              <p className="text-xs text-gray-400 text-right mt-1">
-                Sisa {formatRupiah(Math.max(selectedGoalDetail.target - selectedGoalDetail.saved, 0))}
-              </p>
-            </div>
-
-            {/* Contribution History */}
-            {goalContributions.length > 0 ? (
-              <div className="space-y-2 max-h-80 overflow-y-auto">
-                <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Riwayat Kontribusi</h4>
-                {goalContributions.map((t) => {
-                  const isAuto = t.description?.includes('Auto-sisih');
-                  return (
-                    <div key={t.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-xl">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isAuto ? 'bg-violet-100' : 'bg-emerald-100'}`}>
-                          {isAuto ? <TrendingUp className="w-4 h-4 text-violet-600" /> : <Plus className="w-4 h-4 text-emerald-600" />}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">{isAuto ? 'Auto-sisih' : 'Top-up Manual'}</p>
-                          <p className="text-[10px] text-gray-400">{t.description || '-'}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-emerald-700 tabular-nums">{formatRupiah(t.amount)}</p>
-                        <p className="text-[10px] text-gray-400">{t.date}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-6 text-gray-400">
-                <PiggyBank className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Belum ada kontribusi</p>
-                <p className="text-xs">Tekan + di goal untuk mulai nabung</p>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-2 pt-2 border-t border-gray-100">
-              <button
-                onClick={() => { setShowTopUp(selectedGoalDetail.id); setTopUpAmountInput(''); setTopUpNote(''); setDetailGoalId(null); setDetailView(null); }}
-                className="flex-1 h-11 rounded-xl bg-cyan-500 text-white font-semibold text-sm active:bg-cyan-600 transition-colors"
-              >
-                Top Up
-              </button>
-              <button
-                onClick={() => setDeleteId(selectedGoalDetail.id)}
-                className="flex-1 h-11 rounded-xl bg-red-50 text-red-600 font-semibold text-sm border border-red-200 active:bg-red-100 transition-colors"
-              >
-                Hapus Goal
-              </button>
-            </div>
-          </div>
-        )}
       </BottomSheet>
 
       {/* Delete Confirm */}
