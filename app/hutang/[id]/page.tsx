@@ -313,7 +313,7 @@ export default function DebtDetailPage() {
               <CheckCircle2 className="w-3.5 h-3.5" />
               Bayar
             </button>
-          )
+          )}
           <button
             onClick={openEditForm}
             className="flex-1 h-8 rounded-lg bg-orange-500 text-white font-semibold text-[10px] flex items-center justify-center gap-1.5 active:bg-orange-600 transition-colors"
@@ -490,18 +490,6 @@ export default function DebtDetailPage() {
           </button>
         </div>
       </BottomSheet>
-
-      {/* ── Delete ConfirmDialog ── */}
-      <ConfirmDialog
-        open={showDelete}
-        title="Hapus Catatan?"
-        message="Data hutang/piutang ini akan dihapus permanen."
-        confirmLabel="Ya, Hapus"
-        cancelLabel="Batal"
-        variant="danger"
-        onConfirm={handleDelete}
-        onCancel={() => setShowDelete(false)}
-      />
     </>
   );
 }
