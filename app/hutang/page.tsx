@@ -1,26 +1,19 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   DollarSign,
   Plus,
-  Trash2,
-  Wallet,
   ArrowUpRight,
   ArrowDownRight,
   Calendar,
-  CheckCircle2,
-  Pencil,
-  CircleDot,
-  CheckCircle,
-  AlertCircle,
+  ChevronRight,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
   getDebts,
   addDebt,
-  updateDebt,
-  deleteDebt,
   syncAllToCloud,
 } from '@/lib/storage';
 import { formatRupiah, formatDate } from '@/lib/format';
@@ -28,7 +21,7 @@ import { useSyncOnMount } from '@/lib/use-sync';
 import { getStoredEmail } from '@/lib/cloud';
 import { PageHeader } from '@/components/PageHeader';
 import { BottomSheet } from '@/components/BottomSheet';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { DatePicker } from '@/components/DatePicker';
 import type { Debt } from '@/lib/types';
 
 type FilterTab = 'semua' | 'hutang' | 'piutang';
@@ -53,6 +46,7 @@ function getDaysUntil(dueDate: string): number {
 }
 
 export default function HutangPage() {
+  const router = useRouter();
   const { refreshKey, refreshData } = useAppContext();
   useSyncOnMount([refreshKey]);
   const email = getStoredEmail();
@@ -61,9 +55,6 @@ export default function HutangPage() {
 
   const [filterTab, setFilterTab] = useState<FilterTab>('semua');
   const [showAdd, setShowAdd] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [showPay, setShowPay] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (filterTab === 'semua') return allDebts;
@@ -78,15 +69,12 @@ export default function HutangPage() {
     .reduce((s, d) => s + (d.amount - d.paidAmount), 0);
   const net = totalPiutang - totalHutang;
 
-  // Form state
+  // Form state for add
   const [formType, setFormType] = useState<Debt['type']>('hutang');
   const [formName, setFormName] = useState('');
   const [formAmount, setFormAmount] = useState('');
   const [formDueDate, setFormDueDate] = useState('');
   const [formNotes, setFormNotes] = useState('');
-
-  // Pay form
-  const [payAmount, setPayAmount] = useState('');
 
   const resetForm = () => {
     setFormType('hutang');
@@ -94,71 +82,25 @@ export default function HutangPage() {
     setFormAmount('');
     setFormDueDate('');
     setFormNotes('');
-    setEditId(null);
-  };
-
-  const openEdit = (debt: Debt) => {
-    setEditId(debt.id);
-    setFormType(debt.type);
-    setFormName(debt.name);
-    setFormAmount(new Intl.NumberFormat('id-ID').format(debt.amount));
-    setFormDueDate(debt.dueDate);
-    setFormNotes(debt.notes || '');
-    setShowAdd(true);
   };
 
   const handleSave = () => {
     const amount = parseInt(formAmount.replace(/[^0-9]/g, '')) || 0;
     if (!formName || amount <= 0) return;
 
-    if (editId) {
-      updateDebt(editId, {
-        type: formType,
-        name: formName,
-        amount,
-        dueDate: formDueDate,
-        notes: formNotes || undefined,
-      });
-    } else {
-      addDebt({
-        type: formType,
-        name: formName,
-        amount,
-        paidAmount: 0,
-        dueDate: formDueDate,
-        notes: formNotes || undefined,
-        status: 'unpaid',
-      });
-    }
+    addDebt({
+      type: formType,
+      name: formName,
+      amount,
+      paidAmount: 0,
+      dueDate: formDueDate,
+      notes: formNotes || undefined,
+      status: 'unpaid',
+    });
 
     if (email) syncAllToCloud(email).catch(() => {});
     resetForm();
     setShowAdd(false);
-    refreshData();
-  };
-
-  const handleDelete = () => {
-    if (!deleteId) return;
-    deleteDebt(deleteId);
-    if (email) syncAllToCloud(email).catch(() => {});
-    setDeleteId(null);
-    refreshData();
-  };
-
-  const handlePay = () => {
-    const payValue = parseInt(payAmount.replace(/[^0-9]/g, '')) || 0;
-    if (!showPay || payValue <= 0) return;
-
-    const debt = allDebts.find((d) => d.id === showPay);
-    if (!debt) return;
-
-    const newPaid = debt.paidAmount + payValue;
-    const newStatus: Debt['status'] = newPaid >= debt.amount ? 'paid' : 'partial';
-
-    updateDebt(showPay, { paidAmount: newPaid, status: newStatus });
-    if (email) syncAllToCloud(email).catch(() => {});
-    setShowPay(null);
-    setPayAmount('');
     refreshData();
   };
 
@@ -244,9 +186,10 @@ export default function HutangPage() {
               const statusConf = STATUS_CONFIG[debt.status];
 
               return (
-                <div
+                <button
                   key={debt.id}
-                  className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                  onClick={() => router.push('/hutang/' + debt.id)}
+                  className="w-full bg-white rounded-lg border border-gray-200 overflow-hidden text-left active:bg-gray-50 transition-colors"
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between px-3 py-2">
@@ -277,31 +220,7 @@ export default function HutangPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {debt.status !== 'paid' && (
-                        <button
-                          onClick={() => { setShowPay(debt.id); setPayAmount(''); }}
-                          className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center active:bg-emerald-100 transition-colors"
-                          aria-label="Bayar"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => openEdit(debt)}
-                        className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center active:bg-gray-100 transition-colors"
-                        aria-label="Edit"
-                      >
-                        <Pencil className="w-3.5 h-3.5 text-gray-400" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(debt.id)}
-                        className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center active:bg-red-100 transition-colors"
-                        aria-label="Hapus"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                      </button>
-                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
                   </div>
 
                   {/* Detail grid */}
@@ -350,7 +269,7 @@ export default function HutangPage() {
                       <span className="text-[9px] text-gray-400 truncate max-w-[120px]">{debt.notes}</span>
                     )}
                   </div>
-                </div>
+                </button>
               );
             })
           )}
@@ -367,49 +286,51 @@ export default function HutangPage() {
 
       </div>
 
-      {/* Bottom Sheet: Add/Edit */}
+      {/* Bottom Sheet: Add */}
       <BottomSheet
         open={showAdd}
         onClose={() => { setShowAdd(false); resetForm(); }}
-        title={editId ? 'Edit Catatan' : 'Tambah Catatan'}
+        title="Tambah Catatan"
       >
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div>
-            <label className="text-[10px] text-gray-400 mb-1 block">Tipe</label>
+            <label className="block text-[10px] font-medium text-gray-700 mb-0.5">Tipe</label>
             <div className="flex gap-2">
               <button
                 onClick={() => setFormType('hutang')}
-                className={`flex-1 h-10 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex-1 h-8 rounded-lg text-xs font-medium transition-colors ${
                   formType === 'hutang'
                     ? 'bg-red-500 text-white'
                     : 'bg-gray-100 text-gray-500'
                 }`}
+                type="button"
               >
                 Hutang
               </button>
               <button
                 onClick={() => setFormType('piutang')}
-                className={`flex-1 h-10 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex-1 h-8 rounded-lg text-xs font-medium transition-colors ${
                   formType === 'piutang'
                     ? 'bg-emerald-500 text-white'
                     : 'bg-gray-100 text-gray-500'
                 }`}
+                type="button"
               >
                 Piutang
               </button>
             </div>
           </div>
           <div>
-            <label className="text-[10px] text-gray-400 mb-1 block">Nama</label>
+            <label className="block text-[10px] font-medium text-gray-700 mb-0.5">Nama</label>
             <input
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
               placeholder="Nama orang / keterangan"
-              className="w-full h-10 px-3 rounded-lg border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+              className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-transparent focus:ring-orange-500"
             />
           </div>
           <div>
-            <label className="text-[10px] text-gray-400 mb-1 block">Jumlah (Rp)</label>
+            <label className="block text-[10px] font-medium text-gray-700 mb-0.5">Jumlah (Rp)</label>
             <input
               type="text"
               inputMode="numeric"
@@ -420,110 +341,31 @@ export default function HutangPage() {
                 setFormAmount(new Intl.NumberFormat('id-ID').format(parseInt(raw)));
               }}
               placeholder="0"
-              className="w-full h-10 px-3 rounded-lg border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+              className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-transparent focus:ring-orange-500"
             />
           </div>
           <div>
-            <label className="text-[10px] text-gray-400 mb-1 block">Jatuh Tempo (opsional)</label>
-            <input
-              type="date"
-              value={formDueDate}
-              onChange={(e) => setFormDueDate(e.target.value)}
-              className="w-full h-10 px-3 rounded-lg border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-            />
+            <label className="block text-[10px] font-medium text-gray-700 mb-0.5">Jatuh Tempo (opsional)</label>
+            <DatePicker value={formDueDate} onChange={setFormDueDate} flow="out" />
           </div>
           <div>
-            <label className="text-[10px] text-gray-400 mb-1 block">Catatan (opsional)</label>
+            <label className="block text-[10px] font-medium text-gray-700 mb-0.5">Catatan (opsional)</label>
             <input
               value={formNotes}
               onChange={(e) => setFormNotes(e.target.value)}
               placeholder="Keterangan tambahan"
-              className="w-full h-10 px-3 rounded-lg border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+              className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-transparent focus:ring-orange-500"
             />
           </div>
           <button
             onClick={handleSave}
             disabled={!formName || !formAmount}
-            className="w-full h-10 rounded-lg bg-orange-500 text-white font-semibold text-xs disabled:opacity-50 active:bg-orange-600 transition-colors"
+            className="w-full h-8 rounded-lg bg-orange-500 text-white font-semibold text-xs disabled:opacity-50 active:bg-orange-600 transition-colors"
           >
-            {editId ? 'Simpan Perubahan' : 'Tambah Catatan'}
+            Tambah Catatan
           </button>
         </div>
       </BottomSheet>
-
-      {/* Bottom Sheet: Pay / Mark Partial */}
-      <BottomSheet
-        open={showPay !== null}
-        onClose={() => setShowPay(null)}
-        title="Catat Pembayaran"
-      >
-        <div className="space-y-3">
-          {showPay && (() => {
-            const debt = allDebts.find(d => d.id === showPay);
-            if (!debt) return null;
-            const remaining = debt.amount - debt.paidAmount;
-            return (
-              <>
-                <div className="bg-orange-50 rounded-lg p-3 space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">{debt.name}</span>
-                    <span className="font-semibold text-gray-900">{formatRupiah(debt.amount)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-gray-400">Sisa tagihan</span>
-                    <span className="font-semibold text-red-600">{formatRupiah(remaining)}</span>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[10px] text-gray-400 mb-1 block">Jumlah Dibayar (Rp)</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={payAmount}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/[^0-9]/g, '');
-                      if (raw === '') { setPayAmount(''); return; }
-                      setPayAmount(new Intl.NumberFormat('id-ID').format(parseInt(raw)));
-                    }}
-                    placeholder="0"
-                    className="w-full h-10 px-3 rounded-lg border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  {[remaining, Math.round(remaining / 2), Math.round(remaining * 0.25)].map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => setPayAmount(new Intl.NumberFormat('id-ID').format(v))}
-                      className="flex-1 h-8 rounded-lg bg-gray-100 text-[10px] font-medium text-gray-600 active:bg-gray-200 transition-colors"
-                    >
-                      {formatRupiah(v)}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={handlePay}
-                  disabled={!payAmount || parseInt(payAmount.replace(/[^0-9]/g, '')) <= 0}
-                  className="w-full h-10 rounded-lg bg-orange-500 text-white font-semibold text-xs disabled:opacity-50 active:bg-orange-600 transition-colors"
-                >
-                  Catat Pembayaran
-                </button>
-              </>
-            );
-          })()}
-        </div>
-      </BottomSheet>
-
-      {/* Delete Confirm */}
-      <ConfirmDialog
-        open={deleteId !== null}
-        title="Hapus Catatan?"
-        message="Data hutang/piutang ini akan dihapus permanen."
-        confirmLabel="Ya, Hapus"
-        cancelLabel="Batal"
-        variant="danger"
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteId(null)}
-      />
     </>
   );
 }
