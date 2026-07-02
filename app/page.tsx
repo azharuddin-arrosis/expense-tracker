@@ -219,15 +219,15 @@ export default function DashboardPage() {
               <button
                 key={item.label}
                 onClick={() => router.push(item.path)}
-                className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform p-2 rounded-lg border border-gray-100 bg-white"
+                className="flex flex-col items-center gap-1 active:scale-95 transition-transform p-1.5 rounded-lg border border-gray-100 bg-white"
               >
                 <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: item.bg }}
                 >
-                  <Icon className="w-4 h-4" style={{ color: item.color }} />
+                  <Icon className="w-3.5 h-3.5" style={{ color: item.color }} />
                 </div>
-                <span className="text-[10px] font-medium text-gray-600">{item.label}</span>
+                <span className="text-[9px] font-medium text-gray-600">{item.label}</span>
               </button>
             );
           })}
