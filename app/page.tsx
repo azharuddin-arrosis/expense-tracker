@@ -7,7 +7,6 @@ import {
   List,
   FileText,
   PieChart,
-  SlidersHorizontal,
   Lightbulb,
   Target,
   User,
@@ -241,7 +240,6 @@ export default function DashboardPage() {
             { label: 'Investasi', icon: TrendingUp, path: '/investasi', color: '#10B981', bg: '#ECFDF5' },
             { label: 'Hutang', icon: DollarSign, path: '/hutang', color: '#EF4444', bg: '#FEF2F2' },
             { label: 'Laporan', icon: BarChart3, path: '/laporan', color: '#6366F1', bg: '#EEF2FF' },
-            { label: 'Pengaturan', icon: SlidersHorizontal, path: '/setting', color: '#EF4444', bg: '#FEF2F2' },
           ].map((item) => {
             const Icon = item.icon;
             return (
