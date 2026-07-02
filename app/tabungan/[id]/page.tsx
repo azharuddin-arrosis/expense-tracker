@@ -7,18 +7,13 @@ import {
   Target,
   Plus,
   Trash2,
-  TrendingUp,
   ArrowLeft,
-  List,
   Calendar,
-  Tag,
-  AlertCircle,
   CheckCircle,
 } from 'lucide-react';
 import { useAppContext } from '@/lib/context';
 import {
   getGoals,
-  updateGoal,
   deleteGoal,
   addContribution,
   getAutoSisih,
@@ -118,164 +113,133 @@ export default function TabunganDetailPage() {
   };
 
   const getContributionSource = (exp: any) => {
-    if (exp.description?.includes('Auto-sisih')) return { label: 'Auto-sisih', color: 'bg-violet-100 text-violet-700', icon: '🔄' };
-    if (exp.description?.includes(goal.name)) return { label: 'Top-up Manual', color: 'bg-emerald-100 text-emerald-700', icon: '➕' };
-    return { label: 'Lainnya', color: 'bg-gray-100 text-gray-700', icon: '❓' };
+    if (exp.description?.includes('Auto-sisih')) return { label: 'Auto-sisih' };
+    if (exp.description?.includes(goal.name)) return { label: 'Manual' };
+    return { label: 'Lainnya' };
   };
+
+  const totalContributions = goalContributions.reduce((s, t) => s + t.amount, 0);
+  const avgAmount = goalContributions.length > 0 ? Math.round(totalContributions / goalContributions.length) : 0;
+  const maxAmount = goalContributions.length > 0 ? Math.max(...goalContributions.map(t => t.amount)) : 0;
 
   return (
     <>
-      <PageHeader 
-        title="Detail Tabungan" 
+      <PageHeader
+        title="Detail Tabungan"
         subtitle={goal.name}
         onBack={() => router.back()}
       />
 
-      <div className="px-4 pt-4 pb-8 space-y-4">
+      <div className="px-3 pt-3 pb-8 space-y-3">
 
         {/* Goal Header Card */}
-        <div className="rounded-2xl shadow-sm p-5 bg-white" style={{ borderLeft: `4px solid ${goal.color}` }}>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: goal.color + '18' }}>
-                <PiggyBank className="w-6 h-6" style={{ color: goal.color }} />
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: goal.color + '18' }}>
+                <PiggyBank className="w-4 h-4" style={{ color: goal.color }} />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 truncate">{goal.name}</h1>
-                <p className="text-sm text-gray-500">Target {formatRupiah(goal.target)}</p>
+                <h1 className="text-sm font-bold text-gray-900 truncate">{goal.name}</h1>
+                <p className="text-[11px] text-gray-500">Target {formatRupiah(goal.target)}</p>
               </div>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-2xl font-bold tabular-nums" style={{ color: goal.color }}>{formatRupiah(goal.saved)}</p>
-              <p className="text-xs text-gray-400">{pct.toFixed(0)}% tercapai</p>
+              <p className="text-lg font-bold tabular-nums" style={{ color: goal.color }}>{formatRupiah(goal.saved)}</p>
+              <p className="text-[10px] text-gray-400">{pct.toFixed(0)}%</p>
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="mt-4">
-            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${pct}%`, backgroundColor: goal.color }}
-              />
+          <div className="mt-2.5">
+            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: goal.color }} />
             </div>
-            <div className="flex justify-between mt-2 text-xs">
+            <div className="flex justify-between mt-1 text-[10px]">
               <span className="text-gray-500">Terkumpul {formatRupiah(goal.saved)}</span>
-              <span className="text-gray-400 font-medium">Sisa {formatRupiah(remaining)}</span>
+              <span className="text-gray-400">Sisa {formatRupiah(remaining)}</span>
             </div>
             {remaining === 0 && (
-              <p className="mt-2 text-sm font-semibold text-emerald-600 flex items-center gap-1">
-                <CheckCircle className="w-4 h-4" /> Target Tercapai!
+              <p className="mt-1.5 text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                <CheckCircle className="w-3.5 h-3.5" /> Target Tercapai!
               </p>
             )}
           </div>
 
-          {/* Quick Actions */}
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <button
-              onClick={() => setShowTopUp(true)}
-              className="col-span-1 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 font-medium text-sm flex items-center justify-center gap-1"
-            >
-              <Plus className="w-4 h-4" /> Top Up
+          <div className="mt-3 grid grid-cols-3 gap-1.5">
+            <button onClick={() => setShowTopUp(true)} className="py-2 rounded-lg bg-emerald-50 text-emerald-700 font-medium text-xs flex items-center justify-center gap-1">
+              <Plus className="w-3.5 h-3.5" /> Top Up
             </button>
-            <button
-              onClick={() => { setAsEnabled(autoSisih.enabled); setAsPersen(autoSisih.persen); setAsGoalId(autoSisih.goalId); setShowAutoSisih(true); }}
-              className="col-span-1 py-2.5 rounded-xl bg-violet-50 text-violet-700 font-medium text-sm flex items-center justify-center gap-1"
-            >
-              <Target className="w-4 h-4" /> Auto-Sisih
+            <button onClick={() => { setAsEnabled(autoSisih.enabled); setAsPersen(autoSisih.persen); setAsGoalId(autoSisih.goalId); setShowAutoSisih(true); }} className="py-2 rounded-lg bg-violet-50 text-violet-700 font-medium text-xs flex items-center justify-center gap-1">
+              <Target className="w-3.5 h-3.5" /> Auto-Sisih
             </button>
-            <button
-              onClick={() => setDeleteId(goal.id)}
-              className="col-span-1 py-2.5 rounded-xl bg-red-50 text-red-600 font-medium text-sm flex items-center justify-center gap-1"
-            >
-              <Trash2 className="w-4 h-4" /> Hapus
+            <button onClick={() => setDeleteId(goal.id)} className="py-2 rounded-lg bg-red-50 text-red-600 font-medium text-xs flex items-center justify-center gap-1">
+              <Trash2 className="w-3.5 h-3.5" /> Hapus
             </button>
           </div>
         </div>
 
-        {/* Contribution History */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-1">
-              <List className="w-4 h-4" /> Riwayat Kontribusi ({goalContributions.length})
-            </h3>
-            {goalContributions.length > 0 && (
-              <span className="text-xs text-gray-400">Total: {formatRupiah(goalContributions.reduce((s, t) => s + t.amount, 0))}</span>
-            )}
+        {/* Stats Bar */}
+        {goalContributions.length > 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between text-[10px] text-gray-500">
+            <span><strong className="text-gray-700">{goalContributions.length}</strong> transaksi</span>
+            <span>Rata-rata <strong className="text-gray-700">{formatRupiah(avgAmount)}</strong></span>
+            <span>Tertinggi <strong className="text-gray-700">{formatRupiah(maxAmount)}</strong></span>
+            <span>Total <strong className="text-gray-900">{formatRupiah(totalContributions)}</strong></span>
           </div>
+        )}
 
+        {/* Contribution Table */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           {goalContributions.length === 0 ? (
-            <div className="px-4 py-8 text-center">
-              <PiggyBank className="w-12 h-12 text-gray-200 mx-auto mb-2" />
+            <div className="px-4 py-10 text-center">
+              <PiggyBank className="w-10 h-10 text-gray-200 mx-auto mb-2" />
               <p className="text-sm font-medium text-gray-500">Belum ada kontribusi</p>
               <p className="text-xs text-gray-400 mt-1">Mulai tabung dengan klik tombol Top Up</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
-              {goalContributions.map((t) => {
+            <div>
+              {/* Table Header */}
+              <div className="grid grid-cols-[90px_1fr_60px_90px] gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                <div className="px-2.5 py-1.5 border-r border-gray-200">Tanggal</div>
+                <div className="px-2.5 py-1.5 border-r border-gray-200">Keterangan</div>
+                <div className="px-2.5 py-1.5 border-r border-gray-200 text-center">Sumber</div>
+                <div className="px-2.5 py-1.5 text-right">Nominal</div>
+              </div>
+              {/* Table Rows */}
+              {goalContributions.map((t, i) => {
                 const source = getContributionSource(t);
                 return (
-                  <div key={t.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${source.color}`}>
-                          <span className="text-sm">{source.icon}</span>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{t.description || '-'}</p>
-                          <p className="text-xs text-gray-400 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" /> {formatDate(t.date)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${source.color}`}>
-                          {source.label}
-                        </span>
-                        <span className="text-sm font-semibold text-gray-900 tabular-nums text-right whitespace-nowrap">
-                          {formatRupiah(t.amount)}
-                        </span>
-                      </div>
+                  <div key={t.id} className={`grid grid-cols-[90px_1fr_60px_90px] gap-0 text-xs border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                    <div className="px-2.5 py-2 border-r border-gray-100 text-gray-500 tabular-nums flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                      {formatDate(t.date)}
+                    </div>
+                    <div className="px-2.5 py-2 border-r border-gray-100 text-gray-700 truncate">
+                      {t.description || '-'}
+                    </div>
+                    <div className="px-2.5 py-2 border-r border-gray-100 text-center">
+                      <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                        source.label === 'Auto-sisih' ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {source.label}
+                      </span>
+                    </div>
+                    <div className="px-2.5 py-2 text-right font-semibold text-gray-900 tabular-nums">
+                      {formatRupiah(t.amount)}
                     </div>
                   </div>
                 );
               })}
+              {/* Table Footer */}
+              <div className="grid grid-cols-[90px_1fr_60px_90px] gap-0 border-t border-gray-200 bg-gray-50 text-xs font-bold text-gray-900">
+                <div className="px-2.5 py-1.5 border-r border-gray-200" />
+                <div className="px-2.5 py-1.5 border-r border-gray-200 text-gray-500 font-medium">Total</div>
+                <div className="px-2.5 py-1.5 border-r border-gray-200" />
+                <div className="px-2.5 py-1.5 text-right tabular-nums">{formatRupiah(totalContributions)}</div>
+              </div>
             </div>
           )}
         </div>
-
-        {/* Stats Summary */}
-        {goalContributions.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm p-4">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-1">
-              <Target className="w-4 h-4" /> Ringkasan
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Total Masuk</p>
-                <p className="text-lg font-bold text-emerald-700 tabular-nums">
-                  {formatRupiah(goalContributions.reduce((s, t) => s + t.amount, 0))}
-                </p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Jumlah Transaksi</p>
-                <p className="text-lg font-bold text-cyan-700">{goalContributions.length}</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Rata-rata</p>
-                <p className="text-lg font-bold text-amber-700 tabular-nums">
-                  {formatRupiah(Math.round(goalContributions.reduce((s, t) => s + t.amount, 0) / goalContributions.length))}
-                </p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Terbesar</p>
-                <p className="text-lg font-bold text-violet-700 tabular-nums">
-                  {formatRupiah(Math.max(...goalContributions.map(t => t.amount)))}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Bottom Sheet: Top Up */}
