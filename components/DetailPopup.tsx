@@ -42,13 +42,13 @@ export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps
         </div>
 
         {/* Header */}
-        <div className={`mx-4 px-5 py-4 rounded-xl ${
+        <div className={`px-4 py-3 rounded-lg ${
           transaction.flow === 'in' ? 'bg-amber-50' : 'bg-red-50'
         }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
-                className="w-12 h-12 rounded-full flex items-center justify-center"
+                className="w-10 h-10 rounded-full flex items-center justify-center"
                 style={{
                   backgroundColor: transaction.flow === 'in'
                     ? '#F59E0B20'
@@ -57,7 +57,7 @@ export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps
               >
                 <CategoryIcon
                   categoryId={transaction.category}
-                  className="w-6 h-6"
+                  className="w-5 h-5"
                   style={{
                     color: transaction.flow === 'in' ? '#F59E0B' : getCategoryColor(transaction.category),
                   }}
@@ -67,7 +67,7 @@ export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps
                 <p className="text-sm text-gray-500">
                   {transaction.flow === 'in' ? 'Pemasukan' : 'Pengeluaran'}
                 </p>
-                <p className="text-lg font-bold text-gray-900 tabular-nums">
+                <p className="text-base font-bold text-gray-900 tabular-nums">
                   {transaction.flow === 'in' ? '+' : '-'}{formatRupiah(transaction.amount)}
                 </p>
               </div>
@@ -83,10 +83,10 @@ export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps
         </div>
 
         {/* Detail Rows */}
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-4 py-3 space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-              <Tag className="w-4 h-4 text-gray-500" />
+            <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+              <Tag className="w-3.5 h-3.5 text-gray-500" />
             </div>
             <div>
               <p className="text-xs text-gray-400">Kategori</p>
@@ -95,8 +95,8 @@ export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-              <Calendar className="w-4 h-4 text-gray-500" />
+            <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-3.5 h-3.5 text-gray-500" />
             </div>
             <div>
               <p className="text-xs text-gray-400">Tanggal</p>
@@ -106,8 +106,8 @@ export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps
 
           {transaction.description && (
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <FileText className="w-4 h-4 text-gray-500" />
+              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <FileText className="w-3.5 h-3.5 text-gray-500" />
               </div>
               <div>
                 <p className="text-xs text-gray-400">Deskripsi</p>
@@ -117,10 +117,10 @@ export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps
           )}
 
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
               {transaction.flow === 'in'
-                ? <TrendingUp className="w-4 h-4 text-amber-500" />
-                : <TrendingDown className="w-4 h-4 text-red-500" />
+                ? <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
+                : <TrendingDown className="w-3.5 h-3.5 text-red-500" />
               }
             </div>
             <div>
@@ -135,24 +135,24 @@ export function DetailPopup({ transaction, onClose, onDelete }: DetailPopupProps
         </div>
 
         {/* Action Buttons */}
-        <div className="px-5 pb-6 space-y-2">
+        <div className="px-4 pb-4 space-y-2">
           <button
             onClick={handleEdit}
-            className="w-full h-11 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+            className="w-full h-9 rounded-lg bg-emerald-500 text-white font-semibold text-xs active:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
           >
             <Pencil className="w-4 h-4" />
             Edit Transaksi
           </button>
           <button
             onClick={handleDelete}
-            className="w-full h-11 rounded-xl bg-red-50 text-red-600 font-semibold text-sm active:bg-red-100 transition-colors flex items-center justify-center gap-2"
+            className="w-full h-9 rounded-lg bg-red-50 text-red-600 font-semibold text-xs active:bg-red-100 transition-colors flex items-center justify-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
             Hapus Transaksi
           </button>
           <button
             onClick={onClose}
-            className="w-full h-11 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm active:bg-gray-200 transition-colors"
+            className="w-full h-9 rounded-lg bg-gray-100 text-gray-700 font-semibold text-xs active:bg-gray-200 transition-colors"
           >
             Tutup
           </button>

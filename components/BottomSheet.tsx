@@ -78,19 +78,19 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
+          <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-gray-400 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+            className="p-1 rounded-full text-gray-400 hover:bg-gray-100 active:bg-gray-200 transition-colors"
             aria-label="Tutup"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto px-5 py-4" style={{ maxHeight: 'calc(90dvh - 80px)' }}>
+        <div className="overflow-y-auto px-4 py-3" style={{ maxHeight: 'calc(90dvh - 80px)' }}>
           {children}
         </div>
       </div>

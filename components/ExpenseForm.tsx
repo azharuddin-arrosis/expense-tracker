@@ -12,7 +12,7 @@ import { getTodayString } from '@/lib/format';
 import { getStoredEmail } from '@/lib/cloud';
 import { CategoryIcon } from './CategoryIcon';
 import { BottomSheet } from './BottomSheet';
-import { Check, TrendingDown, TrendingUp } from 'lucide-react';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 
 interface ExpenseFormProps {
   onSuccess: () => void;
@@ -140,42 +140,42 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
       onClose={handleClose}
       title={isEditing ? 'Edit Transaksi' : flow === 'in' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran'}
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {/* Flow Toggle */}
-        <div className={`flex bg-gray-100 rounded-xl p-1 ${isEditing ? 'opacity-60 pointer-events-none' : ''}`}>
+        <div className={`flex bg-gray-100 rounded-lg p-0.5 ${isEditing ? 'opacity-60 pointer-events-none' : ''}`}>
           <button
             type="button"
             onClick={() => handleTabChange('out')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
               flow === 'out'
                 ? 'bg-white text-emerald-700 shadow-sm'
                 : 'text-gray-500'
             }`}
           >
-            <TrendingDown className="w-4 h-4" />
+            <TrendingDown className="w-3.5 h-3.5" />
             Pengeluaran
           </button>
           <button
             type="button"
             onClick={() => handleTabChange('in')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
               flow === 'in'
                 ? 'bg-white text-amber-700 shadow-sm'
                 : 'text-gray-500'
             }`}
           >
-            <TrendingUp className="w-4 h-4" />
+            <TrendingUp className="w-3.5 h-3.5" />
             Pemasukan
           </button>
         </div>
 
         {/* Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             Jumlah (Rp)
           </label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-lg">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">
               Rp
             </span>
             <input
@@ -184,7 +184,7 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
               value={amount}
               onChange={handleAmountChange}
               placeholder="0"
-              className={`w-full h-12 pl-10 pr-4 rounded-xl border border-gray-200 text-lg font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent ${
+              className={`w-full h-10 pl-10 pr-4 rounded-lg border border-gray-200 text-base font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent ${
                 flow === 'in'
                   ? 'focus:ring-amber-500'
                   : 'focus:ring-emerald-500'
@@ -198,10 +198,10 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
 
         {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             Kategori
           </label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             {categories.map((cat) => {
               const isSelected = category === cat.id;
               return (
@@ -209,7 +209,7 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
                   key={cat.id}
                   type="button"
                   onClick={() => setCategory(cat.id)}
-                  className={`flex flex-col items-center gap-1 py-3 px-1 rounded-xl border-2 transition-all ${
+                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg border-2 transition-all ${
                     isSelected
                       ? flow === 'in'
                         ? 'border-amber-500 bg-amber-50'
@@ -219,12 +219,12 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
                   aria-label={cat.name}
                 >
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    className="w-6 h-6 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: cat.color + '20' }}
                   >
                     <CategoryIcon
                       categoryId={cat.id}
-                      className="w-4 h-4"
+                      className="w-3.5 h-3.5"
                       style={{ color: cat.color }}
                     />
                   </div>
@@ -242,14 +242,14 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
 
         {/* Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             Tanggal
           </label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className={`w-full h-12 px-4 rounded-xl border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent ${
+            className={`w-full h-10 px-4 rounded-lg border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent ${
               flow === 'in'
                 ? 'focus:ring-amber-500'
                 : 'focus:ring-emerald-500'
@@ -259,7 +259,7 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             Deskripsi <span className="text-gray-400">(opsional)</span>
           </label>
           <input
@@ -268,7 +268,7 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
             onChange={(e) => setDescription(e.target.value)}
             placeholder={flow === 'in' ? 'Mis: Gaji bulanan, Bonus, dll' : 'Mis: Nasi goreng, Bensin, dll'}
             maxLength={100}
-            className="w-full h-12 px-4 rounded-xl border border-gray-200 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className="w-full h-10 px-4 rounded-lg border border-gray-200 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
           />
         </div>
 
@@ -276,19 +276,16 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full h-12 rounded-xl text-white font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-50 transition-colors ${
+          className={`w-full h-10 rounded-lg text-white font-semibold text-sm flex items-center justify-center disabled:opacity-50 transition-colors ${
             flow === 'in'
               ? 'bg-amber-500 active:bg-amber-600'
               : 'bg-emerald-500 active:bg-emerald-600'
           }`}
         >
           {isSubmitting ? (
-            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
-            <>
-              <Check className="w-5 h-5" />
-              {isEditing ? 'Simpan Perubahan' : flow === 'in' ? 'Simpan Pemasukan' : 'Simpan'}
-            </>
+            isEditing ? 'Simpan Perubahan' : flow === 'in' ? 'Simpan Pemasukan' : 'Simpan'
           )}
         </button>
       </form>

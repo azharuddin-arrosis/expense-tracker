@@ -201,7 +201,7 @@ export default function StatistikPage() {
 
           {/* SVG Trend Chart */}
           {trendData.some((d) => d.expense > 0 || d.income > 0) && (
-            <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <div className="bg-white rounded-lg border border-gray-200 p-2">
               <h3 className="text-xs font-semibold text-gray-800 mb-2">Tren 6 Bulan</h3>
               <svg viewBox={`0 0 ${chartW} ${chartH + 20}`} className="w-full h-auto">
                 {/* Y-axis grid lines */}
@@ -270,17 +270,17 @@ export default function StatistikPage() {
 
           {/* Pie Chart */}
           <div className="bg-white rounded-lg border border-gray-200 p-3">
-            <h3 className="text-xs font-semibold text-gray-800 mb-3">
+            <h3 className="text-xs font-semibold text-gray-800 mb-2">
               Pie Chart Kategori
             </h3>
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-2">
               <div
-                className="w-36 h-36 rounded-full shadow-inner"
+                className="w-28 h-28 rounded-full shadow-inner"
                 style={{ background: pieGradient }}
               />
 
               {/* Legend */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 w-full">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 w-full">
                 {CATEGORIES.filter(
                   (cat) => (categoryData[cat.id] || 0) > 0
                 )
@@ -316,7 +316,7 @@ export default function StatistikPage() {
           </div>
 
           {/* Detail Bars */}
-          <div>
+          <div className="space-y-1">
             <h3 className="text-xs font-semibold text-gray-800 mb-2">
               Detail per Kategori
             </h3>

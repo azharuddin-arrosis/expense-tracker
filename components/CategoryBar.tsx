@@ -28,29 +28,29 @@ export function CategoryBar({ data, total, showPercentage = true, categoryBudget
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400 text-sm">
+      <div className="text-center py-6 text-gray-400 text-xs">
         Belum ada pengeluaran bulan ini
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {items.map((item) => (
         <div key={item.categoryId} className="space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
               <div
-                className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: getCategoryColor(item.categoryId) + '20' }}
               >
                 <CategoryIcon
                   categoryId={item.categoryId}
-                  className="w-3.5 h-3.5"
+                  className="w-3 h-3"
                   style={{ color: getCategoryColor(item.categoryId) }}
                 />
               </div>
-              <span className="text-sm font-medium text-gray-700 truncate">
+              <span className="text-xs font-medium text-gray-700 truncate">
                 {getCategoryName(item.categoryId)}
               </span>
             </div>
@@ -67,17 +67,17 @@ export function CategoryBar({ data, total, showPercentage = true, categoryBudget
                   title={`Budget: ${formatRupiah(categoryBudgets[item.categoryId])}`}
                 />
               )}
-              <span className="text-sm font-semibold text-gray-900 tabular-nums">
+              <span className="text-xs font-semibold text-gray-900 tabular-nums">
                 {formatRupiah(item.total)}
               </span>
               {showPercentage && (
-                <span className="text-xs text-gray-400 w-10 text-right tabular-nums">
+                <span className="text-[10px] text-gray-400 w-10 text-right tabular-nums">
                   {item.percentage.toFixed(1)}%
                 </span>
               )}
             </div>
           </div>
-          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
