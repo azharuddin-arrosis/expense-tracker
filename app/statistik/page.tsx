@@ -315,8 +315,8 @@ export default function StatistikPage() {
             </div>
           </div>
 
-          {/* Detail Bars */}
-          <div className="space-y-1">
+          {/* Detail per Kategori */}
+          <div>
             <h3 className="text-xs font-semibold text-gray-800 mb-2">
               Detail per Kategori
             </h3>
