@@ -53,7 +53,7 @@ export default function TabunganDetailPage() {
     if (!goal) return [];
     return allExpenses
       .filter(t => t.description?.includes(goal.name) && t.category === 'tabungan')
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [allExpenses, goal]);
 
   const [showTopUp, setShowTopUp] = useState(false);

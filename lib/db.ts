@@ -23,7 +23,7 @@ export const pool = mysql.createPool({
 export async function getTransactions(email: string): Promise<Expense[]> {
   try {
     const [rows] = await pool.execute<mysql.RowDataPacket[]>(
-      'SELECT id, email, amount, category, description, date, flow, account, created_at, updated_at FROM transactions WHERE email = ? ORDER BY date DESC',
+      'SELECT id, email, amount, category, description, date, flow, account, created_at, updated_at FROM transactions WHERE email = ? ORDER BY created_at DESC',
       [email]
     );
     return rows.map(mapRowToExpense);

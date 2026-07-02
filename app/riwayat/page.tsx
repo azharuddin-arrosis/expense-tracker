@@ -48,7 +48,7 @@ export default function RiwayatPage() {
       result = result.filter((e) => e.category === filterCat);
     }
     return result.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [allExpenses, search, filterCat]);
 
