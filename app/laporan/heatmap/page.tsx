@@ -106,7 +106,7 @@ export default function HeatmapPage() {
         {hasData ? (
           <div className="bg-white rounded-lg border border-gray-200 p-3">
             <h3 className="text-xs font-semibold text-gray-800 mb-3">Heatmap Pengeluaran {year}</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {heatmapData.map((d) => {
                 const color = d.total > 0 ? getHeatmapColor(d.total, heatmapMin, heatmapMax) : '#F3F4F6';
                 const textColor = d.total > heatmapMax * 0.6 ? 'text-white' : 'text-gray-800';

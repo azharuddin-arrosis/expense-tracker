@@ -17,6 +17,7 @@ import {
   Loader2,
   Calendar,
   TrendingUp,
+  TrendingDown,
   DollarSign,
   BarChart3,
 } from 'lucide-react';
@@ -46,7 +47,7 @@ import { getStoredEmail } from '@/lib/cloud';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { refreshKey, refreshData } = useAppContext();
+  const { refreshKey, refreshData, setShowAddExpense, setAddFlow, setShowAddTarget } = useAppContext();
   const [synced, setSynced] = useState(false);
   const [cloudStatus, setCloudStatus] = useState<'checking' | 'connected' | 'local'>('checking');
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -201,8 +202,36 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Compact Nav Grid — 3×3 */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* Quick Add — 2 compact buttons */}
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <button
+            onClick={() => { setAddFlow('out'); setShowAddExpense(true); }}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-emerald-200 bg-emerald-50 active:bg-emerald-100 transition-colors"
+          >
+            <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+              <TrendingDown className="w-3.5 h-3.5 text-white" />
+            </div>
+            <div className="text-left leading-tight">
+              <p className="text-[10px] font-semibold text-emerald-900">Catat Pengeluaran</p>
+              <p className="text-[8px] text-emerald-600">Makanan, transport, belanja</p>
+            </div>
+          </button>
+          <button
+            onClick={() => { setAddFlow('in'); setShowAddExpense(true); }}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-amber-200 bg-amber-50 active:bg-amber-100 transition-colors"
+          >
+            <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="w-3.5 h-3.5 text-white" />
+            </div>
+            <div className="text-left leading-tight">
+              <p className="text-[10px] font-semibold text-amber-900">Catat Pemasukan</p>
+              <p className="text-[8px] text-amber-600">Gaji, freelance, bisnis</p>
+            </div>
+          </button>
+        </div>
+
+        {/* Nav Grid — compact 4 cols */}
+        <div className="grid grid-cols-4 gap-1.5">
           {[
             { label: 'Riwayat', icon: List, path: '/riwayat', color: '#6366F1', bg: '#EEF2FF' },
             { label: 'Buku Kas', icon: Lightbulb, path: '/wawasan', color: '#8B5CF6', bg: '#F5F3FF' },
@@ -219,15 +248,15 @@ export default function DashboardPage() {
               <button
                 key={item.label}
                 onClick={() => router.push(item.path)}
-                className="flex flex-col items-center gap-1 active:scale-95 transition-transform p-1.5 rounded-lg border border-gray-100 bg-white"
+                className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform p-1 rounded-lg bg-white"
               >
                 <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  className="w-6 h-6 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: item.bg }}
                 >
-                  <Icon className="w-3.5 h-3.5" style={{ color: item.color }} />
+                  <Icon className="w-3 h-3" style={{ color: item.color }} />
                 </div>
-                <span className="text-[9px] font-medium text-gray-600">{item.label}</span>
+                <span className="text-[8px] font-medium text-gray-500">{item.label}</span>
               </button>
             );
           })}

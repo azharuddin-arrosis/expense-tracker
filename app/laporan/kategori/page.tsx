@@ -140,8 +140,8 @@ export default function KategoriPage() {
                 cols="grid-cols-[1fr_100px_100px_70px]"
                 cells={[
                   { value: cat.name, className: 'truncate' },
-                  { value: cat.total, className: 'text-gray-800 font-medium' },
-                  { value: cat.avg, className: 'text-gray-600' },
+                  { value: formatRupiah(cat.total), className: 'text-gray-800 font-medium' },
+                  { value: formatRupiah(cat.avg), className: 'text-gray-600' },
                   { value: `${cat.pct.toFixed(1)}%`, className: 'text-gray-500' },
                 ]}
                 isEven={i % 2 === 0}
@@ -152,7 +152,7 @@ export default function KategoriPage() {
               cols="grid-cols-[1fr_100px_100px_70px]"
               cells={[
                 'Total',
-                { value: annualExpense, className: 'text-gray-800' },
+                { value: formatRupiah(annualExpense), className: 'text-gray-800' },
                 '',
                 { value: '100%', className: 'text-gray-600' },
               ]}

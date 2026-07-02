@@ -4,16 +4,12 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getStoredEmail } from '@/lib/cloud';
 import { BottomNav } from '@/components/BottomNav';
-import { FAB } from '@/components/FAB';
 import { ExpenseFormGlobal } from '@/components/ExpenseFormGlobal';
-
-const FAB_PAGES = ['/', '/riwayat', '/setting'];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [checked, setChecked] = useState(false);
-  const showFAB = FAB_PAGES.includes(pathname);
 
   useEffect(() => {
     const email = getStoredEmail();
@@ -52,7 +48,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen max-w-[480px] mx-auto bg-white shadow-sm relative">
       <main className="pb-24 min-h-screen">{children}</main>
-      {showFAB && <FAB />}
       <BottomNav />
       <ExpenseFormGlobal />
     </div>

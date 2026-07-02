@@ -134,11 +134,11 @@ export default function CashflowPage() {
                 cols="grid-cols-[70px_1fr_1fr_1fr_1fr]"
                 cells={[
                   getShortMonth(d.month),
-                  { value: d.saldoAwal, className: 'text-gray-500' },
-                  { value: d.pemasukan > 0 ? d.pemasukan : '-', className: d.pemasukan > 0 ? 'text-amber-700 font-medium' : '' },
-                  { value: d.pengeluaran > 0 ? d.pengeluaran : '-', className: d.pengeluaran > 0 ? 'text-red-700 font-medium' : '' },
+                  { value: formatRupiah(d.saldoAwal), className: 'text-gray-500' },
+                  { value: d.pemasukan > 0 ? formatRupiah(d.pemasukan) : '-', className: d.pemasukan > 0 ? 'text-amber-700 font-medium' : '' },
+                  { value: d.pengeluaran > 0 ? formatRupiah(d.pengeluaran) : '-', className: d.pengeluaran > 0 ? 'text-red-700 font-medium' : '' },
                   {
-                    value: d.saldoAkhir,
+                    value: formatRupiah(d.saldoAkhir),
                     className: `font-semibold ${d.saldoAkhir >= 0 ? 'text-emerald-700' : 'text-red-700'}`,
                   },
                 ]}
@@ -151,10 +151,10 @@ export default function CashflowPage() {
               cells={[
                 'Total',
                 '',
-                { value: annualTotalIncome, className: 'text-amber-800' },
-                { value: annualTotalExpense, className: 'text-red-800' },
+                { value: formatRupiah(annualTotalIncome), className: 'text-amber-800' },
+                { value: formatRupiah(annualTotalExpense), className: 'text-red-800' },
                 {
-                  value: cashFlowData.length > 0 ? cashFlowData[cashFlowData.length - 1].saldoAkhir : 0,
+                  value: formatRupiah(cashFlowData.length > 0 ? cashFlowData[cashFlowData.length - 1].saldoAkhir : 0),
                   className:
                     cashFlowData.length > 0 && cashFlowData[cashFlowData.length - 1].saldoAkhir >= 0
                       ? 'text-emerald-800'

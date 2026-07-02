@@ -161,9 +161,9 @@ export default function BudgetPage() {
                   cols="grid-cols-[70px_1fr_1fr_1fr_70px]"
                   cells={[
                     getShortMonth(d.month),
-                    { value: hasRowBudget ? d.budget! : '-', className: 'text-gray-800 font-medium' },
-                    { value: d.realisasi, className: 'text-red-700 font-medium' },
-                    { value: hasRowBudget ? d.selisih! : '-', className: `${selisihClass} font-medium` },
+                    { value: hasRowBudget ? formatRupiah(d.budget!) : '-', className: 'text-gray-800 font-medium' },
+                    { value: formatRupiah(d.realisasi), className: 'text-red-700 font-medium' },
+                    { value: hasRowBudget ? formatRupiah(d.selisih!) : '-', className: `${selisihClass} font-medium` },
                     { value: hasRowBudget && d.pct !== null ? `${d.pct.toFixed(0)}%` : '-', className: `${pctClass} font-medium` },
                   ]}
                   isEven={i % 2 === 0}
@@ -175,10 +175,10 @@ export default function BudgetPage() {
               cols="grid-cols-[70px_1fr_1fr_1fr_70px]"
               cells={[
                 'Total',
-                { value: budgetTotals.budgetCount > 0 ? budgetTotals.totalBudget : '-', className: 'text-gray-800' },
-                { value: budgetTotals.totalRealisasi, className: 'text-red-800' },
+                { value: budgetTotals.budgetCount > 0 ? formatRupiah(budgetTotals.totalBudget) : '-', className: 'text-gray-800' },
+                { value: formatRupiah(budgetTotals.totalRealisasi), className: 'text-red-800' },
                 {
-                  value: budgetTotals.totalSelisih !== null ? budgetTotals.totalSelisih : '-',
+                  value: budgetTotals.totalSelisih !== null ? formatRupiah(budgetTotals.totalSelisih) : '-',
                   className: budgetTotals.totalSelisih !== null && budgetTotals.totalSelisih >= 0 ? 'text-emerald-800' : 'text-red-800',
                 },
                 {

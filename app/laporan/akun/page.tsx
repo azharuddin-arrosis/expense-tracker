@@ -123,9 +123,9 @@ export default function AkunPage() {
                 cols="grid-cols-[70px_1fr_1fr_1fr]"
                 cells={[
                   getShortMonth(d.month),
-                  { value: d.suami > 0 ? d.suami : '-', className: d.suami > 0 ? 'text-blue-700 font-medium' : '' },
-                  { value: d.istri > 0 ? d.istri : '-', className: d.istri > 0 ? 'text-pink-700 font-medium' : '' },
-                  { value: d.bersama > 0 ? d.bersama : '-', className: d.bersama > 0 ? 'text-emerald-700 font-medium' : '' },
+                  { value: d.suami > 0 ? formatRupiah(d.suami) : '-', className: d.suami > 0 ? 'text-blue-700 font-medium' : '' },
+                  { value: d.istri > 0 ? formatRupiah(d.istri) : '-', className: d.istri > 0 ? 'text-pink-700 font-medium' : '' },
+                  { value: d.bersama > 0 ? formatRupiah(d.bersama) : '-', className: d.bersama > 0 ? 'text-emerald-700 font-medium' : '' },
                 ]}
                 isEven={i % 2 === 0}
                 isLast={i === perAccountData.length - 1}

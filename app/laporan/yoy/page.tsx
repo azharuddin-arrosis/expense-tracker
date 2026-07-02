@@ -272,8 +272,8 @@ export default function YoYPage() {
                   cols="grid-cols-[1fr_1fr_1fr_1fr_80px]"
                   cells={[
                     { value: item.name, className: 'truncate' },
-                    { value: item.prev, className: 'text-gray-700' },
-                    { value: item.curr, className: 'text-gray-800 font-medium' },
+                    { value: formatRupiah(item.prev), className: 'text-gray-700' },
+                    { value: formatRupiah(item.curr), className: 'text-gray-800 font-medium' },
                     { value: changeStr, className: `font-medium ${item.isPositive ? 'text-emerald-700' : 'text-red-700'}` },
                     { value: pctStr, className: `font-medium ${item.isPositive ? 'text-emerald-700' : 'text-red-700'}` },
                   ]}

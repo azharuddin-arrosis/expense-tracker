@@ -272,9 +272,9 @@ export default function RingkasanPage() {
                   cols="grid-cols-[70px_1fr_1fr_80px]"
                   cells={[
                     getShortMonth(d.month),
-                    { value: d.income, className: 'text-amber-700 font-medium' },
-                    { value: d.expense, className: 'text-red-700 font-medium' },
-                    { value: d.balance, className: `font-semibold ${d.balance >= 0 ? 'text-emerald-700' : 'text-red-700'}` },
+                    { value: formatRupiah(d.income), className: 'text-amber-700 font-medium' },
+                    { value: formatRupiah(d.expense), className: 'text-red-700 font-medium' },
+                    { value: formatRupiah(d.balance), className: `font-semibold ${d.balance >= 0 ? 'text-emerald-700' : 'text-red-700'}` },
                   ]}
                   isEven={i % 2 === 0}
                   isLast={i === monthlyData.length - 1}
@@ -284,9 +284,9 @@ export default function RingkasanPage() {
                 cols="grid-cols-[70px_1fr_1fr_80px]"
                 cells={[
                   'Total',
-                  { value: annualSummary.totalIncome, className: 'text-amber-800' },
-                  { value: annualSummary.totalExpense, className: 'text-red-800' },
-                  { value: annualSummary.surplus, className: annualSummary.surplus >= 0 ? 'text-emerald-800' : 'text-red-800' },
+                  { value: formatRupiah(annualSummary.totalIncome), className: 'text-amber-800' },
+                  { value: formatRupiah(annualSummary.totalExpense), className: 'text-red-800' },
+                  { value: formatRupiah(annualSummary.surplus), className: annualSummary.surplus >= 0 ? 'text-emerald-800' : 'text-red-800' },
                 ]}
               />
             </div>
