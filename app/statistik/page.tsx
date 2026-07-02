@@ -91,8 +91,8 @@ export default function StatistikPage() {
   }, [trendMonths, refreshKey, synced, email]);
 
   const maxVal = Math.max(...trendData.map((d) => Math.max(d.expense, d.income)), 1);
-  const chartH = 120;
-  const chartW = 280;
+  const chartH = 100;
+  const chartW = 260;
 
   // MoM Comparison
   const prevMonthStr = prevMonth(month);
@@ -131,10 +131,10 @@ export default function StatistikPage() {
   if (!synced && email) {
     return (
       <div className="flex flex-col items-center justify-center h-dvh bg-white px-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm mb-4">
-          <Wallet className="w-6 h-6 text-white" />
+        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mb-3">
+          <Wallet className="w-5 h-5 text-white" />
         </div>
-        <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-3" />
+        <Loader2 className="w-5 h-5 text-emerald-600 animate-spin mb-2" />
         <p className="text-sm font-medium text-gray-700">Memuat data...</p>
         <p className="text-xs text-gray-400 mt-1">Menyinkronkan dari cloud</p>
       </div>
@@ -145,7 +145,7 @@ export default function StatistikPage() {
     <>
       <PageHeader title="Statistik" />
 
-      <div className="px-4 pt-6 pb-6 space-y-4">
+      <div className="px-3 pt-3 pb-8 space-y-3">
       {/* Date Filter */}
       <DateFilter
         month={month}
@@ -158,56 +158,41 @@ export default function StatistikPage() {
 
       {hasData ? (
         <>
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white rounded-2xl shadow-sm p-3 text-center">
-              <p className="text-xs text-gray-500 mb-0.5">Total</p>
-              <p className="text-sm font-bold text-gray-900 tabular-nums">
-                {formatRupiah(totalMonth)}
-              </p>
-            </div>
-            <div className="bg-white rounded-2xl shadow-sm p-3 text-center">
-              <p className="text-xs text-gray-500 mb-0.5">Rata-rata</p>
-              <p className="text-sm font-bold text-gray-900 tabular-nums">
-                {formatRupiah(Math.round(avgPerDay))}
-              </p>
-            </div>
-            <div className="bg-white rounded-2xl shadow-sm p-3 text-center">
-              <p className="text-xs text-gray-500 mb-0.5">Transaksi</p>
-              <p className="text-sm font-bold text-gray-900 tabular-nums">
-                {transactionCount}
-              </p>
-            </div>
+          {/* Compact Quick Stats Bar */}
+          <div className="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between text-[10px] text-gray-500">
+            <span>Total <strong className="text-gray-900 text-xs">{formatRupiah(totalMonth)}</strong></span>
+            <span>Rata-rata <strong className="text-gray-900 text-xs">{formatRupiah(Math.round(avgPerDay))}</strong></span>
+            <span>{transactionCount} transaksi</span>
           </div>
 
-          {/* MoM Comparison & Biggest Change */}
+          {/* Compact MoM & Biggest Change */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-white rounded-2xl shadow-sm p-3">
-              <p className="text-xs text-gray-500 mb-1">vs Bulan Lalu</p>
+            <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
+              <p className="text-[10px] text-gray-500 mb-0.5">vs Bulan Lalu</p>
               <div className="flex items-center gap-1">
                 {momChange > 0 ? (
-                  <ArrowUp className="w-4 h-4 text-red-500" />
+                  <ArrowUp className="w-3.5 h-3.5 text-red-500" />
                 ) : (
-                  <ArrowDown className="w-4 h-4 text-emerald-500" />
+                  <ArrowDown className="w-3.5 h-3.5 text-emerald-500" />
                 )}
-                <span className={`text-sm font-bold tabular-nums ${momChange > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                <span className={`text-xs font-bold tabular-nums ${momChange > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                   {Math.abs(momChange).toFixed(1)}%
                 </span>
               </div>
-              <p className="text-[10px] text-gray-400 mt-0.5">
+              <p className="text-[9px] text-gray-400 mt-0.5">
                 {momChange > 0 ? 'Naik' : 'Turun'} dari bulan lalu
               </p>
             </div>
             {biggestChangeCat.id && (
-              <div className="bg-white rounded-2xl shadow-sm p-3">
-                <p className="text-xs text-gray-500 mb-1">Perubahan Terbesar</p>
+              <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
+                <p className="text-[10px] text-gray-500 mb-0.5">Perubahan Terbesar</p>
                 <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryColor(biggestChangeCat.id) }} />
-                  <span className="text-xs font-medium text-gray-700 truncate">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getCategoryColor(biggestChangeCat.id) }} />
+                  <span className="text-[11px] font-medium text-gray-700 truncate">
                     {getCategoryName(biggestChangeCat.id)}
                   </span>
                 </div>
-                <p className={`text-[10px] tabular-nums mt-0.5 ${biggestChangeCat.delta > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                <p className={`text-[9px] tabular-nums mt-0.5 ${biggestChangeCat.delta > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                   {biggestChangeCat.delta > 0 ? '+' : ''}{formatRupiah(biggestChangeCat.delta)}
                 </p>
               </div>
@@ -216,8 +201,8 @@ export default function StatistikPage() {
 
           {/* SVG Trend Chart */}
           {trendData.some((d) => d.expense > 0 || d.income > 0) && (
-            <div className="bg-white rounded-2xl shadow-sm p-4">
-              <h3 className="text-sm font-semibold text-gray-800 mb-3">Tren 6 Bulan</h3>
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <h3 className="text-xs font-semibold text-gray-800 mb-2">Tren 6 Bulan</h3>
               <svg viewBox={`0 0 ${chartW} ${chartH + 20}`} className="w-full h-auto">
                 {/* Y-axis grid lines */}
                 {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
@@ -232,7 +217,7 @@ export default function StatistikPage() {
                 <polyline
                   fill="none"
                   stroke="#EF4444"
-                  strokeWidth="2"
+                  strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   points={trendData.map((d, i) => {
@@ -245,7 +230,7 @@ export default function StatistikPage() {
                 <polyline
                   fill="none"
                   stroke="#F59E0B"
-                  strokeWidth="2"
+                  strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   points={trendData.map((d, i) => {
@@ -260,9 +245,9 @@ export default function StatistikPage() {
                   <text
                     key={d.month}
                     x={(i / (trendData.length - 1)) * (chartW - 20) + 10}
-                    y={chartH + 10}
+                    y={chartH + 12}
                     textAnchor="middle"
-                    className="text-[9px] fill-gray-400"
+                    className="text-[8px] fill-gray-400"
                   >
                     {getMonthName(d.month).slice(0, 3)}
                   </text>
@@ -270,32 +255,32 @@ export default function StatistikPage() {
               </svg>
 
               {/* Legend */}
-              <div className="flex items-center justify-center gap-4 mt-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-0.5 rounded bg-red-500" />
-                  <span className="text-[10px] text-gray-500">Pengeluaran</span>
+              <div className="flex items-center justify-center gap-3 mt-1.5">
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-0.5 rounded bg-red-500" />
+                  <span className="text-[9px] text-gray-500">Pengeluaran</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-0.5 rounded bg-amber-500" />
-                  <span className="text-[10px] text-gray-500">Pemasukan</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-0.5 rounded bg-amber-500" />
+                  <span className="text-[9px] text-gray-500">Pemasukan</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Pie Chart */}
-          <div className="bg-white rounded-2xl shadow-sm p-5">
-            <h3 className="text-sm font-semibold text-gray-800 mb-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <h3 className="text-xs font-semibold text-gray-800 mb-3">
               Pie Chart Kategori
             </h3>
-            <div className="flex flex-col items-center gap-5">
+            <div className="flex flex-col items-center gap-3">
               <div
-                className="w-44 h-44 rounded-full shadow-inner"
+                className="w-36 h-36 rounded-full shadow-inner"
                 style={{ background: pieGradient }}
               />
 
               {/* Legend */}
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 w-full">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 w-full">
                 {CATEGORIES.filter(
                   (cat) => (categoryData[cat.id] || 0) > 0
                 )
@@ -311,16 +296,16 @@ export default function StatistikPage() {
                     return (
                       <div
                         key={cat.id}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-1.5"
                       >
                         <div
-                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          className="w-2 h-2 rounded-full flex-shrink-0"
                           style={{ backgroundColor: cat.color }}
                         />
-                        <span className="text-xs text-gray-600 truncate">
+                        <span className="text-[10px] text-gray-600 truncate">
                           {cat.name}
                         </span>
-                        <span className="text-xs text-gray-400 tabular-nums ml-auto">
+                        <span className="text-[10px] text-gray-400 tabular-nums ml-auto">
                           {pct.toFixed(1)}%
                         </span>
                       </div>
@@ -332,7 +317,7 @@ export default function StatistikPage() {
 
           {/* Detail Bars */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">
+            <h3 className="text-xs font-semibold text-gray-800 mb-2">
               Detail per Kategori
             </h3>
             <CategoryBar data={categoryData} total={totalMonth} />

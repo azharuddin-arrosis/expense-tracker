@@ -178,16 +178,16 @@ export default function SettingPage() {
     return (
       <button
         onClick={onClick}
-        className="w-full flex items-center gap-3 px-4 py-4 active:bg-gray-50 transition-colors text-left"
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 active:bg-gray-50 transition-colors text-left"
       >
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: bg }}>
-          <Icon className="w-5 h-5" style={{ color }} />
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: bg }}>
+          <Icon className="w-4 h-4" style={{ color }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900">{label}</p>
-          {desc && <p className="text-xs text-gray-400 mt-0.5 truncate">{desc}</p>}
+          <p className="text-xs font-semibold text-gray-900">{label}</p>
+          {desc && <p className="text-[10px] text-gray-400 mt-0.5 truncate">{desc}</p>}
         </div>
-        {right || <ChevronRight className="w-5 h-5 text-gray-300 flex-shrink-0" />}
+        {right || <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />}
       </button>
     );
   }
@@ -196,43 +196,43 @@ export default function SettingPage() {
     <>
       <PageHeader title="Pengaturan" />
 
-      <div className="px-4 pt-6 pb-6 space-y-5">
+      <div className="px-3 pt-3 pb-8 space-y-3">
 
       {/* ── Akun ── */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 px-1">
-          <Mail className="w-5 h-5 text-emerald-600" />
-          <h2 className="text-base font-semibold text-gray-800">Akun</h2>
+      <section className="space-y-2">
+        <div className="flex items-center gap-1.5 px-1">
+          <Mail className="w-4 h-4 text-emerald-600" />
+          <h2 className="text-sm font-semibold text-gray-800">Akun</h2>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3.5">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                 <Mail className="w-4 h-4 text-emerald-500" />
               </div>
               <div>
-                <p className="text-xs text-gray-400">Email</p>
-                <p className="text-sm font-medium text-gray-900">{email ?? '-'}</p>
+                <p className="text-[10px] text-gray-400">Email</p>
+                <p className="text-xs font-medium text-gray-900">{email ?? '-'}</p>
               </div>
             </div>
             {email && (
               <button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="text-xs font-semibold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg active:bg-red-100 transition-colors"
+                className="text-[10px] font-semibold text-red-500 bg-red-50 px-2.5 py-1 rounded-lg active:bg-red-100 transition-colors"
               >
                 Ganti
               </button>
             )}
           </div>
-          <div className="h-px bg-gray-100 mx-4" />
-          <div className="flex items-center justify-between px-4 py-3.5">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+          <div className="h-px bg-gray-100 mx-3" />
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                 {email ? <Cloud className="w-4 h-4 text-emerald-500" /> : <CloudOff className="w-4 h-4 text-gray-400" />}
               </div>
               <div>
-                <p className="text-xs text-gray-400">Cloud Sync</p>
-                <p className={`text-sm font-medium ${email ? 'text-emerald-600' : 'text-gray-500'}`}>
+                <p className="text-[10px] text-gray-400">Cloud Sync</p>
+                <p className={`text-xs font-medium ${email ? 'text-emerald-600' : 'text-gray-500'}`}>
                   {email ? 'Tersimpan di Cloud' : 'Hanya Lokal'}
                 </p>
               </div>
@@ -241,28 +241,28 @@ export default function SettingPage() {
               <button
                 onClick={handleSync}
                 disabled={syncing}
-                className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg disabled:opacity-50 active:bg-emerald-100 transition-colors"
+                className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg disabled:opacity-50 active:bg-emerald-100 transition-colors"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3 h-3 ${syncing ? 'animate-spin' : ''}`} />
                 {syncing ? 'Sync...' : syncStatus === 'success' ? 'Done' : 'Sync'}
               </button>
             )}
           </div>
           {syncStatus === 'error' && (
-            <div className="px-4 pb-3">
-              <p className="text-xs text-red-500">Gagal. Periksa koneksi.</p>
+            <div className="px-3 pb-2">
+              <p className="text-[10px] text-red-500">Gagal. Periksa koneksi.</p>
             </div>
           )}
         </div>
       </section>
 
       {/* ── Daftar Pengaturan ── */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 px-1">
-          <SlidersHorizontal className="w-5 h-5 text-emerald-600" />
-          <h2 className="text-base font-semibold text-gray-800">Pengaturan</h2>
+      <section className="space-y-2">
+        <div className="flex items-center gap-1.5 px-1">
+          <SlidersHorizontal className="w-4 h-4 text-emerald-600" />
+          <h2 className="text-sm font-semibold text-gray-800">Pengaturan</h2>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-100">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden divide-y divide-gray-100">
           <SettingRow
             icon={Calendar}
             label="Periode Laporan"
@@ -291,27 +291,27 @@ export default function SettingPage() {
       </section>
 
       {/* ── Data & Privasi ── */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 px-1">
-          <Shield className="w-5 h-5 text-emerald-600" />
-          <h2 className="text-base font-semibold text-gray-800">Data & Privasi</h2>
+      <section className="space-y-2">
+        <div className="flex items-center gap-1.5 px-1">
+          <Shield className="w-4 h-4 text-emerald-600" />
+          <h2 className="text-sm font-semibold text-gray-800">Data & Privasi</h2>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <Info className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-gray-500 leading-relaxed">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 space-y-2.5">
+          <div className="flex items-start gap-2">
+            <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+            <p className="text-[10px] text-gray-500 leading-relaxed">
               Data tersimpan di cloud dan perangkat. Hapus data lokal jika ingin memulai dari awal.
             </p>
           </div>
           <button
             onClick={handleClearAll}
-            className="w-full h-11 rounded-xl border-2 border-red-200 text-red-600 font-semibold text-xs flex items-center justify-center gap-2 active:bg-red-100 transition-colors"
+            className="w-full h-9 rounded-lg border-2 border-red-200 text-red-600 font-semibold text-[10px] flex items-center justify-center gap-1.5 active:bg-red-100 transition-colors"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
             Hapus Semua Data Lokal
           </button>
         </div>
-        <p className="text-center text-[10px] text-gray-300 pt-1">
+        <p className="text-center text-[9px] text-gray-300 pt-1">
           Duit v1.0
         </p>
       </section>
@@ -329,14 +329,14 @@ export default function SettingPage() {
 
       {/* ── Bottom Sheet: Periode Laporan ── */}
       <BottomSheet open={sheetPeriod} onClose={() => setSheetPeriod(false)} title="Periode Laporan">
-        <div className="space-y-4">
-          <div className="flex gap-4">
+        <div className="space-y-3">
+          <div className="flex gap-3">
             <div className="flex-1">
-              <p className="text-xs text-gray-400 mb-1.5">Tanggal Mulai</p>
+              <p className="text-[10px] text-gray-400 mb-1">Tanggal Mulai</p>
               <select
                 value={periodStart}
                 onChange={(e) => setPeriodStart(Number(e.target.value))}
-                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
               >
                 {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                   <option key={d} value={d}>{d}</option>
@@ -344,11 +344,11 @@ export default function SettingPage() {
               </select>
             </div>
             <div className="flex-1">
-              <p className="text-xs text-gray-400 mb-1.5">Tanggal Tutup</p>
+              <p className="text-[10px] text-gray-400 mb-1">Tanggal Tutup</p>
               <select
                 value={periodEnd}
                 onChange={(e) => setPeriodEnd(Number(e.target.value))}
-                className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
               >
                 {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                   <option key={d} value={d}>{d}</option>
@@ -356,13 +356,13 @@ export default function SettingPage() {
               </select>
             </div>
           </div>
-          <div className="bg-gray-50 rounded-xl p-3 space-y-1">
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Periode Saat Ini</p>
-            <p className="text-sm font-semibold text-gray-800">{periodLabel}</p>
+          <div className="bg-gray-50 rounded-lg p-2.5 space-y-0.5">
+            <p className="text-[9px] text-gray-400 uppercase tracking-wide">Periode Saat Ini</p>
+            <p className="text-xs font-semibold text-gray-800">{periodLabel}</p>
           </div>
           <button
             onClick={handleSavePeriod}
-            className="w-full h-11 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-colors"
+            className="w-full h-9 rounded-lg bg-emerald-500 text-white font-semibold text-xs active:bg-emerald-600 transition-colors"
           >
             {periodSaved ? 'Tersimpan' : 'Simpan'}
           </button>
@@ -371,31 +371,31 @@ export default function SettingPage() {
 
       {/* ── Bottom Sheet: Target Budget ── */}
       <BottomSheet open={sheetTarget} onClose={() => setSheetTarget(false)} title="Target Budget">
-        <div className="space-y-4">
+        <div className="space-y-3">
           {budget ? (
-            <div className="bg-emerald-50 rounded-xl p-3 space-y-1">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide">Target Saat Ini</p>
-              <p className="text-base font-bold text-emerald-700 tabular-nums">{formatRupiah(budget.target)}</p>
+            <div className="bg-emerald-50 rounded-lg p-2.5 space-y-0.5">
+              <p className="text-[9px] text-gray-500 uppercase tracking-wide">Target Saat Ini</p>
+              <p className="text-sm font-bold text-emerald-700 tabular-nums">{formatRupiah(budget.target)}</p>
             </div>
           ) : (
-            <div className="bg-gray-50 rounded-xl p-3 text-center">
-              <p className="text-xs text-gray-400">Belum ada target untuk {getMonthName(currentMonth)}</p>
+            <div className="bg-gray-50 rounded-lg p-2.5 text-center">
+              <p className="text-[10px] text-gray-400">Belum ada target untuk {getMonthName(currentMonth)}</p>
             </div>
           )}
           <div>
-            <label className="text-xs text-gray-400 mb-1.5 block">Atur Target</label>
+            <label className="text-[10px] text-gray-400 mb-1 block">Atur Target</label>
             <input
               type="number"
               value={targetAmount}
               onChange={(e) => setTargetAmount(Number(e.target.value))}
               placeholder="Masukkan nominal target"
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+              className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
             />
           </div>
           <button
             onClick={handleSaveBudget}
             disabled={targetAmount <= 0}
-            className="w-full h-11 rounded-xl bg-emerald-500 text-white font-semibold text-sm disabled:opacity-50 active:bg-emerald-600 transition-colors"
+            className="w-full h-9 rounded-lg bg-emerald-500 text-white font-semibold text-xs disabled:opacity-50 active:bg-emerald-600 transition-colors"
           >
             Simpan Target
           </button>
@@ -404,29 +404,29 @@ export default function SettingPage() {
 
       {/* ── Bottom Sheet: Ekspor Data ── */}
       <BottomSheet open={sheetExport} onClose={() => setSheetExport(false)} title="Ekspor Data">
-        <div className="space-y-3">
+        <div className="space-y-2">
           <button
             onClick={handleExportJSON}
-            className="w-full flex items-center gap-3 p-4 rounded-xl border border-gray-200 active:bg-gray-50 transition-colors"
+            className="w-full flex items-center gap-2.5 p-3 rounded-lg border border-gray-200 active:bg-gray-50 transition-colors"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-              <Download className="w-5 h-5 text-emerald-500" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <Download className="w-4 h-4 text-emerald-500" />
             </div>
             <div className="text-left flex-1">
-              <p className="text-sm font-semibold text-gray-900">Download JSON</p>
-              <p className="text-xs text-gray-400">Semua data transaksi</p>
+              <p className="text-xs font-semibold text-gray-900">Download JSON</p>
+              <p className="text-[10px] text-gray-400">Semua data transaksi</p>
             </div>
           </button>
           <button
             onClick={handleExportText}
-            className="w-full flex items-center gap-3 p-4 rounded-xl border border-gray-200 active:bg-gray-50 transition-colors"
+            className="w-full flex items-center gap-2.5 p-3 rounded-lg border border-gray-200 active:bg-gray-50 transition-colors"
           >
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-              <Download className="w-5 h-5 text-amber-500" />
+            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+              <Download className="w-4 h-4 text-amber-500" />
             </div>
             <div className="text-left flex-1">
-              <p className="text-sm font-semibold text-gray-900">Salin Teks</p>
-              <p className="text-xs text-gray-400">Laporan siap rekap</p>
+              <p className="text-xs font-semibold text-gray-900">Salin Teks</p>
+              <p className="text-[10px] text-gray-400">Laporan siap rekap</p>
             </div>
           </button>
         </div>
