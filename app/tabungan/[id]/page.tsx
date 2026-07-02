@@ -46,10 +46,16 @@ export default function TabunganDetailPage() {
 
   const goalContributions = useMemo(() => {
     if (!goal) return [];
+    const otherGoalNames = goals.filter(g => g.id !== goal.id).map(g => g.name.toLowerCase());
     return allExpenses
-      .filter(t => t.description?.includes(goal.name) && t.category === 'tabungan')
+      .filter(t => {
+        if (t.category !== 'tabungan') return false;
+        if (t.description?.includes(goal.name)) return true;
+        const desc = (t.description || '').toLowerCase();
+        return !otherGoalNames.some(n => desc.includes(n));
+      })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [allExpenses, goal]);
+  }, [allExpenses, goal, goals]);
 
   const [showTopUp, setShowTopUp] = useState(false);
   const [showAutoSisih, setShowAutoSisih] = useState(false);

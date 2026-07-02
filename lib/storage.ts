@@ -863,12 +863,10 @@ export function addContribution(goalId: string, amount: number, note?: string, s
   // Update goal saved amount
   updateGoal(goalId, { saved: goal.saved + amount });
   
-  // Create appropriate description based on source
-  const sourceText = source === 'auto' ? 'Auto-sisih' : (source === 'manual' ? 'Manual' : '');
-  const description = note || 
-    (source === 'auto' ? 
-      `Auto-sisih ${sourceText} tabungan: ${goal.name}` : 
-      `Tabungan: ${goal.name}`);
+  const base = source === 'auto'
+    ? `Auto-sisih tabungan: ${goal.name}`
+    : `Tabungan: ${goal.name}`;
+  const description = note ? `${base} - ${note}` : base;
   
   const tx = addExpense({
     amount,
